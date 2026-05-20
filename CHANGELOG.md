@@ -1,0 +1,547 @@
+# CHANGELOG
+## GoW Framework - Changes Tracking Log
+
+**Format**: Each entry must include Date, Phase, Feature, Status, Decision, and Notes.
+**Status Options**: `PLANNED` | `IN-PROGRESS` | `COMPLETED` | `BLOCKED` | `DEFERRED` | `REMOVED`
+
+---
+
+## LEGEND
+
+| Status | Meaning |
+|--------|---------|
+| PLANNED | Scheduled for implementation, no work started |
+| IN-PROGRESS | Currently being implemented |
+| COMPLETED | Fully implemented and tested |
+| BLOCKED | Cannot proceed due to dependency or issue |
+| DEFERRED | Postponed to later phase |
+| REMOVED | Feature removed from scope |
+
+---
+
+## MASTER LOG
+
+### 2026-05-20 - Phase 0: Specification & Planning
+- **Date**: 2026-05-20
+- **Phase**: 0 - Specification
+- **Feature**: Framework Specification Document
+- **Status**: COMPLETED
+- **Decision**: Created comprehensive GoW_SPEC.md covering all Laravel features adapted for Go. Framework codenamed "GoW" (Go + Laravel).
+- **Notes**: 
+  - Specification covers 34 major sections including architecture, ORM, auth, security, queues, events, mail, notifications, broadcasting, testing, CLI, and more.
+  - Directory structure mirrors Laravel but adapted for Go conventions.
+  - Implementation roadmap defined in 7 phases.
+  - Agent continuation guidelines established.
+  - No code written yet - specification only.
+
+---
+
+## PHASE 1: Foundation (Core Framework)
+
+### [P1.1] Project Scaffolding & Directory Structure
+- **Date**: PLANNED
+- **Phase**: 1
+- **Feature**: Directory structure, go.mod, main.go, bootstrap files
+- **Status**: PLANNED
+- **Decision**: Use standard Go project layout with Laravel-inspired app/ directory
+- **Notes**: Create `GoW new` command for project scaffolding
+
+### [P1.2] Service Container
+- **Date**: PLANNED
+- **Phase**: 1
+- **Feature**: IoC container with bind, singleton, instance, make
+- **Status**: PLANNED
+- **Decision**: Use reflection-based resolution with generics support (Go 1.18+)
+- **Notes**: Core of framework - must be implemented first
+
+### [P1.3] Application Bootstrap & Kernel
+- **Date**: PLANNED
+- **Phase**: 1
+- **Feature**: Application struct, HTTP kernel, request lifecycle
+- **Status**: PLANNED
+- **Decision**: Kernel implements http.Handler interface
+- **Notes**: Support both HTTP and Console kernels
+
+### [P1.4] HTTP Router
+- **Date**: PLANNED
+- **Phase**: 1
+- **Feature**: Route registration, groups, parameters, named routes, matching
+- **Status**: PLANNED
+- **Decision**: Custom radix tree implementation or adapted httprouter
+- **Notes**: Must support route caching for production
+
+### [P1.5] Middleware Pipeline
+- **Date**: PLANNED
+- **Phase**: 1
+- **Feature**: Global, route, group middleware; terminable middleware
+- **Status**: PLANNED
+- **Decision**: Standard Go middleware signature func(http.Handler) http.Handler
+- **Notes**: Pipeline built via nested handler wrapping
+
+### [P1.6] Base Controller & Response Helpers
+- **Date**: PLANNED
+- **Phase**: 1
+- **Feature**: Controller struct, JSON responses, redirects, views
+- **Status**: PLANNED
+- **Decision**: Controllers are structs with dependency injection
+- **Notes**: Response helpers as methods or package functions
+
+### [P1.7] Configuration System
+- **Date**: PLANNED
+- **Phase**: 1
+- **Feature**: Config structs, .env loading, dot notation access, caching
+- **Status**: PLANNED
+- **Decision**: Struct tags for env binding; gob serialization for cache
+- **Notes**: Use godotenv for .env parsing
+
+### [P1.8] Service Provider System
+- **Date**: PLANNED
+- **Phase**: 1
+- **Feature**: Register/Boot lifecycle, deferred providers
+- **Status**: PLANNED
+- **Decision**: Interface-based with base struct for embedding
+- **Notes**: Provider manifest for deferred loading optimization
+
+### [P1.9] Error Handling & Exception Rendering
+- **Date**: PLANNED
+- **Phase**: 1
+- **Feature**: HttpException, handler, custom error pages, panic recovery
+- **Status**: PLANNED
+- **Decision**: Go errors adapted to HTTP exception pattern
+- **Notes**: Different dev/prod rendering
+
+### [P1.10] Logging System
+- **Date**: PLANNED
+- **Phase**: 1
+- **Feature**: Multi-channel logging, levels, context, rotation
+- **Status**: PLANNED
+- **Decision**: Build on zap or standard slog
+- **Notes**: Request ID injection via context
+
+### [P1.11] CLI Framework (Artisan)
+- **Date**: PLANNED
+- **Phase**: 1
+- **Feature**: Command registration, built-in commands, code generation
+- **Status**: PLANNED
+- **Decision**: Use cobra or urfave/cli as base
+- **Notes**: `artisan` command as main CLI entry point
+
+---
+
+## PHASE 2: Database & ORM
+
+### [P2.1] Database Connection Manager
+- **Date**: PLANNED
+- **Phase**: 2
+- **Feature**: Multi-driver connections, read/write splitting, pooling
+- **Status**: PLANNED
+- **Decision**: Abstract database/sql with driver-specific configs
+- **Notes**: Support PostgreSQL, MySQL, SQLite, SQL Server
+
+### [P2.2] Query Builder
+- **Date**: PLANNED
+- **Phase**: 2
+- **Feature**: Fluent API for SELECT, INSERT, UPDATE, DELETE, JOIN, WHERE, etc.
+- **Status**: PLANNED
+- **Decision**: Method chaining returning *Builder
+- **Notes**: Must use parameterized queries exclusively
+
+### [P2.3] Schema Builder & Blueprint
+- **Date**: PLANNED
+- **Phase**: 2
+- **Feature**: Create/alter/drop tables, columns, indexes, foreign keys
+- **Status**: PLANNED
+- **Decision**: DDL generation per driver
+- **Notes**: Blueprint pattern similar to Laravel
+
+### [P2.4] Migration System
+- **Date**: PLANNED
+- **Phase**: 2
+- **Feature**: Up/down migrations, status, rollback, fresh, refresh
+- **Status**: PLANNED
+- **Decision**: Timestamped Go files with interface
+- **Notes**: migrations table tracking
+
+### [P2.5] Model Base (Goquent)
+- **Date**: PLANNED
+- **Phase**: 2
+- **Feature**: Struct-based models, timestamps, soft deletes, casts
+- **Status**: PLANNED
+- **Decision**: Struct tags for metadata (fillable, hidden, casts)
+- **Notes**: No magic methods - explicit getters/setters or reflection
+
+### [P2.6] Relationships
+- **Date**: PLANNED
+- **Phase**: 2
+- **Feature**: HasOne, HasMany, BelongsTo, BelongsToMany, Morph*, etc.
+- **Status**: PLANNED
+- **Decision**: Tag-based relationship definitions
+- **Notes**: Eager loading via .With()
+
+### [P2.7] Eager Loading
+- **Date**: PLANNED
+- **Phase**: 2
+- **Feature**: .With() for relationship preloading
+- **Status**: PLANNED
+- **Decision**: Batch query then map to parent models
+- **Notes**: N+1 prevention
+
+### [P2.8] Seeders & Factories
+- **Date**: PLANNED
+- **Phase**: 2
+- **Feature**: Database seeding, model factories with fake data
+- **Status**: PLANNED
+- **Decision**: Go files with gofakeit for fake data
+- **Notes**: Factory states and sequences
+
+### [P2.9] Pagination
+- **Date**: PLANNED
+- **Phase**: 2
+- **Feature**: Length-aware, simple, cursor pagination
+- **Status**: PLANNED
+- **Decision**: Separate paginator structs with JSON rendering
+- **Notes**: Query builder integration
+
+---
+
+## PHASE 3: Web Layer
+
+### [P3.1] Template Engine (Goblade)
+- **Date**: PLANNED
+- **Phase**: 3
+- **Feature**: Blade-like syntax compiling to html/template
+- **Status**: PLANNED
+- **Decision**: Custom parser layer over Go templates
+- **Notes**: @extends, @section, @yield, @include, components
+
+### [P3.2] View Composers
+- **Date**: PLANNED
+- **Phase**: 3
+- **Feature**: Bind data to views automatically
+- **Status**: PLANNED
+- **Decision**: Registration in service providers
+- **Notes**: Run before view rendering
+
+### [P3.3] Session Management
+- **Date**: PLANNED
+- **Phase**: 3
+- **Feature**: Multi-driver sessions, flash data, regeneration, encryption
+- **Status**: PLANNED
+- **Decision**: Cookie-based IDs with pluggable drivers
+- **Notes**: File, database, Redis, cookie drivers
+
+### [P3.4] Cache System
+- **Date**: PLANNED
+- **Phase**: 3
+- **Feature**: Multi-driver cache, tags, atomic locks, remember pattern
+- **Status**: PLANNED
+- **Decision**: Store interface with driver implementations
+- **Notes**: Redis and file drivers first
+
+### [P3.5] Validation System
+- **Date**: PLANNED
+- **Phase**: 3
+- **Feature**: Rule-based validation, custom rules, messages, nested arrays
+- **Status**: PLANNED
+- **Decision**: Struct tags or rule maps
+- **Notes**: File upload validation included
+
+### [P3.6] Form Requests
+- **Date**: PLANNED
+- **Phase**: 3
+- **Feature**: Validation + authorization per request class
+- **Status**: PLANNED
+- **Decision**: Struct implementing Request interface
+- **Notes**: Auto-validation middleware
+
+### [P3.7] File Storage
+- **Date**: PLANNED
+- **Phase**: 3
+- **Feature**: Multi-disk storage, uploads, visibility, temporary URLs
+- **Status**: PLANNED
+- **Decision**: Filesystem interface with local and S3 drivers
+- **Notes**: UploadedFile wrapper for multipart handling
+
+### [P3.8] Localization (i18n)
+- **Date**: PLANNED
+- **Phase**: 3
+- **Feature**: Language files, pluralization, parameters, locale detection
+- **Status**: PLANNED
+- **Decision**: JSON language files with translator
+- **Notes**: Fallback locale support
+
+---
+
+## PHASE 4: Auth & Security
+
+### [P4.1] Authentication System
+- **Date**: PLANNED
+- **Phase**: 4
+- **Feature**: Multi-guard auth, session/token, registration, login, logout
+- **Status**: PLANNED
+- **Decision**: Guard interface with session and token implementations
+- **Notes**: User provider abstraction
+
+### [P4.2] Password Hashing & Reset
+- **Date**: PLANNED
+- **Phase**: 4
+- **Feature**: Bcrypt hashing, password reset flow, email tokens
+- **Status**: PLANNED
+- **Decision**: golang.org/x/crypto/bcrypt
+- **Notes**: Rehash on login if needed
+
+### [P4.3] Authorization (Gates & Policies)
+- **Date**: PLANNED
+- **Phase**: 4
+- **Feature**: Gates, policies, roles/permissions foundation
+- **Status**: PLANNED
+- **Decision**: Gate closures and Policy structs
+- **Notes**: Middleware integration
+
+### [P4.4] CSRF Protection
+- **Date**: PLANNED
+- **Phase**: 4
+- **Feature**: Token generation, validation, exemption lists
+- **Status**: PLANNED
+- **Decision**: Session-based tokens + double-submit cookie
+- **Notes**: Auto-inject in forms via template engine
+
+### [P4.5] Encryption System
+- **Date**: PLANNED
+- **Phase**: 4
+- **Feature**: AES-256-GCM, app key, encrypted casts
+- **Status**: PLANNED
+- **Decision**: crypto/aes with GCM mode
+- **Notes**: Key rotation support
+
+### [P4.6] Rate Limiting
+- **Date**: PLANNED
+- **Phase**: 4
+- **Feature**: Per-route limits, token bucket, response headers
+- **Status**: PLANNED
+- **Decision**: Redis or in-memory token bucket
+- **Notes**: Throttle middleware
+
+### [P4.7] CORS
+- **Date**: PLANNED
+- **Phase**: 4
+- **Feature**: Configurable cross-origin requests
+- **Status**: PLANNED
+- **Decision**: CORS middleware with config
+- **Notes**: Preflight handling
+
+### [P4.8] Security Headers
+- **Date**: PLANNED
+- **Phase**: 4
+- **Feature**: HSTS, CSP, X-Frame-Options, etc.
+- **Status**: PLANNED
+- **Decision**: Middleware injecting headers
+- **Notes**: Configurable per environment
+
+---
+
+## PHASE 5: Advanced Features
+
+### [P5.1] Queue System
+- **Date**: PLANNED
+- **Phase**: 5
+- **Feature**: Multi-driver queues, workers, delayed jobs
+- **Status**: PLANNED
+- **Decision**: Database and Redis drivers first
+- **Notes**: Job serialization and worker CLI
+
+### [P5.2] Job Classes
+- **Date**: PLANNED
+- **Phase**: 5
+- **Feature**: Job interface, handle method, failed handling, retries
+- **Status**: PLANNED
+- **Decision**: Struct implementing Job interface
+- **Notes**: Middleware support for jobs
+
+### [P5.3] Event & Listener System
+- **Date**: PLANNED
+- **Phase**: 5
+- **Feature**: Event dispatch, listeners, subscribers, queued listeners
+- **Status**: PLANNED
+- **Decision**: Type-based dispatch using reflect.Type
+- **Notes**: Wildcard listeners
+
+### [P5.4] Mail System
+- **Date**: PLANNED
+- **Phase**: 5
+- **Feature**: Mailables, multi-driver, attachments, markdown, queueing
+- **Status**: PLANNED
+- **Decision**: Mailable interface with SMTP driver
+- **Notes**: Log driver for testing
+
+### [P5.5] Notification System
+- **Date**: PLANNED
+- **Phase**: 5
+- **Feature**: Notifiable, channels, database storage, broadcast
+- **Status**: PLANNED
+- **Decision**: Notification interface with channel methods
+- **Notes**: Polymorphic database notifications
+
+### [P5.6] Task Scheduling
+- **Date**: PLANNED
+- **Phase**: 5
+- **Feature**: Cron-like scheduling, mutex, overlap prevention
+- **Status**: PLANNED
+- **Decision**: robfig/cron for expression parsing
+- **Notes**: schedule:run command
+
+### [P5.7] Broadcasting
+- **Date**: PLANNED
+- **Phase**: 5
+- **Feature**: WebSockets, channels, presence, authorization
+- **Status**: PLANNED
+- **Decision**: Pusher and Redis drivers
+- **Notes**: Channel authorization routes
+
+---
+
+## PHASE 6: Testing & Tooling
+
+### [P6.1] Test Framework Base
+- **Date**: PLANNED
+- **Phase**: 6
+- **Feature**: TestCase, HTTP assertions, JSON assertions
+- **Status**: PLANNED
+- **Decision**: Wrap httptest with assertion helpers
+- **Notes**: Use testify for base assertions
+
+### [P6.2] Fakes
+- **Date**: PLANNED
+- **Phase**: 6
+- **Feature**: Mail, Queue, Event, Notification, Storage fakes
+- **Status**: PLANNED
+- **Decision**: In-memory implementations for testing
+- **Notes**: Assert dispatched/sent/not stored
+
+### [P6.3] Database Testing
+- **Date**: PLANNED
+- **Phase**: 6
+- **Feature**: Refresh database, seeding, transactions per test
+- **Status**: PLANNED
+- **Decision**: Migration runner in test setup
+- **Notes**: SQLite in-memory for speed
+
+### [P6.4] Code Generation
+- **Date**: PLANNED
+- **Phase**: 6
+- **Feature**: make:controller, make:model, make:migration, etc.
+- **Status**: PLANNED
+- **Decision**: Text/template with stubs
+- **Notes**: All generators via CLI
+
+### [P6.5] Caching Commands
+- **Date**: PLANNED
+- **Phase**: 6
+- **Feature**: Route cache, config cache, view cache
+- **Status**: PLANNED
+- **Decision**: Compile to serialized Go structures
+- **Notes**: Significant performance boost for production
+
+---
+
+## PHASE 7: Optimization & Polish
+
+### [P7.1] Performance Benchmarking
+- **Date**: PLANNED
+- **Phase**: 7
+- **Feature**: Benchmark suite, profiling
+- **Status**: PLANNED
+- **Decision**: Go benchmark tests + pprof
+- **Notes**: Target metrics in spec
+
+### [P7.2] Documentation
+- **Date**: PLANNED
+- **Phase**: 7
+- **Feature**: Go docs, README, usage guides
+- **Status**: PLANNED
+- **Decision**: godoc + markdown docs
+- **Notes**: Critical for adoption
+
+### [P7.3] Example Application
+- **Date**: PLANNED
+- **Phase**: 7
+- **Feature**: Demo app showing all features
+- **Status**: PLANNED
+- **Decision**: Simple blog or task manager
+- **Notes**: Living documentation
+
+## 2026-05-20 - Specification Expansion: Missing Laravel Features
+- **Date**: 2026-05-20
+- **Phase**: 0 - Specification
+- **Feature**: Comprehensive Laravel Feature Gap Analysis & Addition
+- **Status**: COMPLETED
+- **Decision**: Added 16 new specification sections (35–50) covering API Resources, Collections, Helpers, Signed URLs, Route Model Binding, Process execution, Schema Dumping, Model Pruning, Health Checks, Feature Flags, Advanced Blade, Request/Response Macros, Query Logging, Package Auto-Discovery, Testing Utilities, and Modern Laravel Parity (Reverb, Pulse, Prompts, Context). Framework name clarified as GoW (Go Web). Added by Kimi K2.6.
+- **Notes**:
+  - All new sections follow existing spec format: Features Required, Laravel behavior, Go implementation.
+  - Updated Table of Contents, Implementation Roadmap, Appendix A (Feature Checklist), and Appendix B (Naming Conventions).
+  - New known issues KI-011 through KI-016 added for new feature considerations.
+  - No code written — specification only.
+---
+
+## DECISION LOG
+
+| Date | Decision | Rationale | Impact |
+|------|----------|-----------|--------|
+| 2026-05-20 | Framework name: GoW | Go + Laravel portmanteau | Branding |
+| 2026-05-20 | ORM name: Goquent | Go + Eloquent portmanteau | Naming convention |
+| 2026-05-20 | No magic methods | Go doesn't support PHP-style magic | Architecture |
+| 2026-05-20 | Use struct tags for ORM/Validation | Go idiomatic metadata | Developer experience |
+| 2026-05-20 | Reflection-based DI container | Closest to Laravel's container | Core architecture |
+| 2026-05-20 | Custom router vs httprouter | Need named routes and route caching | Performance/feature balance |
+| 2026-05-20 | 7-phase implementation | Logical grouping of dependencies | Project management |
+| 2026-05-20 | Go 1.24+ target | Use latest stable with generics | Language features |
+
+---
+
+## KNOWN ISSUES & CONSIDERATIONS
+
+| ID | Issue | Severity | Phase | Notes |
+|----|-------|----------|-------|-------|
+| KI-001 | Go lacks runtime class loading | MEDIUM | 1 | Use code generation and interfaces instead |
+| KI-002 | No generics in interfaces before 1.18 | LOW | 1 | Target 1.24+, use generics freely |
+| KI-003 | Error handling is explicit, not exceptions | MEDIUM | 1 | Adapt Laravel's exception pattern to Go errors |
+| KI-004 | Template compilation complexity | MEDIUM | 3 | Blade-like syntax requires custom parser |
+| KI-005 | ORM eager loading performance | MEDIUM | 2 | Must optimize batch queries |
+| KI-006 | Queue job serialization in Go | MEDIUM | 5 | Need type registry for deserialization |
+| KI-007 | Session locking in high concurrency | LOW | 3 | Consider read/write locks |
+| KI-008 | Rate limiting distributed across nodes | LOW | 4 | Redis required for multi-node |
+| KI-009 | Broadcasting WebSocket server | MEDIUM | 5 | May need separate WS server or use Pusher |
+| KI-010 | Testing fake implementations maintenance | LOW | 6 | Fakes must stay in sync with real drivers |
+| KI-011 | Go template loop variables require custom context injection | MEDIUM | 3 | Blade-like $loop variable needs custom parsing |
+| KI-012 | Process fake requires command interception | LOW | 5 | Testing external process calls |
+| KI-013 | Feature flag serialization in distributed systems | MEDIUM | 4 | Redis/database consistency |
+| KI-014 | Reverb WebSocket server horizontal scaling | MEDIUM | 5 | Redis pub/sub complexity |
+| KI-015 | Lazy collection memory efficiency vs channel overhead | LOW | 2 | Benchmark generator patterns |
+| KI-016 | Signed URL key rotation without invalidating existing URLs | MEDIUM | 4 | Cryptographic design |
+---
+
+## CHANGE TRACKING INSTRUCTIONS
+
+For any AI agent or developer making changes:
+
+1. **Add an entry to MASTER LOG** with today's date, phase, feature, and status
+2. **Update the Phase checklist** in GoW_SPEC.md Section 32
+3. **Log any architectural decisions** in the DECISION LOG above
+4. **Update KNOWN ISSUES** if new blockers or considerations are discovered
+5. **Use the format**:
+   ```
+   ### YYYY-MM-DD - Brief Description
+   - **Date**: YYYY-MM-DD
+   - **Phase**: X
+   - **Feature**: Feature Name
+   - **Status**: [STATUS]
+   - **Decision**: What was decided and why
+   - **Notes**: Any additional context, blockers, or next steps
+   ```
+
+---
+
+
+*Last Updated: 2026-05-20*
+*Next Expected Update: When Phase 1 implementation begins*
+
