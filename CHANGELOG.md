@@ -39,44 +39,44 @@
 ## PHASE 1: Foundation (Core Framework)
 
 ### [P1.1] Project Scaffolding & Directory Structure
-- **Date**: PLANNED
+- **Date**: 2026-05-20
 - **Phase**: 1
 - **Feature**: Directory structure, go.mod, main.go, bootstrap files
-- **Status**: PLANNED
-- **Decision**: Use standard Go project layout with Laravel-inspired app/ directory
-- **Notes**: Create `GoW new` command for project scaffolding
+- **Status**: COMPLETED
+- **Decision**: Initialized go.mod and created base packages
+- **Notes**: `gow new` command still pending, but base framework structure is in place
 
 ### [P1.2] Service Container
-- **Date**: PLANNED
+- **Date**: 2026-05-20
 - **Phase**: 1
 - **Feature**: IoC container with bind, singleton, instance, make
-- **Status**: PLANNED
-- **Decision**: Use reflection-based resolution with generics support (Go 1.18+)
-- **Notes**: Core of framework - must be implemented first
+- **Status**: COMPLETED
+- **Decision**: Used sync.RWMutex for thread safety and Generics for Make[T]
+- **Notes**: Added Freeze() method to prevent runtime mutation
 
 ### [P1.3] Application Bootstrap & Kernel
-- **Date**: PLANNED
+- **Date**: 2026-05-20
 - **Phase**: 1
 - **Feature**: Application struct, HTTP kernel, request lifecycle
-- **Status**: PLANNED
-- **Decision**: Kernel implements http.Handler interface
-- **Notes**: Support both HTTP and Console kernels
+- **Status**: COMPLETED
+- **Decision**: Application embeds Container; Kernel handles middleware pipeline
+- **Notes**: Basic lifecycle methods in place
 
 ### [P1.4] HTTP Router
-- **Date**: PLANNED
+- **Date**: 2026-05-20
 - **Phase**: 1
 - **Feature**: Route registration, groups, parameters, named routes, matching
-- **Status**: PLANNED
-- **Decision**: Custom radix tree implementation or adapted httprouter
-- **Notes**: Must support route caching for production
+- **Status**: COMPLETED
+- **Decision**: Built a custom radix-tree router natively in Go
+- **Notes**: Route caching map fallback planned for production
 
 ### [P1.5] Middleware Pipeline
-- **Date**: PLANNED
+- **Date**: 2026-05-20
 - **Phase**: 1
 - **Feature**: Global, route, group middleware; terminable middleware
-- **Status**: PLANNED
+- **Status**: IN-PROGRESS
 - **Decision**: Standard Go middleware signature func(http.Handler) http.Handler
-- **Notes**: Pipeline built via nested handler wrapping
+- **Notes**: Kernel pipeline building is implemented
 
 ### [P1.6] Base Controller & Response Helpers
 - **Date**: PLANNED
