@@ -207,12 +207,12 @@
 ## PHASE 3: Web Layer
 
 ### [P3.1] Template Engine (Goblade)
-- **Date**: PLANNED
+- **Date**: 2026-05-21
 - **Phase**: 3
 - **Feature**: Blade-like syntax compiling to html/template
-- **Status**: PLANNED
-- **Decision**: Custom parser layer over Go templates
-- **Notes**: @extends, @section, @yield, @include, components
+- **Status**: COMPLETED
+- **Decision**: Scanner/parser transpiler mapping to Go templates
+- **Notes**: Cached securely in storage/framework/views/.
 
 ### [P3.2] View Composers
 - **Date**: PLANNED
@@ -220,14 +220,47 @@
 - **Feature**: Bind data to views automatically
 - **Status**: PLANNED
 - **Decision**: Registration in service providers
-- **Notes**: Run before view rendering
+- **Notes**: To be integrated in final polishing.
 
 ### [P3.3] Session Management
-- **Date**: PLANNED
+- **Date**: 2026-05-21
 - **Phase**: 3
 - **Feature**: Multi-driver sessions, flash data, regeneration, encryption
+- **Status**: COMPLETED
+- **Decision**: Default to file driver, session ID stored in a cookie.
+- **Notes**: Session start/save handled in HTTP Middleware.
+
+### [P3.4] Cookie Management
+- **Date**: PLANNED
+- **Phase**: 3
+- **Feature**: Cookie encryption, signing, helpers
 - **Status**: PLANNED
-- **Decision**: Cookie-based IDs with pluggable drivers
+- **Decision**: Use securecookie or native crypto
+- **Notes**: Partially handled by standard `net/http` and Session middleware.
+
+### [P3.5] File Storage (Filesystem)
+- **Date**: 2026-05-21
+- **Phase**: 3
+- **Feature**: Local disk, S3 abstraction
+- **Status**: COMPLETED
+- **Decision**: Flysystem-like interface
+- **Notes**: `storage.Filesystem` and `LocalFilesystem` driver created.
+
+### [P3.6] HTTP Client
+- **Date**: 2026-05-21
+- **Phase**: 3
+- **Feature**: Fluent wrapper around net/http
+- **Status**: COMPLETED
+- **Decision**: Simple chainable wrapper returning JSON/Responses.
+- **Notes**: `http/client` package implemented.
+
+### [P3.7] Forms & CSRF
+- **Date**: 2026-05-21
+- **Phase**: 3
+- **Feature**: CSRF tokens, form method spoofing
+- **Status**: COMPLETED
+- **Decision**: VerifyCsrfToken middleware using Session token.
+- **Notes**: Automatically handles headers and form values.
 - **Notes**: File, database, Redis, cookie drivers
 
 ### [P3.4] Cache System
