@@ -339,26 +339,26 @@
 - **Notes**: Scaffolds backend files and basic HTML without JS dependencies.
 
 ### [P4.6] Encryption System
-- **Date**: PLANNED
+- **Date**: 2026-05-21
 - **Phase**: 4
 - **Feature**: AES-256-GCM, app key, encrypted casts
-- **Status**: PLANNED
+- **Status**: COMPLETED
 - **Decision**: crypto/aes with GCM mode
 - **Notes**: Key rotation support
 
 ### [P4.7] CORS
-- **Date**: PLANNED
+- **Date**: 2026-05-21
 - **Phase**: 4
 - **Feature**: Configurable cross-origin requests
-- **Status**: PLANNED
+- **Status**: COMPLETED
 - **Decision**: CORS middleware with config
 - **Notes**: Preflight handling
 
 ### [P4.8] Security Headers
-- **Date**: PLANNED
+- **Date**: 2026-05-21
 - **Phase**: 4
 - **Feature**: HSTS, CSP, X-Frame-Options, etc.
-- **Status**: PLANNED
+- **Status**: COMPLETED
 - **Decision**: Middleware injecting headers
 - **Notes**: Configurable per environment
 

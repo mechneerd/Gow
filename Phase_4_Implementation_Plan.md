@@ -23,3 +23,10 @@ This document outlines the detailed implementation of Phase 4 within the GoW fra
 ## 5. Artisan Auth Scaffold [P4.5]
 - **`cmd/artisan/make_auth.go`**: Exposes the `artisan make:auth` command. 
 - Scaffolds a complete backend login/registration flow including `AuthController`, `LoginRequest`, `RegisterRequest`, `User` Model, and simple framework-agnostic `Goblade` templates (`login.gohtml` / `register.gohtml`), deliberately avoiding NPM/Tailwind complexity.
+
+## 6. Encryption System [P4.6]
+- **`encryption/encrypter.go`**: Utilizes AES-256-GCM to provide secure, randomized encryption and decryption of values. Returns base64 encoded strings ready for safe storage.
+
+## 7. CORS & Security Middleware [P4.7, P4.8]
+- **`http/middleware/cors.go`**: Implements Cross-Origin Resource Sharing handling, injecting `Access-Control-Allow-Origin`, handling preflight `OPTIONS` requests, and supporting configurable allowed methods/headers.
+- **`http/middleware/security_headers.go`**: Automatically injects industry standard security headers (`X-Frame-Options`, `X-Content-Type-Options`, `X-XSS-Protection`, `Strict-Transport-Security`, `Content-Security-Policy`) into responses.
