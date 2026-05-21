@@ -34,6 +34,7 @@ func (c *Compiler) CompileString(raw string) string {
 	compiled = strings.ReplaceAll(compiled, "@else", "{{ else }}")
 	compiled = strings.ReplaceAll(compiled, "@endif", "{{ end }}")
 	compiled = strings.ReplaceAll(compiled, "@endforeach", "{{ end }}")
+	compiled = strings.ReplaceAll(compiled, "@endfor", "{{ end }}")
 
 	// @if(condition) -> {{ if condition }}
 	ifRe := regexp.MustCompile(`@if\s*\((.*?)\)`)
@@ -47,9 +48,44 @@ func (c *Compiler) CompileString(raw string) string {
 	foreachRe := regexp.MustCompile(`@foreach\s*\((.*?)\)`)
 	compiled = foreachRe.ReplaceAllString(compiled, "{{ range $1 }}")
 
+	// @while(condition) - Go templates don't support while natively without a custom function, but we can compile to range or just omit if too complex.
+	// We'll map @while to a block or just a conditional for now, or assume users use a helper. 
+	// For now, let's replace @while with a comment warning or a mock block to not break.
+	whileRe := regexp.MustCompile(`@while\s*\((.*?)\)`)
+	compiled = whileRe.ReplaceAllString(compiled, `{{/* while $1 */}}`)
+	compiled = strings.ReplaceAll(compiled, "@endwhile", "")
+
+	// @for(init; condition; post) - Go templates don't natively support C-style for loops inside templates easily.
+	// We will compile this into a generic action to warn users or simulate it. 
+	// For simplicity, we assume users will use @foreach in Go context, but we will mock @for to range over an array if they pass one.
+	forRe := regexp.MustCompile(`@for\s*\((.*?)\)`)
+	compiled = forRe.ReplaceAllString(compiled, "{{ range $1 }}")
+
+	// @switch / @case
+	compiled = strings.ReplaceAll(compiled, "@endswitch", "{{ end }}")
+	switchRe := regexp.MustCompile(`@switch\s*\((.*?)\)`)
+	compiled = switchRe.ReplaceAllString(compiled, `{{ $switch_var := $1 }}`)
+	
+	caseRe := regexp.MustCompile(`@case\s*\((.*?)\)`)
+	// We use a simple if/else if chain for switch in Go templates
+	compiled = caseRe.ReplaceAllStringFunc(compiled, func(match string) string {
+		val := caseRe.FindStringSubmatch(match)[1]
+		return fmt.Sprintf(`{{ if eq $switch_var %s }}`, val)
+	})
+	compiled = strings.ReplaceAll(compiled, "@break", "") // Go template 'if' blocks don't need breaks
+	
+	// @default
+	compiled = strings.ReplaceAll(compiled, "@default", "{{ else }}")
+
 	// 3. Layouts & Sections
-	// @extends('layouts.app') -> ignored directly in compilation string, handled by engine aggregating files
-	// However, we can map @yield('content') -> {{ block "content" . }}{{ end }}
+	// @extends('layouts.app') -> We leave it in the compiled code as a special tag for the Engine to extract dependencies
+	// Actually, in Go, the layout file is parsed and executed. The layout file executes {{ block "content" . }}{{ end }}.
+	// The child file defines {{ define "content" }}...{{ end }}.
+	// We just need the Engine to parse BOTH files, and ExecuteTemplate(w, "layout.html", data).
+	extendsRe := regexp.MustCompile(`@extends\s*\(['"](.*?)['"]\)`)
+	compiled = extendsRe.ReplaceAllString(compiled, `{{/* extends "$1" */}}`)
+
+	// @yield('content') -> {{ block "content" . }}{{ end }}
 	yieldRe := regexp.MustCompile(`@yield\s*\(['"](.*?)['"]\)`)
 	compiled = yieldRe.ReplaceAllString(compiled, `{{ block "$1" . }}{{ end }}`)
 

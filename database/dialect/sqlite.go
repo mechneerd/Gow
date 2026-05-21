@@ -20,13 +20,59 @@ func (d *SQLiteDialect) Placeholder(index int) string {
 	return "?"
 }
 
+func (d *SQLiteDialect) compileWheres(wheres []WhereClause, args *[]any) string {
+	if len(wheres) == 0 {
+		return ""
+	}
+	
+	var sql strings.Builder
+	sql.WriteString(" WHERE ")
+	
+	for i, w := range wheres {
+		if i > 0 {
+			sql.WriteString(" " + w.Boolean + " ")
+		}
+		
+		switch w.Type {
+		case "Basic":
+			sql.WriteString(d.QuoteIdentifier(w.Column))
+			sql.WriteString(" " + w.Operator + " ")
+			sql.WriteString(d.Placeholder(len(*args) + 1))
+			*args = append(*args, w.Value)
+		case "In":
+			sql.WriteString(d.QuoteIdentifier(w.Column) + " IN (")
+			for j, val := range w.Values {
+				if j > 0 {
+					sql.WriteString(", ")
+				}
+				sql.WriteString(d.Placeholder(len(*args) + 1))
+				*args = append(*args, val)
+			}
+			sql.WriteString(")")
+		case "Null":
+			sql.WriteString(d.QuoteIdentifier(w.Column) + " IS NULL")
+		case "NotNull":
+			sql.WriteString(d.QuoteIdentifier(w.Column) + " IS NOT NULL")
+		case "Between":
+			sql.WriteString(d.QuoteIdentifier(w.Column) + " BETWEEN ")
+			sql.WriteString(d.Placeholder(len(*args) + 1) + " AND ")
+			*args = append(*args, w.Values[0])
+			sql.WriteString(d.Placeholder(len(*args) + 1))
+			*args = append(*args, w.Values[1])
+		}
+	}
+	return sql.String()
+}
+
 func (d *SQLiteDialect) CompileSelect(query SelectQuery) (string, []any) {
 	var sql strings.Builder
 	var args []any
 
 	// SELECT
 	sql.WriteString("SELECT ")
-	if len(query.Columns) == 0 {
+	if query.Aggregate != nil {
+		sql.WriteString(fmt.Sprintf("%s(%s)", query.Aggregate.Function, d.QuoteIdentifier(query.Aggregate.Column)))
+	} else if len(query.Columns) == 0 {
 		sql.WriteString("*")
 	} else {
 		for i, col := range query.Columns {
@@ -41,19 +87,15 @@ func (d *SQLiteDialect) CompileSelect(query SelectQuery) (string, []any) {
 	sql.WriteString(" FROM ")
 	sql.WriteString(d.QuoteIdentifier(query.Table))
 
-	// WHERE
-	if len(query.Wheres) > 0 {
-		sql.WriteString(" WHERE ")
-		for i, w := range query.Wheres {
-			if i > 0 {
-				sql.WriteString(" " + w.Boolean + " ")
-			}
-			sql.WriteString(d.QuoteIdentifier(w.Column))
-			sql.WriteString(" " + w.Operator + " ")
-			sql.WriteString(d.Placeholder(len(args) + 1))
-			args = append(args, w.Value)
-		}
+	// JOINS
+	for _, j := range query.Joins {
+		sql.WriteString(" " + j.Type + " JOIN ")
+		sql.WriteString(d.QuoteIdentifier(j.Table) + " ON ")
+		sql.WriteString(d.QuoteIdentifier(j.First) + " " + j.Operator + " " + d.QuoteIdentifier(j.Second))
 	}
+
+	// WHERE
+	sql.WriteString(d.compileWheres(query.Wheres, &args))
 
 	// ORDER BY
 	if len(query.OrderBys) > 0 {
@@ -129,18 +171,7 @@ func (d *SQLiteDialect) CompileUpdate(table string, values map[string]any, where
 		first = false
 	}
 
-	if len(wheres) > 0 {
-		sql.WriteString(" WHERE ")
-		for i, w := range wheres {
-			if i > 0 {
-				sql.WriteString(" " + w.Boolean + " ")
-			}
-			sql.WriteString(d.QuoteIdentifier(w.Column))
-			sql.WriteString(" " + w.Operator + " ")
-			sql.WriteString(d.Placeholder(len(args) + 1))
-			args = append(args, w.Value)
-		}
-	}
+	sql.WriteString(d.compileWheres(wheres, &args))
 
 	return sql.String(), args
 }
@@ -152,18 +183,7 @@ func (d *SQLiteDialect) CompileDelete(table string, wheres []WhereClause) (strin
 	sql.WriteString("DELETE FROM ")
 	sql.WriteString(d.QuoteIdentifier(table))
 
-	if len(wheres) > 0 {
-		sql.WriteString(" WHERE ")
-		for i, w := range wheres {
-			if i > 0 {
-				sql.WriteString(" " + w.Boolean + " ")
-			}
-			sql.WriteString(d.QuoteIdentifier(w.Column))
-			sql.WriteString(" " + w.Operator + " ")
-			sql.WriteString(d.Placeholder(len(args) + 1))
-			args = append(args, w.Value)
-		}
-	}
+	sql.WriteString(d.compileWheres(wheres, &args))
 
 	return sql.String(), args
 }

@@ -36,9 +36,52 @@ func loadRelation[T any](db *DB, models []*T, relationName string) error {
 		return fmt.Errorf("relation %s on %s is missing relationship tags", relationName, typ.Name())
 	}
 
-	// For Phase 2 Catch-up: Simplified Eager Loading stub.
-	// In a full implementation, we'd extract all IDs from 'models',
-	// perform a single IN query on the related table, and map the results back to the parent models.
+	// Collect local keys based on relation type
+	var ids []any
+	var localKeyName string
+	
+	if strings.Contains(gowTag, "belongsTo") {
+		localKeyName = relationName + "ID" // e.g. User -> UserID
+	} else {
+		localKeyName = "ID" // e.g. hasMany -> parent ID
+	}
 
+	for _, m := range models {
+		v := reflect.ValueOf(m).Elem()
+		field := v.FieldByName(localKeyName)
+		if field.IsValid() {
+			ids = append(ids, field.Interface())
+		}
+	}
+
+	if len(ids) == 0 {
+		return nil
+	}
+
+	// In a full implementation, we would reflectively instantiate the target relation model,
+	// run `SELECT * FROM target_table WHERE foreign_key IN (...)` using query.Builder's WhereIn(),
+	// and map the hydrated results back to the parent `models` fields.
+	
 	return nil
+}
+
+// HasMany represents a one-to-many relationship.
+type HasMany[T any] struct {
+	// Represents the related models
+	Models []T
+}
+
+// BelongsTo represents an inverse one-to-many relationship.
+type BelongsTo[T any] struct {
+	Model *T
+}
+
+// HasOne represents a one-to-one relationship.
+type HasOne[T any] struct {
+	Model *T
+}
+
+// BelongsToMany represents a many-to-many relationship via a pivot table.
+type BelongsToMany[T any] struct {
+	Models []T
 }

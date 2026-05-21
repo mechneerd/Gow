@@ -204,6 +204,31 @@ func (r *Router) Post(path string, handler HandlerFunc) *Route {
 	return r.AddRoute(http.MethodPost, path, handler)
 }
 
+// Put helper
+func (r *Router) Put(path string, handler HandlerFunc) *Route {
+	return r.AddRoute(http.MethodPut, path, handler)
+}
+
+// Patch helper
+func (r *Router) Patch(path string, handler HandlerFunc) *Route {
+	return r.AddRoute(http.MethodPatch, path, handler)
+}
+
+// Delete helper
+func (r *Router) Delete(path string, handler HandlerFunc) *Route {
+	return r.AddRoute(http.MethodDelete, path, handler)
+}
+
+// Options helper
+func (r *Router) Options(path string, handler HandlerFunc) *Route {
+	return r.AddRoute(http.MethodOptions, path, handler)
+}
+
+// Head helper
+func (r *Router) Head(path string, handler HandlerFunc) *Route {
+	return r.AddRoute(http.MethodHead, path, handler)
+}
+
 // Group creates a new route group
 func (r *Router) Group(prefix string, callback func(*Router)) {
 	oldPrefix := r.groupPrefix

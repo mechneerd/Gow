@@ -60,7 +60,46 @@ func (e *Engine) Make(name string, data map[string]any) (string, error) {
 		return "", err
 	}
 
-	tmpl, err := template.ParseFiles(cachedPath)
+	compiledContent, _ := os.ReadFile(cachedPath)
+	contentStr := string(compiledContent)
+	
+	filesToParse := []string{cachedPath}
+
+	// Look for extends
+	// e.g. {{/* extends "layouts.app" */}}
+	extendsRe := regexp.MustCompile(`\{\{/\*\s*extends\s*["'](.*?)["']\s*\*/\}\}`)
+	matches := extendsRe.FindStringSubmatch(contentStr)
+	
+	if len(matches) > 1 {
+		layoutName := matches[1]
+		layoutRelPath := strings.ReplaceAll(layoutName, ".", "/")
+		var layoutAbsPath string
+		for _, vp := range e.ViewPaths {
+			possiblePaths := []string{
+				filepath.Join(vp, layoutRelPath+".blade.php"),
+				filepath.Join(vp, layoutRelPath+".goblade"),
+				filepath.Join(vp, layoutRelPath+".html"),
+			}
+			for _, p := range possiblePaths {
+				if _, err := os.Stat(p); err == nil {
+					layoutAbsPath = p
+					break
+				}
+			}
+			if layoutAbsPath != "" {
+				break
+			}
+		}
+		
+		if layoutAbsPath != "" {
+			layoutCachedPath, err := e.Compiler.CompileFile(layoutAbsPath)
+			if err == nil {
+				filesToParse = append(filesToParse, layoutCachedPath)
+			}
+		}
+	}
+
+	tmpl, err := template.ParseFiles(filesToParse...)
 	if err != nil {
 		return "", err
 	}

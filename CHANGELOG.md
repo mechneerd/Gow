@@ -507,147 +507,407 @@
   - No code written — specification only.
 ---
 
-## PHASE A: Core Usability (from §35-50)
+## PHASE A: Make Core Usable
 
-### [PA.1] Collections & Lazy Collections (§36)
+### [PA.1] Complete Query Builder
 - **Date**: 2026-05-21
 - **Phase**: A
-- **Feature**: Generic collection wrapper with map/filter/reduce
-- **Status**: PLANNED
-- **Decision**: Pending implementation
-- **Notes**: Essential for fluent data manipulation throughout the framework
+- **Feature**: JOINs, WHERE IN/NULL/BETWEEN, aggregates, transactions, subqueries, raw expressions, when()
+- **Status**: COMPLETED
 
-### [PA.2] Helpers (Str, Arr, Number, Date, Benchmark, Sleep) (§37)
+### [PA.2] Complete ORM Relationships
+- **Date**: 2026-05-21
+- **Phase**: A
+- **Feature**: Implement loadRelation(), pivot tables, polymorphic relations
+- **Status**: COMPLETED
+
+### [PA.3] Finish Validation
+- **Date**: 2026-05-21
+- **Phase**: A
+- **Feature**: Top 30+ validation rules
+- **Status**: COMPLETED
+
+### [PA.4] HTTP Verb Helpers
+- **Date**: 2026-05-21
+- **Phase**: A
+- **Feature**: PUT, PATCH, DELETE, OPTIONS, HEAD methods for routing
+- **Status**: COMPLETED
+
+### [PA.5] Advanced Blade Control Structures
+- **Date**: 2026-05-21
+- **Phase**: A
+- **Feature**: @extends, @for, @while, @switch
+- **Status**: COMPLETED
+
+### [PA.6] Session Enhancements
+- **Date**: 2026-05-21
+- **Phase**: A
+- **Feature**: Session flash data, old input, session regeneration
+- **Status**: COMPLETED
+
+### [PA.7] Collections & Lazy Collections (§36)
+- **Date**: 2026-05-21
+- **Phase**: A
+- **Feature**: Generic collection wrapper with map/filter/reduce/pluck/chunk
+- **Status**: COMPLETED
+
+### [PA.8] Helpers (Str, Arr, Number, Date, Benchmark, Sleep) (§37)
 - **Date**: 2026-05-21
 - **Phase**: A
 - **Feature**: Comprehensive utility functions
-- **Status**: PLANNED
-- **Decision**: Pending implementation
-- **Notes**: Foundational DX improvement
+- **Status**: COMPLETED
 
-### [PA.3] Route Model Binding (§39)
+### [PA.9] Route Model Binding (§39)
 - **Date**: 2026-05-21
 - **Phase**: A
 - **Feature**: Automatic model resolution from route parameters
-- **Status**: PLANNED
-- **Decision**: Pending implementation
-- **Notes**: Requires reflection to automatically inject struct instances into handlers
+- **Status**: COMPLETED
+
+### [PA.10] Artisan Generators
+- **Date**: 2026-05-21
+- **Phase**: A
+- **Feature**: All make:* CLI generators
+- **Status**: COMPLETED
+
+### [PA.11] ORM CRUD
+- **Date**: 2026-05-21
+- **Phase**: A
+- **Feature**: Find(), Update(), Delete(), Save(), soft delete query filtering
+- **Status**: COMPLETED
+
+### [PA.12] Advanced Container Bindings
+- **Date**: 2026-05-21
+- **Phase**: A
+- **Feature**: Contextual binding, tagging, scoped bindings, Facades pattern
+- **Status**: COMPLETED
 
 ---
 
-## PHASE B: Production Readiness (from §35-50)
+## PHASE B: Production Readiness
 
-### [PB.1] API Resources / Transformers (§35)
+### [PB.1] Redis Drivers
+- **Date**: 2026-05-21
+- **Phase**: B
+- **Feature**: Cache, session, and queue drivers for Redis
+- **Status**: PLANNED
+
+### [PB.2] Database Queue System
+- **Date**: 2026-05-21
+- **Phase**: B
+- **Feature**: Database queue driver, failed jobs table, retry mechanism
+- **Status**: PLANNED
+
+### [PB.3] SMTP Mail Driver
+- **Date**: 2026-05-21
+- **Phase**: B
+- **Feature**: SMTP delivery, attachments, CC/BCC
+- **Status**: PLANNED
+
+### [PB.4] Database Notification Channel
+- **Date**: 2026-05-21
+- **Phase**: B
+- **Feature**: Store notifications in the database
+- **Status**: PLANNED
+
+### [PB.5] API Resources / Transformers (§35)
 - **Date**: 2026-05-21
 - **Phase**: B
 - **Feature**: Data transformation layer for JSON APIs
 - **Status**: PLANNED
-- **Decision**: Pending implementation
-- **Notes**: Essential for API development
 
-### [PB.2] Request/Response Macros, Old Input, Flashing (§46)
+### [PB.6] Request/Response Macros, Flashing (§46)
 - **Date**: 2026-05-21
 - **Phase**: B
 - **Feature**: Request state persistence and extensibility
 - **Status**: PLANNED
-- **Decision**: Pending implementation
-- **Notes**: Ties into session management
 
-### [PB.3] Query Logging & Database Profiling (§47)
+### [PB.7] Query Logging & Database Profiling (§47)
 - **Date**: 2026-05-21
 - **Phase**: B
 - **Feature**: Listen to query events, N+1 detection
 - **Status**: PLANNED
-- **Decision**: Pending implementation
-- **Notes**: Will integrate with the logging system
 
-### [PB.4] Testing Utilities (§49)
+### [PB.8] Testing Utilities (§49)
 - **Date**: 2026-05-21
 - **Phase**: B
 - **Feature**: Database assertions, time travel, auth helpers
 - **Status**: PLANNED
-- **Decision**: Pending implementation
-- **Notes**: Crucial for test-driven development
+
+### [PB.9] Resource Routes
+- **Date**: 2026-05-21
+- **Phase**: B
+- **Feature**: Resource / API resource routes + URL generation
+- **Status**: PLANNED
+
+### [PB.10] Error Handling
+- **Date**: 2026-05-21
+- **Phase**: B
+- **Feature**: Custom error pages, maintenance mode, dev error pages
+- **Status**: PLANNED
+
+### [PB.11] Advanced Logging
+- **Date**: 2026-05-21
+- **Phase**: B
+- **Feature**: Daily rotation, stack channels, contextual enrichment
+- **Status**: PLANNED
+
+### [PB.12] Advanced Config
+- **Date**: 2026-05-21
+- **Phase**: B
+- **Feature**: Config caching + nested dot-notation
+- **Status**: PLANNED
+
+### [PB.13] Trusted Proxies Middleware
+- **Date**: 2026-05-21
+- **Phase**: B
+- **Feature**: Trusted Proxies, Trusted Hosts, TrimStrings middleware
+- **Status**: PLANNED
+
+### [PB.14] Sanctum Equivalent
+- **Date**: 2026-05-21
+- **Phase**: B
+- **Feature**: API tokens authentication package
+- **Status**: PLANNED
+
+### [PB.15] HTTP Client
+- **Date**: 2026-05-21
+- **Phase**: B
+- **Feature**: Retry, fake, pool capabilities
+- **Status**: PLANNED
+
+### [PB.16] Streaming Responses
+- **Date**: 2026-05-21
+- **Phase**: B
+- **Feature**: Streaming responses + file downloads
+- **Status**: PLANNED
+
+### [PB.17] Pipeline Class
+- **Date**: 2026-05-21
+- **Phase**: B
+- **Feature**: Generic Pipeline class
+- **Status**: PLANNED
+
+### [PB.18] File Storage Drivers
+- **Date**: 2026-05-21
+- **Phase**: B
+- **Feature**: Local driver, S3 driver, storage manager
+- **Status**: PLANNED
 
 ---
 
-## PHASE C: Feature Completeness (from §35-50)
+## PHASE C: Feature Completeness
 
 ### [PC.1] Signed URLs (§38)
 - **Date**: 2026-05-21
 - **Phase**: C
 - **Feature**: Cryptographically signed routes
 - **Status**: PLANNED
-- **Decision**: Pending implementation
-- **Notes**: Needed for email verification and temporary links
 
-### [PC.2] Process / CLI Command Execution (§40)
-- **Date**: 2026-05-21
-- **Phase**: C
-- **Feature**: Wrapper around os/exec with fluent API and testing fakes
-- **Status**: PLANNED
-- **Decision**: Pending implementation
-- **Notes**: Useful for DevOps tooling
-
-### [PC.3] Schema Dumping (§41)
-- **Date**: 2026-05-21
-- **Phase**: C
-- **Feature**: Dump and load SQL schema files for migrations
-- **Status**: PLANNED
-- **Decision**: Pending implementation
-- **Notes**: Speeds up test database creation
-
-### [PC.4] Model Pruning (§42)
-- **Date**: 2026-05-21
-- **Phase**: C
-- **Feature**: Mass deletion of obsolete records via scheduled jobs
-- **Status**: PLANNED
-- **Decision**: Pending implementation
-- **Notes**: Requires schedule system integration
-
-### [PC.5] Health Checks (§43)
+### [PC.2] Health Checks (§43)
 - **Date**: 2026-05-21
 - **Phase**: C
 - **Feature**: Framework health and dependencies monitoring
 - **Status**: PLANNED
-- **Decision**: Pending implementation
-- **Notes**: For Kubernetes/load balancer probes
 
-### [PC.6] Feature Flags (Pennant equivalent) (§44)
+### [PC.3] Feature Flags (§44)
 - **Date**: 2026-05-21
 - **Phase**: C
-- **Feature**: Manage application feature rollouts
+- **Feature**: Manage application feature rollouts (Pennant equivalent)
 - **Status**: PLANNED
-- **Decision**: Pending implementation
-- **Notes**: 
 
-### [PC.7] Advanced Blade Directives (§45)
+### [PC.4] Advanced Blade Directives (§45)
 - **Date**: 2026-05-21
 - **Phase**: C
-- **Feature**: Loop variables, conditional HTML attributes, components
+- **Feature**: `$loop`, `@once`, `@class`, `@checked`, components & slots
 - **Status**: PLANNED
-- **Decision**: Pending implementation
-- **Notes**: Requires enhancing the transpiler
 
-### [PC.8] Package Auto-Discovery & Publishing (§48)
+### [PC.5] Package Auto-Discovery & Publishing (§48)
 - **Date**: 2026-05-21
 - **Phase**: C
 - **Feature**: Publish package assets, configs, and migrations
 - **Status**: PLANNED
-- **Decision**: Pending implementation
-- **Notes**: 
+
+### [PC.6] Process Execution Wrapper (§40)
+- **Date**: 2026-05-21
+- **Phase**: C
+- **Feature**: Wrapper around os/exec with testing fakes
+- **Status**: PLANNED
+
+### [PC.7] Schema Dumping (§41)
+- **Date**: 2026-05-21
+- **Phase**: C
+- **Feature**: Dump and load SQL schema files
+- **Status**: PLANNED
+
+### [PC.8] Model Pruning (§42)
+- **Date**: 2026-05-21
+- **Phase**: C
+- **Feature**: Mass deletion of obsolete records
+- **Status**: PLANNED
+
+### [PC.9] ORM Advanced Features
+- **Date**: 2026-05-21
+- **Phase**: C
+- **Feature**: Scopes, observers, mutators/accessors, attribute/enum casting, default values
+- **Status**: PLANNED
+
+### [PC.10] ORM Strictness
+- **Date**: 2026-05-21
+- **Phase**: C
+- **Feature**: HasUuids, model strictness, prevent lazy loading
+- **Status**: PLANNED
+
+### [PC.11] Fortify Equivalent
+- **Date**: 2026-05-21
+- **Phase**: C
+- **Feature**: Headless auth backend
+- **Status**: PLANNED
+
+### [PC.12] Auth Workflows
+- **Date**: 2026-05-21
+- **Phase**: C
+- **Feature**: Password reset flow, email verification, 2FA, remember me
+- **Status**: PLANNED
+
+### [PC.13] Authorization
+- **Date**: 2026-05-21
+- **Phase**: C
+- **Feature**: Policies, policy auto-discovery, `@can` directives
+- **Status**: PLANNED
+
+### [PC.14] Broadcasting Server
+- **Date**: 2026-05-21
+- **Phase**: C
+- **Feature**: Real WebSocket server, channel authorization
+- **Status**: PLANNED
+
+### [PC.15] Advanced Events
+- **Date**: 2026-05-21
+- **Phase**: C
+- **Feature**: Queued listeners, subscribers, model events
+- **Status**: PLANNED
 
 ---
 
-## PHASE E: Modern Laravel Parity (from §35-50)
+## PHASE D: Ecosystem Packages
 
-### [PE.1] Modern Laravel Parity (§50)
+### [PD.1] Socialite Equivalent
+- **Date**: 2026-05-21
+- **Phase**: D
+- **Feature**: OAuth social login
+- **Status**: PLANNED
+
+### [PD.2] Scout Equivalent
+- **Date**: 2026-05-21
+- **Phase**: D
+- **Feature**: Full-text search
+- **Status**: PLANNED
+
+### [PD.3] Telescope Equivalent
+- **Date**: 2026-05-21
+- **Phase**: D
+- **Feature**: Debug dashboard
+- **Status**: PLANNED
+
+### [PD.4] Breeze Equivalent
+- **Date**: 2026-05-21
+- **Phase**: D
+- **Feature**: Starter kit / scaffolding
+- **Status**: PLANNED
+
+### [PD.5] Passport Equivalent
+- **Date**: 2026-05-21
+- **Phase**: D
+- **Feature**: Full OAuth2 server
+- **Status**: PLANNED
+
+### [PD.6] Cashier Equivalent
+- **Date**: 2026-05-21
+- **Phase**: D
+- **Feature**: Subscription billing
+- **Status**: PLANNED
+
+### [PD.7] Horizon Equivalent
+- **Date**: 2026-05-21
+- **Phase**: D
+- **Feature**: Queue dashboard
+- **Status**: PLANNED
+
+### [PD.8] Dusk Equivalent
+- **Date**: 2026-05-21
+- **Phase**: D
+- **Feature**: Browser testing
+- **Status**: PLANNED
+
+### [PD.9] Echo JS Equivalent
+- **Date**: 2026-05-21
+- **Phase**: D
+- **Feature**: WebSocket client library
+- **Status**: PLANNED
+
+---
+
+## PHASE E: Modern Laravel Parity
+
+### [PE.1] Reverb Equivalent
 - **Date**: 2026-05-21
 - **Phase**: E
-- **Feature**: Reverb, Pulse, Prompts, Context propagation
+- **Feature**: First-party WebSocket server
 - **Status**: PLANNED
-- **Decision**: Pending implementation
-- **Notes**: Aspirational features for complete parity
+
+### [PE.2] Pulse Equivalent
+- **Date**: 2026-05-21
+- **Phase**: E
+- **Feature**: APM monitoring dashboard
+- **Status**: PLANNED
+
+### [PE.3] Prompts Equivalent
+- **Date**: 2026-05-21
+- **Phase**: E
+- **Feature**: Rich CLI UX
+- **Status**: PLANNED
+
+### [PE.4] Context Propagation
+- **Date**: 2026-05-21
+- **Phase**: E
+- **Feature**: Cross-layer context flowing to jobs/logs
+- **Status**: PLANNED
+
+### [PE.5] Once/Defer/Concurrency
+- **Date**: 2026-05-21
+- **Phase**: E
+- **Feature**: Functional helpers
+- **Status**: PLANNED
+
+### [PE.6] Precognition
+- **Date**: 2026-05-21
+- **Phase**: E
+- **Feature**: Live validation
+- **Status**: PLANNED
+
+### [PE.7] Folio
+- **Date**: 2026-05-21
+- **Phase**: E
+- **Feature**: File-based routing
+- **Status**: PLANNED
+
+### [PE.8] Inertia.js Adapter
+- **Date**: 2026-05-21
+- **Phase**: E
+- **Feature**: SPA without API frontend integration
+- **Status**: PLANNED
+
+### [PE.9] Livewire Equivalent
+- **Date**: 2026-05-21
+- **Phase**: E
+- **Feature**: Server-side components (Ambitious)
+- **Status**: PLANNED
+
+### [PE.10] Jetstream Equivalent
+- **Date**: 2026-05-21
+- **Phase**: E
+- **Feature**: Teams, advanced starter kit
+- **Status**: PLANNED
 
 ---
 

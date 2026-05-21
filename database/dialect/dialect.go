@@ -24,21 +24,41 @@ type Dialect interface {
 
 // SelectQuery represents the components of a SELECT query for compilation.
 type SelectQuery struct {
+	Table     string
+	Columns   []string
+	Wheres    []WhereClause
+	OrderBys  []OrderByClause
+	Joins     []JoinClause
+	Aggregate *AggregateClause
+	Limit     *int
+	Offset    *int
+}
+
+// JoinClause represents a table JOIN condition.
+type JoinClause struct {
+	Type     string // INNER, LEFT, RIGHT, CROSS
 	Table    string
-	Columns  []string
-	Wheres   []WhereClause
-	OrderBys []OrderByClause
-	Limit    *int
-	Offset   *int
+	First    string
+	Operator string
+	Second   string
+}
+
+// AggregateClause represents an aggregate function to apply instead of selecting columns.
+type AggregateClause struct {
+	Function string // COUNT, MAX, MIN, SUM, AVG
+	Column   string // usually * or a column name
 }
 
 // WhereClause represents a WHERE condition.
 type WhereClause struct {
-	Type     string // Basic, In, Null, etc.
+	Type     string // Basic, In, Null, NotNull, Between, Subquery, Raw
 	Column   string
 	Operator string
 	Value    any
+	Values   []any // For IN, BETWEEN
 	Boolean  string // AND / OR
+	RawSQL   string // For Raw queries
+	RawArgs  []any
 }
 
 // OrderByClause represents an ORDER BY condition.

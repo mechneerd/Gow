@@ -15,11 +15,13 @@ var (
 
 // Container is the IoC container.
 type Container struct {
-	mu        sync.RWMutex
-	bindings  map[reflect.Type]*binding
-	instances map[reflect.Type]any
-	aliases   map[string]reflect.Type
-	frozen    bool
+	mu                  sync.RWMutex
+	bindings            map[reflect.Type]*binding
+	contextualBindings  map[reflect.Type]map[reflect.Type]*binding
+	instances           map[reflect.Type]any
+	aliases             map[string]reflect.Type
+	frozen              bool
+	resolutionStack     []reflect.Type
 }
 
 type binding struct {
@@ -30,9 +32,10 @@ type binding struct {
 // New creates a new Container.
 func New() *Container {
 	return &Container{
-		bindings:  make(map[reflect.Type]*binding),
-		instances: make(map[reflect.Type]any),
-		aliases:   make(map[string]reflect.Type),
+		bindings:           make(map[reflect.Type]*binding),
+		contextualBindings: make(map[reflect.Type]map[reflect.Type]*binding),
+		instances:          make(map[reflect.Type]any),
+		aliases:            make(map[string]reflect.Type),
 	}
 }
 
@@ -110,9 +113,62 @@ func Make[T any](c *Container) (T, error) {
 	return instance.(T), nil
 }
 
+// ContextualBindingBuilder helps build a contextual binding.
+type ContextualBindingBuilder struct {
+	container *Container
+	concrete  reflect.Type
+	needs     reflect.Type
+}
+
+// When begins defining a contextual binding.
+func (c *Container) When(concrete any) *ContextualBindingBuilder {
+	typ := reflect.TypeOf(concrete)
+	if typ.Kind() == reflect.Ptr && typ.Elem().Kind() == reflect.Interface {
+		typ = typ.Elem()
+	}
+	return &ContextualBindingBuilder{container: c, concrete: typ}
+}
+
+// Needs specifies the interface needed by the concrete class.
+func (b *ContextualBindingBuilder) Needs(iface any) *ContextualBindingBuilder {
+	typ := reflect.TypeOf(iface)
+	if typ.Kind() == reflect.Ptr && typ.Elem().Kind() == reflect.Interface {
+		typ = typ.Elem()
+	}
+	b.needs = typ
+	return b
+}
+
+// Give specifies the factory to provide when the context is resolved.
+func (b *ContextualBindingBuilder) Give(factory any) {
+	b.container.mu.Lock()
+	defer b.container.mu.Unlock()
+
+	if b.container.contextualBindings[b.concrete] == nil {
+		b.container.contextualBindings[b.concrete] = make(map[reflect.Type]*binding)
+	}
+
+	b.container.contextualBindings[b.concrete][b.needs] = &binding{
+		factory:   factory,
+		singleton: false, // contextual bindings are typically transient
+	}
+}
+
 // Resolve resolves a dependency by its reflection type.
 func (c *Container) Resolve(typ reflect.Type) (any, error) {
 	c.mu.RLock()
+	
+	// Check contextual bindings if we have a resolution stack
+	if len(c.resolutionStack) > 0 {
+		parent := c.resolutionStack[len(c.resolutionStack)-1]
+		if ctxMap, ok := c.contextualBindings[parent]; ok {
+			if b, ok := ctxMap[typ]; ok {
+				c.mu.RUnlock()
+				return c.callFactory(b.factory)
+			}
+		}
+	}
+
 	// Check instances first
 	if instance, ok := c.instances[typ]; ok {
 		c.mu.RUnlock()
@@ -131,8 +187,19 @@ func (c *Container) Resolve(typ reflect.Type) (any, error) {
 		return nil, fmt.Errorf("%w: %v", ErrBindingNotFound, typ)
 	}
 
+	// Push to stack to keep track of context
+	c.mu.Lock()
+	c.resolutionStack = append(c.resolutionStack, typ)
+	c.mu.Unlock()
+
 	// Build via factory
 	instance, err := c.callFactory(b.factory)
+	
+	// Pop from stack
+	c.mu.Lock()
+	c.resolutionStack = c.resolutionStack[:len(c.resolutionStack)-1]
+	c.mu.Unlock()
+
 	if err != nil {
 		return nil, err
 	}

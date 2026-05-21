@@ -182,6 +182,35 @@ func (j *{Name}) Failed(err error) {
 	},
 }
 
+// MakeCommandCmd scaffolds a new custom artisan command.
+var MakeCommandCmd = &cobra.Command{
+	Use:   "make:command [name]",
+	Short: "Create a new artisan command",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		name := args[0]
+		path := fmt.Sprintf("app/console/commands/%s.go", name)
+		
+		stub := `package commands
+
+import (
+	"fmt"
+	"github.com/spf13/cobra"
+)
+
+var {Name}Cmd = &cobra.Command{
+	Use:   "command:name",
+	Short: "Command description",
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println("{Name} executed successfully!")
+	},
+}
+`
+		content := strings.ReplaceAll(stub, "{Name}", name)
+		generateFile(path, content)
+	},
+}
+
 func init() {
 	MakeControllerCmd.Flags().Bool("resource", false, "Generate a resource controller class")
 }

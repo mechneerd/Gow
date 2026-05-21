@@ -119,3 +119,124 @@ func (b *Builder) Delete() (sql.Result, error) {
 	sqlQuery, args := b.dialect.CompileDelete(b.query.Table, b.query.Wheres)
 	return b.conn.ExecContext(b.ctx, sqlQuery, args...)
 }
+
+// --- JOIN CLAUSES ---
+
+func (b *Builder) join(joinType, table, first, operator, second string) *Builder {
+	b.query.Joins = append(b.query.Joins, dialect.JoinClause{
+		Type:     joinType,
+		Table:    table,
+		First:    first,
+		Operator: operator,
+		Second:   second,
+	})
+	return b
+}
+
+func (b *Builder) Join(table, first, operator, second string) *Builder {
+	return b.join("INNER", table, first, operator, second)
+}
+
+func (b *Builder) LeftJoin(table, first, operator, second string) *Builder {
+	return b.join("LEFT", table, first, operator, second)
+}
+
+func (b *Builder) RightJoin(table, first, operator, second string) *Builder {
+	return b.join("RIGHT", table, first, operator, second)
+}
+
+func (b *Builder) CrossJoin(table string) *Builder {
+	return b.join("CROSS", table, "", "", "")
+}
+
+// --- ADVANCED WHERE CLAUSES ---
+
+func (b *Builder) WhereIn(column string, values []any) *Builder {
+	b.query.Wheres = append(b.query.Wheres, dialect.WhereClause{
+		Type:    "In",
+		Column:  column,
+		Values:  values,
+		Boolean: "AND",
+	})
+	return b
+}
+
+func (b *Builder) WhereNull(column string) *Builder {
+	b.query.Wheres = append(b.query.Wheres, dialect.WhereClause{
+		Type:    "Null",
+		Column:  column,
+		Boolean: "AND",
+	})
+	return b
+}
+
+func (b *Builder) WhereNotNull(column string) *Builder {
+	b.query.Wheres = append(b.query.Wheres, dialect.WhereClause{
+		Type:    "NotNull",
+		Column:  column,
+		Boolean: "AND",
+	})
+	return b
+}
+
+func (b *Builder) WhereBetween(column string, values []any) *Builder {
+	if len(values) != 2 {
+		// in a real framework we'd return an error or panic gracefully
+		return b
+	}
+	b.query.Wheres = append(b.query.Wheres, dialect.WhereClause{
+		Type:    "Between",
+		Column:  column,
+		Values:  values,
+		Boolean: "AND",
+	})
+	return b
+}
+
+// --- AGGREGATES ---
+
+func (b *Builder) aggregate(function, column string) (int, error) {
+	// Clone builder or manipulate query
+	b.query.Aggregate = &dialect.AggregateClause{
+		Function: function,
+		Column:   column,
+	}
+	
+	sqlQuery, args := b.dialect.CompileSelect(b.query)
+	var result int
+	err := b.conn.QueryRowContext(b.ctx, sqlQuery, args...).Scan(&result)
+	return result, err
+}
+
+func (b *Builder) Count(column string) (int, error) {
+	if column == "" {
+		column = "*"
+	}
+	return b.aggregate("COUNT", column)
+}
+
+func (b *Builder) Max(column string) (int, error) {
+	return b.aggregate("MAX", column)
+}
+
+func (b *Builder) Min(column string) (int, error) {
+	return b.aggregate("MIN", column)
+}
+
+func (b *Builder) Avg(column string) (int, error) {
+	return b.aggregate("AVG", column)
+}
+
+func (b *Builder) Sum(column string) (int, error) {
+	return b.aggregate("SUM", column)
+}
+
+// --- CONDITIONAL ---
+
+// When executes the given callback if the condition is true.
+func (b *Builder) When(condition bool, callback func(*Builder)) *Builder {
+	if condition {
+		callback(b)
+	}
+	return b
+}
