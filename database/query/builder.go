@@ -3,8 +3,42 @@ package query
 import (
 	"context"
 	"database/sql"
+	"time"
+	
 	"gow/database/dialect"
 )
+
+// QueryEvent represents an executed database query.
+type QueryEvent struct {
+	SQL      string
+	Bindings []any
+	Duration time.Duration
+	// Caller stack can be added here if needed
+}
+
+// QueryListener is a callback function that listens for query events.
+type QueryListener func(QueryEvent)
+
+var queryListeners []QueryListener
+
+// Listen registers a new query listener.
+func Listen(listener QueryListener) {
+	queryListeners = append(queryListeners, listener)
+}
+
+func dispatchQueryEvent(sql string, bindings []any, duration time.Duration) {
+	if len(queryListeners) == 0 {
+		return
+	}
+	event := QueryEvent{
+		SQL:      sql,
+		Bindings: bindings,
+		Duration: duration,
+	}
+	for _, listener := range queryListeners {
+		listener(event)
+	}
+}
 
 // Builder provides a fluent API for building SQL queries.
 type Builder struct {
@@ -91,7 +125,10 @@ func (b *Builder) ToSQL() (string, []any) {
 // In Goquent (ORM), we will wrap this to hydrate models.
 func (b *Builder) Get() (*sql.Rows, error) {
 	sqlQuery, args := b.ToSQL()
-	return b.conn.QueryContext(b.ctx, sqlQuery, args...)
+	start := time.Now()
+	rows, err := b.conn.QueryContext(b.ctx, sqlQuery, args...)
+	dispatchQueryEvent(sqlQuery, args, time.Since(start))
+	return rows, err
 }
 
 // Insert executes an insert statement.
@@ -105,19 +142,28 @@ func (b *Builder) Insert(values map[string]any) (sql.Result, error) {
 	}
 	
 	sqlQuery, args := b.dialect.CompileInsert(b.query.Table, columns, [][]any{row})
-	return b.conn.ExecContext(b.ctx, sqlQuery, args...)
+	start := time.Now()
+	res, err := b.conn.ExecContext(b.ctx, sqlQuery, args...)
+	dispatchQueryEvent(sqlQuery, args, time.Since(start))
+	return res, err
 }
 
 // Update executes an update statement.
 func (b *Builder) Update(values map[string]any) (sql.Result, error) {
 	sqlQuery, args := b.dialect.CompileUpdate(b.query.Table, values, b.query.Wheres)
-	return b.conn.ExecContext(b.ctx, sqlQuery, args...)
+	start := time.Now()
+	res, err := b.conn.ExecContext(b.ctx, sqlQuery, args...)
+	dispatchQueryEvent(sqlQuery, args, time.Since(start))
+	return res, err
 }
 
 // Delete executes a delete statement.
 func (b *Builder) Delete() (sql.Result, error) {
 	sqlQuery, args := b.dialect.CompileDelete(b.query.Table, b.query.Wheres)
-	return b.conn.ExecContext(b.ctx, sqlQuery, args...)
+	start := time.Now()
+	res, err := b.conn.ExecContext(b.ctx, sqlQuery, args...)
+	dispatchQueryEvent(sqlQuery, args, time.Since(start))
+	return res, err
 }
 
 // --- JOIN CLAUSES ---
@@ -204,7 +250,9 @@ func (b *Builder) aggregate(function, column string) (int, error) {
 	
 	sqlQuery, args := b.dialect.CompileSelect(b.query)
 	var result int
+	start := time.Now()
 	err := b.conn.QueryRowContext(b.ctx, sqlQuery, args...).Scan(&result)
+	dispatchQueryEvent(sqlQuery, args, time.Since(start))
 	return result, err
 }
 

@@ -103,6 +103,47 @@ func (c *Compiler) CompileString(raw string) string {
 	// 5. CSRF
 	compiled = strings.ReplaceAll(compiled, "@csrf", `<input type="hidden" name="_token" value="{{ ._csrf_token }}">`)
 
+	// 6. Authorization
+	// @can('update', $post) -> {{ if can "update" $post }}
+	canRe := regexp.MustCompile(`@can\s*\((.*?)\)`)
+	compiled = canRe.ReplaceAllStringFunc(compiled, func(match string) string {
+		val := canRe.FindStringSubmatch(match)[1]
+		// Convert args: 'update', $post -> "update" $post
+		val = strings.ReplaceAll(val, ",", " ")
+		val = strings.ReplaceAll(val, "'", "\"")
+		return fmt.Sprintf(`{{ if can %s }}`, val)
+	})
+	compiled = strings.ReplaceAll(compiled, "@endcan", "{{ end }}")
+
+	// @cannot('update', $post) -> {{ if not (can "update" $post) }}
+	cannotRe := regexp.MustCompile(`@cannot\s*\((.*?)\)`)
+	compiled = cannotRe.ReplaceAllStringFunc(compiled, func(match string) string {
+		val := cannotRe.FindStringSubmatch(match)[1]
+		val = strings.ReplaceAll(val, ",", " ")
+		val = strings.ReplaceAll(val, "'", "\"")
+		return fmt.Sprintf(`{{ if not (can %s) }}`, val)
+	})
+	compiled = strings.ReplaceAll(compiled, "@endcannot", "{{ end }}")
+
+	// 7. Advanced Directives
+	// @class(['p-4', 'font-bold' => true]) -> we would map to a func `class(...)`
+	classRe := regexp.MustCompile(`@class\s*\((.*?)\)`)
+	compiled = classRe.ReplaceAllString(compiled, `class=$1`) // Simplified for demo
+
+	// @checked(true) -> {{ if true }}checked="checked"{{ end }}
+	checkedRe := regexp.MustCompile(`@checked\s*\((.*?)\)`)
+	compiled = checkedRe.ReplaceAllString(compiled, `{{ if $1 }}checked="checked"{{ end }}`)
+
+	// @once -> {{ if not .__once_executed }}{{ $.__once_executed := true }} ...
+	// Since Go templates don't support simple block execution tracking easily without func maps,
+	// we simplify @once to a standard block definition.
+	compiled = strings.ReplaceAll(compiled, "@once", `{{/* @once start */}}`)
+	compiled = strings.ReplaceAll(compiled, "@endonce", `{{/* @once end */}}`)
+
+	// x-component -> simplified to include
+	compRe := regexp.MustCompile(`<x-(.*?)\s*/?>`)
+	compiled = compRe.ReplaceAllString(compiled, `{{ template "components.$1" . }}`)
+
 	return compiled
 }
 

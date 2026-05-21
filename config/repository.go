@@ -22,6 +22,14 @@ func NewRepository(basePath string) *Repository {
 		values: make(map[string]string),
 	}
 
+	if len(CachedValues) > 0 {
+		// Use cached values for zero deserialization overhead
+		for k, v := range CachedValues {
+			repo.values[k] = v
+		}
+		return repo
+	}
+
 	// Try to load .env file
 	envPath := filepath.Join(basePath, ".env")
 	godotenv.Load(envPath) // ignore error as .env might not exist
