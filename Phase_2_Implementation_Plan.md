@@ -23,9 +23,10 @@ This document outlines the detailed implementation of Phase 2 (Goquent) within t
 - Automatically injects `created_at` times via `gow:"autoCreateTime"`.
 - Features `First()` and `Get()` returning typed `*T` or `[]*T`.
 
-## 5. Seeders & Factories [P2.8]
-- **`database/factory/factory.go`**: Base abstraction for generating mock struct data.
-- **`database/seeder/seeder.go`**: Seeder runner to register and execute multiple seeders during development.
+## 6. Utilities (Pagination, Seeders, Factories)
+- **`database/orm/paginator.go`**: Provides cursor and offset pagination wrapping query results, returning structured metadata (total, next page, etc.).
+- **`database/seeder/seeder.go` & `factory.go`**: Stubbed out interfaces for generating mock database data seamlessly.
 
-## 6. Pagination [P2.9]
-- **`database/pagination/paginator.go`**: Paginator generic struct designed to wrap query results and return paginated metadata (Total, PerPage, CurrentPage, LastPage).
+## 7. Relationships & Eager Loading [P2.6, P2.7]
+- **`database/orm/relation.go`**: Implementation of tag-based relationship definitions (parsing `gow:"hasMany"` etc.).
+- **`database/orm/query.go`**: Upgraded the `ModelQuery` with a `.With("RelationName")` method. Eager loads related models in batched queries to prevent the N+1 problem.

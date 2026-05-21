@@ -23,6 +23,7 @@ type DB struct {
 type ModelQuery[T any] struct {
 	builder *query.Builder
 	db      *DB
+	with    []string
 }
 
 // NewQuery creates a new query for a specific model type.
@@ -33,7 +34,14 @@ func NewQuery[T any](db *DB) *ModelQuery[T] {
 	return &ModelQuery[T]{
 		builder: db.Builder.Table(table),
 		db:      db,
+		with:    make([]string, 0),
 	}
+}
+
+// With adds a relationship to be eager-loaded.
+func (q *ModelQuery[T]) With(relation string) *ModelQuery[T] {
+	q.with = append(q.with, relation)
+	return q
 }
 
 // Where adds a where clause.
@@ -78,6 +86,13 @@ func (q *ModelQuery[T]) Get() ([]*T, error) {
 			return nil, err
 		}
 		results = append(results, model)
+	}
+
+	if len(results) > 0 && len(q.with) > 0 {
+		err = eagerLoadRelationships(q.db, results, q.with)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return results, nil

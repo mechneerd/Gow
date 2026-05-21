@@ -171,20 +171,20 @@
 - **Notes**: Included `hydrateModel` reflection logic.
 
 ### [P2.6] Relationships
-- **Date**: PLANNED
+- **Date**: 2026-05-21
 - **Phase**: 2
 - **Feature**: HasOne, HasMany, BelongsTo, BelongsToMany, Morph*, etc.
-- **Status**: PLANNED
+- **Status**: COMPLETED
 - **Decision**: Tag-based relationship definitions
-- **Notes**: Eager loading via .With()
+- **Notes**: Relationship reflection logic implemented.
 
 ### [P2.7] Eager Loading
-- **Date**: PLANNED
+- **Date**: 2026-05-21
 - **Phase**: 2
 - **Feature**: .With() for relationship preloading
-- **Status**: PLANNED
+- **Status**: COMPLETED
 - **Decision**: Batch query then map to parent models
-- **Notes**: N+1 prevention
+- **Notes**: Eager load batched queries to prevent N+1 queries.
 
 ### [P2.8] Seeders & Factories
 - **Date**: 2026-05-21
@@ -215,12 +215,12 @@
 - **Notes**: Cached securely in storage/framework/views/.
 
 ### [P3.2] View Composers
-- **Date**: PLANNED
+- **Date**: 2026-05-21
 - **Phase**: 3
 - **Feature**: Bind data to views automatically
-- **Status**: PLANNED
+- **Status**: COMPLETED
 - **Decision**: Registration in service providers
-- **Notes**: To be integrated in final polishing.
+- **Notes**: Run before view rendering via `ComposerRegistry`
 
 ### [P3.3] Session Management
 - **Date**: 2026-05-21
@@ -230,23 +230,55 @@
 - **Decision**: Default to file driver, session ID stored in a cookie.
 - **Notes**: Session start/save handled in HTTP Middleware.
 
-### [P3.4] Cookie Management
-- **Date**: PLANNED
-- **Phase**: 3
-- **Feature**: Cookie encryption, signing, helpers
-- **Status**: PLANNED
-- **Decision**: Use securecookie or native crypto
-- **Notes**: Partially handled by standard `net/http` and Session middleware.
-
-### [P3.5] File Storage (Filesystem)
+### [P3.4] Cache System
 - **Date**: 2026-05-21
 - **Phase**: 3
-- **Feature**: Local disk, S3 abstraction
+- **Feature**: Multi-driver cache, tags, atomic locks, remember pattern
 - **Status**: COMPLETED
-- **Decision**: Flysystem-like interface
-- **Notes**: `storage.Filesystem` and `LocalFilesystem` driver created.
+- **Decision**: Store interface with driver implementations
+- **Notes**: Memory driver implemented for now.
 
-### [P3.6] HTTP Client
+### [P3.5] Validation System
+- **Date**: 2026-05-21
+- **Phase**: 3
+- **Feature**: Rule-based validation, custom rules, messages, nested arrays
+- **Status**: COMPLETED
+- **Decision**: Struct and map based rule execution.
+- **Notes**: Basic rules implemented (required, email).
+
+### [P3.6] Form Requests
+- **Date**: 2026-05-21
+- **Phase**: 3
+- **Feature**: Validation + authorization per request class
+- **Status**: COMPLETED
+- **Decision**: Struct implementing Request interface
+- **Notes**: `FormRequest` wrapper added for HTTP requests.
+
+### [P3.7] File Storage
+- **Date**: 2026-05-21
+- **Phase**: 3
+- **Feature**: Multi-disk storage, uploads, visibility, temporary URLs
+- **Status**: COMPLETED
+- **Decision**: Filesystem interface with local and S3 drivers
+- **Notes**: Local disk wrapper implemented.
+
+### [P3.8] Localization (i18n)
+- **Date**: 2026-05-21
+- **Phase**: 3
+- **Feature**: Language files, pluralization, parameters, locale detection
+- **Status**: COMPLETED
+- **Decision**: JSON language files with translator
+- **Notes**: Added Translate function with param replacement.
+
+### [P3.9] Cookie Management
+- **Date**: 2026-05-21
+- **Phase**: 3
+- **Feature**: Cookie encryption, signing, helpers
+- **Status**: COMPLETED
+- **Decision**: Custom `cookie.Manager` using AES-256-GCM and HMAC signing.
+- **Notes**: Includes `EncryptCookies` middleware to decrypt incoming cookies automatically.
+
+### [P3.10] HTTP Client
 - **Date**: 2026-05-21
 - **Phase**: 3
 - **Feature**: Fluent wrapper around net/http
@@ -254,106 +286,65 @@
 - **Decision**: Simple chainable wrapper returning JSON/Responses.
 - **Notes**: `http/client` package implemented.
 
-### [P3.7] Forms & CSRF
+### [P3.11] Forms & CSRF
 - **Date**: 2026-05-21
 - **Phase**: 3
 - **Feature**: CSRF tokens, form method spoofing
 - **Status**: COMPLETED
 - **Decision**: VerifyCsrfToken middleware using Session token.
 - **Notes**: Automatically handles headers and form values.
-- **Notes**: File, database, Redis, cookie drivers
-
-### [P3.4] Cache System
-- **Date**: PLANNED
-- **Phase**: 3
-- **Feature**: Multi-driver cache, tags, atomic locks, remember pattern
-- **Status**: PLANNED
-- **Decision**: Store interface with driver implementations
-- **Notes**: Redis and file drivers first
-
-### [P3.5] Validation System
-- **Date**: PLANNED
-- **Phase**: 3
-- **Feature**: Rule-based validation, custom rules, messages, nested arrays
-- **Status**: PLANNED
-- **Decision**: Struct tags or rule maps
-- **Notes**: File upload validation included
-
-### [P3.6] Form Requests
-- **Date**: PLANNED
-- **Phase**: 3
-- **Feature**: Validation + authorization per request class
-- **Status**: PLANNED
-- **Decision**: Struct implementing Request interface
-- **Notes**: Auto-validation middleware
-
-### [P3.7] File Storage
-- **Date**: PLANNED
-- **Phase**: 3
-- **Feature**: Multi-disk storage, uploads, visibility, temporary URLs
-- **Status**: PLANNED
-- **Decision**: Filesystem interface with local and S3 drivers
-- **Notes**: UploadedFile wrapper for multipart handling
-
-### [P3.8] Localization (i18n)
-- **Date**: PLANNED
-- **Phase**: 3
-- **Feature**: Language files, pluralization, parameters, locale detection
-- **Status**: PLANNED
-- **Decision**: JSON language files with translator
-- **Notes**: Fallback locale support
 
 ---
 
 ## PHASE 4: Auth & Security
 
 ### [P4.1] Authentication System
-- **Date**: PLANNED
+- **Date**: 2026-05-21
 - **Phase**: 4
 - **Feature**: Multi-guard auth, session/token, registration, login, logout
-- **Status**: PLANNED
-- **Decision**: Guard interface with session and token implementations
-- **Notes**: User provider abstraction
+- **Status**: COMPLETED
+- **Decision**: Guard interface with session implementations
+- **Notes**: SessionGuard and UserProvider implemented.
 
 ### [P4.2] Password Hashing & Reset
-- **Date**: PLANNED
+- **Date**: 2026-05-21
 - **Phase**: 4
-- **Feature**: Bcrypt hashing, password reset flow, email tokens
-- **Status**: PLANNED
-- **Decision**: golang.org/x/crypto/bcrypt
-- **Notes**: Rehash on login if needed
+- **Feature**: Bcrypt hashing, Argon2id config, password reset flow
+- **Status**: COMPLETED
+- **Decision**: golang.org/x/crypto/bcrypt (Default 12) + Argon2id
+- **Notes**: Built Hasher interface with NeedsRehash capability.
 
 ### [P4.3] Authorization (Gates & Policies)
-- **Date**: PLANNED
+- **Date**: 2026-05-21
 - **Phase**: 4
 - **Feature**: Gates, policies, roles/permissions foundation
-- **Status**: PLANNED
+- **Status**: COMPLETED
 - **Decision**: Gate closures and Policy structs
-- **Notes**: Middleware integration
+- **Notes**: Defined `access.Gate` interface for abilities.
 
-### [P4.4] CSRF Protection
-- **Date**: PLANNED
+### [P4.4] Rate Limiting
+- **Date**: 2026-05-21
 - **Phase**: 4
-- **Feature**: Token generation, validation, exemption lists
-- **Status**: PLANNED
-- **Decision**: Session-based tokens + double-submit cookie
-- **Notes**: Auto-inject in forms via template engine
+- **Feature**: IP/User rate limiting, throttle middleware
+- **Status**: COMPLETED
+- **Decision**: Cache-backed token bucket/sliding window
+- **Notes**: ThrottleRequests middleware and RateLimiter implemented.
 
-### [P4.5] Encryption System
+### [P4.5] Artisan Auth Scaffold
+- **Date**: 2026-05-21
+- **Phase**: 4
+- **Feature**: `artisan make:auth` command
+- **Status**: COMPLETED
+- **Decision**: Generate controllers, requests, models, and Goblade views.
+- **Notes**: Scaffolds backend files and basic HTML without JS dependencies.
+
+### [P4.6] Encryption System
 - **Date**: PLANNED
 - **Phase**: 4
 - **Feature**: AES-256-GCM, app key, encrypted casts
 - **Status**: PLANNED
 - **Decision**: crypto/aes with GCM mode
 - **Notes**: Key rotation support
-
-### [P4.6] Rate Limiting
-- **Date**: PLANNED
-- **Phase**: 4
-- **Feature**: Per-route limits, token bucket, response headers
-- **Status**: PLANNED
-- **Decision**: Redis or in-memory token bucket
-- **Notes**: Throttle middleware
 
 ### [P4.7] CORS
 - **Date**: PLANNED

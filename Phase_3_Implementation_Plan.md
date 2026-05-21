@@ -23,6 +23,23 @@ This document outlines the detailed implementation of Phase 3 within the GoW fra
 - **`storage/filesystem.go`**: A Flysystem-inspired abstraction layer for managing file storage.
 - Includes `LocalFilesystem` driver to provide unified `Put()`, `Get()`, `Exists()`, and `Delete()` functionality over the local disk.
 
-## 5. HTTP Client [P3.6]
+## 5. HTTP Client [P3.10]
 - **`http/client/client.go`**: A fluent, chainable wrapper around Go's native `net/http` package.
 - Supports adding headers (`WithHeader`), executing requests (`Get`, `Post`), and easily mapping response bodies to JSON structs (`res.JSON(&target)`).
+
+## 6. View Composers [P3.2]
+- **`view/composer.go`**: Implemented `ComposerRegistry` to bind data globally (`*`) or to specific views prior to rendering.
+
+## 7. Cache System [P3.4]
+- **`cache/store.go` & `cache/driver_memory.go`**: Interface defining `Get`, `Put`, `Increment`, `Forever`, `Forget`. Includes a thread-safe in-memory driver implementation (`sync.RWMutex`).
+
+## 8. Validation & Form Requests [P3.5, P3.6]
+- **`validation/validator.go`**: Rule-based execution engine handling validations like `required` and `email`.
+- **`http/request/form_request.go`**: A `Validate` wrapper that handles form authorization and runs the `Validator` engine against request payloads automatically.
+
+## 9. Localization (i18n) [P3.8]
+- **`localization/translator.go`**: A JSON-based language file loader that exposes a `Translate` helper (`__('key')`), supporting dynamic parameter replacement.
+
+## 10. Cookie Management [P3.9]
+- **`cookie/manager.go`**: Provides a standalone manager utilizing AES-256-GCM and HMAC-SHA256 to securely encrypt and sign outgoing cookies.
+- **`http/middleware/encrypt_cookies.go`**: Middleware that intercepts and decrypts incoming cookies automatically, except those explicitly listed in an exemption list.
