@@ -5,30 +5,31 @@ Welcome to the official documentation for the **GoW Framework**.
 ## Table of Contents
 
 ### Getting Started
-1. [Installation & Setup](installation.md)
-2. [Testing](testing.md)
+1. [The Developer Journey](developer_journey.md)
+2. [Installation & Setup](installation.md)
+3. [Testing](testing.md)
 
 ### The Basics
-3. [Routing](routing.md)
-4. [Middleware](middleware.md)
-5. [Views & Goblade](views.md)
+4. [Routing](routing.md)
+5. [Middleware](middleware.md)
+6. [Views & Goblade](views.md)
 
 ### Database & Data
-6. [Database & Tooling](database.md)
-7. [Goquent ORM](orm.md)
+7. [Database & Tooling](database.md)
+8. [Goquent ORM](orm.md)
 
 ### Security
-8. [Authentication](authentication.md)
-9. [Authorization](authorization.md)
+9. [Authentication](authentication.md)
+10. [Authorization](authorization.md)
 
 ### Ecosystem
-10. [Cache & Session](cache_and_session.md)
-11. [Queues](queues.md)
-12. [Mail & Notifications](mail_and_notifications.md)
-13. [File Storage](storage.md)
-14. [Events](events.md)
-15. [Broadcasting](broadcasting.md)
-16. [Utilities (Pennant, Health, Process)](utilities.md)
+11. [Cache & Session](cache_and_session.md)
+12. [Queues](queues.md)
+13. [Mail & Notifications](mail_and_notifications.md)
+14. [File Storage](storage.md)
+15. [Events](events.md)
+16. [Broadcasting](broadcasting.md)
+17. [Utilities (Pennant, Health, Process)](utilities.md)
 
 ---
 
