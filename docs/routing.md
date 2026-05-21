@@ -31,3 +31,41 @@ api.Use(middleware.Throttle(60, 1)) // 60 requests per 1 minute
 api.Get("/users", UserController.Index)
 api.Post("/users", UserController.Store)
 ```
+
+## Resource Routes
+
+GoW provides automatic resource routing to quickly assign CRUD routes to a controller.
+
+```go
+// Generates standard routes: index, create, store, show, edit, update, destroy
+router.Resource("photos", PhotoController{})
+
+// For API-only controllers (excludes create and edit)
+router.ApiResource("photos", PhotoController{})
+```
+
+## Route Macros
+
+You can define custom Route Macros to extend the routing capabilities dynamically.
+
+```go
+router.Macro("customAction", func(r *router.Router, path string) {
+    r.Get(path, CustomHandler)
+})
+
+router.customAction("/custom")
+```
+
+## Signed URLs
+
+GoW can generate cryptographically signed URLs to prevent tampering, which is especially useful for actions like email verification.
+
+```go
+urlGenerator := routing.NewURLGenerator(router, appKey)
+
+// Generate a signed URL valid for 30 minutes
+signedURL, err := urlGenerator.SignedRoute("unsubscribe", map[string]string{"user": "1"}, time.Now().Add(30 * time.Minute))
+
+// Verify a signed URL in a controller
+isValid := urlGenerator.HasValidSignature(r)
+```

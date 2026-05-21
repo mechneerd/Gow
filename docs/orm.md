@@ -43,3 +43,43 @@ posts := orm.Table("posts").
     With("Author").
     Get()
 ```
+
+## Advanced Features
+
+### Scopes
+
+Scopes allow you to easily re-use query logic across your application.
+
+```go
+// Global Scopes are applied automatically to all queries for a model
+orm.AddGlobalScope("Post", &ActiveScope{})
+```
+
+### Observers (Lifecycle Hooks)
+
+Model observers allow you to listen for specific events (`creating`, `updating`, `deleting`) during the model lifecycle.
+
+```go
+orm.Observe("Post", &PostObserver{})
+
+func (o *PostObserver) Creating(model any) bool {
+    // Return false to halt creation
+    return true
+}
+```
+
+### Attribute Casting
+
+The `Cast` interface allows you to define complex mutations when reading and writing properties to the database (e.g., automatically marshalling structs to JSON strings).
+
+### Strictness
+
+GoW provides settings to enforce strict database performance rules globally.
+
+```go
+// Disable lazy loading entirely to prevent N+1 queries in production
+orm.PreventLazyLoading = true
+
+// Enforce UUIDs as primary keys
+orm.HasUuids = true
+```

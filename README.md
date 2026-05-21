@@ -9,10 +9,12 @@
 The Go ecosystem has historically prioritized minimal routing libraries and "bring-your-own-architecture" philosophies. GoW challenges this by providing a cohesive, batteries-included framework that helps you ship faster without sacrificing Go's legendary performance.
 
 - **Developer Experience First**: Familiar, expressive APIs inspired by Laravel.
-- **Goquent ORM**: A fluent query builder and Active Record implementation.
-- **Goblade Templates**: Server-side rendering made beautiful with structural directives.
+- **Goquent ORM**: A fluent query builder and Active Record implementation with global scopes and observers.
+- **Goblade Templates**: Server-side rendering made beautiful with structural directives and components.
 - **Artisan CLI**: Generate controllers, models, migrations, and serve your app instantly.
-- **Batteries Included**: Routing, Middleware, Validation, Localization, Queues, Mail, and more.
+- **Headless Auth**: Built-in JSON API authentication endpoints (Fortify equivalent).
+- **Broadcasting**: Real-time event broadcasting over Pusher and Redis.
+- **Batteries Included**: Routing, Middleware, Validation, Localization, Queues, Mail, Feature Flags, Health Checks, and more.
 
 ## 📦 Quick Start
 
@@ -51,7 +53,7 @@ func TestHealthCheck(t *testing.T) {
 
 ## 🏛️ Project Status
 
-GoW is currently heavily in development. See `CHANGELOG.md` for phase tracking.
+**GoW v1.0** is fully complete and production-ready. All architectural phases (A, B, and C) have been implemented, providing a robust ecosystem. See `CHANGELOG.md` for the full history of features.
 
 ## 📜 License
 
