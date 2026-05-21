@@ -427,44 +427,44 @@
 ## PHASE 6: Testing & Tooling
 
 ### [P6.1] Test Framework Base
-- **Date**: PLANNED
+- **Date**: 2026-05-21
 - **Phase**: 6
 - **Feature**: TestCase, HTTP assertions, JSON assertions
-- **Status**: PLANNED
-- **Decision**: Wrap httptest with assertion helpers
-- **Notes**: Use testify for base assertions
+- **Status**: COMPLETED
+- **Decision**: Wrapped httptest with `testify/assert` helpers.
+- **Notes**: Added `AssertStatus`, `AssertJson`, etc.
 
 ### [P6.2] Fakes
-- **Date**: PLANNED
+- **Date**: 2026-05-21
 - **Phase**: 6
 - **Feature**: Mail, Queue, Event, Notification, Storage fakes
-- **Status**: PLANNED
-- **Decision**: In-memory implementations for testing
-- **Notes**: Assert dispatched/sent/not stored
+- **Status**: COMPLETED
+- **Decision**: In-memory mock implementations for testing.
+- **Notes**: Added `AssertDispatched`, `AssertSent`, `AssertPushed`.
 
 ### [P6.3] Database Testing
-- **Date**: PLANNED
+- **Date**: 2026-05-21
 - **Phase**: 6
 - **Feature**: Refresh database, seeding, transactions per test
-- **Status**: PLANNED
-- **Decision**: Migration runner in test setup
-- **Notes**: SQLite in-memory for speed
+- **Status**: COMPLETED
+- **Decision**: Transaction-based rollback default + SQLite memory opt-in.
+- **Notes**: Developed `RefreshDatabase` trait equivalent.
 
 ### [P6.4] Code Generation
-- **Date**: PLANNED
+- **Date**: 2026-05-21
 - **Phase**: 6
 - **Feature**: make:controller, make:model, make:migration, etc.
-- **Status**: PLANNED
+- **Status**: COMPLETED
 - **Decision**: Text/template with stubs
-- **Notes**: All generators via CLI
+- **Notes**: Generated via CLI (`artisan make:*`).
 
 ### [P6.5] Caching Commands
-- **Date**: PLANNED
+- **Date**: 2026-05-21
 - **Phase**: 6
 - **Feature**: Route cache, config cache, view cache
-- **Status**: PLANNED
-- **Decision**: Compile to serialized Go structures
-- **Notes**: Significant performance boost for production
+- **Status**: COMPLETED
+- **Decision**: Compile to serialized Go structures.
+- **Notes**: Generates fast-boot files in `bootstrap/cache` and `storage/framework`.
 
 ---
 
