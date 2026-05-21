@@ -471,28 +471,28 @@
 ## PHASE 7: Optimization & Polish
 
 ### [P7.1] Performance Benchmarking
-- **Date**: PLANNED
+- **Date**: 2026-05-21
 - **Phase**: 7
 - **Feature**: Benchmark suite, profiling
-- **Status**: PLANNED
-- **Decision**: Go benchmark tests + pprof
-- **Notes**: Target metrics in spec
+- **Status**: COMPLETED
+- **Decision**: Go benchmark tests for router and ORM.
+- **Notes**: Verifies framework speed overhead vs stdlib.
 
 ### [P7.2] Documentation
-- **Date**: PLANNED
+- **Date**: 2026-05-21
 - **Phase**: 7
 - **Feature**: Go docs, README, usage guides
-- **Status**: PLANNED
-- **Decision**: godoc + markdown docs
-- **Notes**: Critical for adoption
+- **Status**: COMPLETED
+- **Decision**: Zero-dependency Markdown (`/docs`).
+- **Notes**: Written README, Installation, Routing, and ORM guides.
 
 ### [P7.3] Example Application
-- **Date**: PLANNED
+- **Date**: 2026-05-21
 - **Phase**: 7
 - **Feature**: Demo app showing all features
-- **Status**: PLANNED
-- **Decision**: Simple blog or task manager
-- **Notes**: Living documentation
+- **Status**: COMPLETED
+- **Decision**: Canonical Blog app.
+- **Notes**: Housed in `examples/demo-app/`.
 
 ## 2026-05-20 - Specification Expansion: Missing Laravel Features
 - **Date**: 2026-05-20
