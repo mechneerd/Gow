@@ -507,6 +507,150 @@
   - No code written — specification only.
 ---
 
+## PHASE A: Core Usability (from §35-50)
+
+### [PA.1] Collections & Lazy Collections (§36)
+- **Date**: 2026-05-21
+- **Phase**: A
+- **Feature**: Generic collection wrapper with map/filter/reduce
+- **Status**: PLANNED
+- **Decision**: Pending implementation
+- **Notes**: Essential for fluent data manipulation throughout the framework
+
+### [PA.2] Helpers (Str, Arr, Number, Date, Benchmark, Sleep) (§37)
+- **Date**: 2026-05-21
+- **Phase**: A
+- **Feature**: Comprehensive utility functions
+- **Status**: PLANNED
+- **Decision**: Pending implementation
+- **Notes**: Foundational DX improvement
+
+### [PA.3] Route Model Binding (§39)
+- **Date**: 2026-05-21
+- **Phase**: A
+- **Feature**: Automatic model resolution from route parameters
+- **Status**: PLANNED
+- **Decision**: Pending implementation
+- **Notes**: Requires reflection to automatically inject struct instances into handlers
+
+---
+
+## PHASE B: Production Readiness (from §35-50)
+
+### [PB.1] API Resources / Transformers (§35)
+- **Date**: 2026-05-21
+- **Phase**: B
+- **Feature**: Data transformation layer for JSON APIs
+- **Status**: PLANNED
+- **Decision**: Pending implementation
+- **Notes**: Essential for API development
+
+### [PB.2] Request/Response Macros, Old Input, Flashing (§46)
+- **Date**: 2026-05-21
+- **Phase**: B
+- **Feature**: Request state persistence and extensibility
+- **Status**: PLANNED
+- **Decision**: Pending implementation
+- **Notes**: Ties into session management
+
+### [PB.3] Query Logging & Database Profiling (§47)
+- **Date**: 2026-05-21
+- **Phase**: B
+- **Feature**: Listen to query events, N+1 detection
+- **Status**: PLANNED
+- **Decision**: Pending implementation
+- **Notes**: Will integrate with the logging system
+
+### [PB.4] Testing Utilities (§49)
+- **Date**: 2026-05-21
+- **Phase**: B
+- **Feature**: Database assertions, time travel, auth helpers
+- **Status**: PLANNED
+- **Decision**: Pending implementation
+- **Notes**: Crucial for test-driven development
+
+---
+
+## PHASE C: Feature Completeness (from §35-50)
+
+### [PC.1] Signed URLs (§38)
+- **Date**: 2026-05-21
+- **Phase**: C
+- **Feature**: Cryptographically signed routes
+- **Status**: PLANNED
+- **Decision**: Pending implementation
+- **Notes**: Needed for email verification and temporary links
+
+### [PC.2] Process / CLI Command Execution (§40)
+- **Date**: 2026-05-21
+- **Phase**: C
+- **Feature**: Wrapper around os/exec with fluent API and testing fakes
+- **Status**: PLANNED
+- **Decision**: Pending implementation
+- **Notes**: Useful for DevOps tooling
+
+### [PC.3] Schema Dumping (§41)
+- **Date**: 2026-05-21
+- **Phase**: C
+- **Feature**: Dump and load SQL schema files for migrations
+- **Status**: PLANNED
+- **Decision**: Pending implementation
+- **Notes**: Speeds up test database creation
+
+### [PC.4] Model Pruning (§42)
+- **Date**: 2026-05-21
+- **Phase**: C
+- **Feature**: Mass deletion of obsolete records via scheduled jobs
+- **Status**: PLANNED
+- **Decision**: Pending implementation
+- **Notes**: Requires schedule system integration
+
+### [PC.5] Health Checks (§43)
+- **Date**: 2026-05-21
+- **Phase**: C
+- **Feature**: Framework health and dependencies monitoring
+- **Status**: PLANNED
+- **Decision**: Pending implementation
+- **Notes**: For Kubernetes/load balancer probes
+
+### [PC.6] Feature Flags (Pennant equivalent) (§44)
+- **Date**: 2026-05-21
+- **Phase**: C
+- **Feature**: Manage application feature rollouts
+- **Status**: PLANNED
+- **Decision**: Pending implementation
+- **Notes**: 
+
+### [PC.7] Advanced Blade Directives (§45)
+- **Date**: 2026-05-21
+- **Phase**: C
+- **Feature**: Loop variables, conditional HTML attributes, components
+- **Status**: PLANNED
+- **Decision**: Pending implementation
+- **Notes**: Requires enhancing the transpiler
+
+### [PC.8] Package Auto-Discovery & Publishing (§48)
+- **Date**: 2026-05-21
+- **Phase**: C
+- **Feature**: Publish package assets, configs, and migrations
+- **Status**: PLANNED
+- **Decision**: Pending implementation
+- **Notes**: 
+
+---
+
+## PHASE E: Modern Laravel Parity (from §35-50)
+
+### [PE.1] Modern Laravel Parity (§50)
+- **Date**: 2026-05-21
+- **Phase**: E
+- **Feature**: Reverb, Pulse, Prompts, Context propagation
+- **Status**: PLANNED
+- **Decision**: Pending implementation
+- **Notes**: Aspirational features for complete parity
+
+---
+
 ## DECISION LOG
 
 | Date | Decision | Rationale | Impact |
