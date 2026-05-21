@@ -367,60 +367,60 @@
 ## PHASE 5: Advanced Features
 
 ### [P5.1] Queue System
-- **Date**: PLANNED
+- **Date**: 2026-05-21
 - **Phase**: 5
 - **Feature**: Multi-driver queues, workers, delayed jobs
-- **Status**: PLANNED
-- **Decision**: Database and Redis drivers first
-- **Notes**: Job serialization and worker CLI
+- **Status**: COMPLETED
+- **Decision**: Go-native Sync driver first, with Job interface and Manager.
+- **Notes**: Channel-based processing ready for Redis/DB scaling.
 
 ### [P5.2] Job Classes
-- **Date**: PLANNED
+- **Date**: 2026-05-21
 - **Phase**: 5
 - **Feature**: Job interface, handle method, failed handling, retries
-- **Status**: PLANNED
-- **Decision**: Struct implementing Job interface
-- **Notes**: Middleware support for jobs
+- **Status**: COMPLETED
+- **Decision**: `Job` interface with `Handle()` and `Failed(err)`
+- **Notes**: Processed by the new worker daemon.
 
 ### [P5.3] Event & Listener System
-- **Date**: PLANNED
+- **Date**: 2026-05-21
 - **Phase**: 5
 - **Feature**: Event dispatch, listeners, subscribers, queued listeners
-- **Status**: PLANNED
-- **Decision**: Type-based dispatch using reflect.Type
-- **Notes**: Wildcard listeners
+- **Status**: COMPLETED
+- **Decision**: Type-based dispatch using `reflect.Type`
+- **Notes**: Supports wildcard listeners and sync execution.
 
 ### [P5.4] Mail System
-- **Date**: PLANNED
+- **Date**: 2026-05-21
 - **Phase**: 5
 - **Feature**: Mailables, multi-driver, attachments, markdown, queueing
-- **Status**: PLANNED
-- **Decision**: Mailable interface with SMTP driver
-- **Notes**: Log driver for testing
+- **Status**: COMPLETED
+- **Decision**: Mailable interface with SMTP and Log drivers
+- **Notes**: Fluent `BaseMailable` builder pattern implemented.
 
 ### [P5.5] Notification System
-- **Date**: PLANNED
+- **Date**: 2026-05-21
 - **Phase**: 5
 - **Feature**: Notifiable, channels, database storage, broadcast
-- **Status**: PLANNED
+- **Status**: COMPLETED
 - **Decision**: Notification interface with channel methods
-- **Notes**: Polymorphic database notifications
+- **Notes**: Manager resolves drivers to send via requested medium.
 
 ### [P5.6] Task Scheduling
-- **Date**: PLANNED
+- **Date**: 2026-05-21
 - **Phase**: 5
 - **Feature**: Cron-like scheduling, mutex, overlap prevention
-- **Status**: PLANNED
-- **Decision**: robfig/cron for expression parsing
-- **Notes**: schedule:run command
+- **Status**: COMPLETED
+- **Decision**: `robfig/cron/v3` for expression parsing
+- **Notes**: Added `artisan schedule:run` and fluent DSL (e.g. `EveryMinute()`).
 
 ### [P5.7] Broadcasting
-- **Date**: PLANNED
+- **Date**: 2026-05-21
 - **Phase**: 5
 - **Feature**: WebSockets, channels, presence, authorization
-- **Status**: PLANNED
-- **Decision**: Pusher and Redis drivers
-- **Notes**: Channel authorization routes
+- **Status**: COMPLETED
+- **Decision**: Manager resolving Log driver initially.
+- **Notes**: Public, Private, and Presence channels mapped out.
 
 ---
 
