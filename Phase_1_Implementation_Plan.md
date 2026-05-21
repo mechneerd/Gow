@@ -55,6 +55,44 @@ Route registration, groups, and parameters.
 #### [NEW] `routing/pipeline.go`
 Middleware pipeline execution logic.
 
+### 5. Base Controller & Response Helpers [P1.6]
+
+#### [NEW] `http/response/json.go` & `http/response/redirect.go`
+- JSON, Ok, Created, and Error helpers for standardized responses.
+- Redirect helper for HTTP redirects.
+
+### 6. Configuration System [P1.7]
+
+#### [NEW] `config/repository.go` & `config/service_provider.go`
+- `Repository` to manage configuration values.
+- Integration with `joho/godotenv` to load `.env` files.
+- Configuration Service Provider to bind the repository to the container.
+
+### 7. Service Provider System [P1.8]
+
+#### [NEW] `foundation/provider.go`
+- `ServiceProvider` interface with `Register` and `Boot` lifecycle methods.
+- Application updated to manage and boot a list of providers.
+
+### 8. Error Handling & Exception Rendering [P1.9]
+
+#### [NEW] `http/exception.go` & `http/middleware/recovery.go`
+- `HttpException` type and `Abort(status, message)` helper to emulate Laravel's abort functionality via panic.
+- Panic recovery middleware to catch exceptions and render structured JSON HTTP errors.
+
+### 9. Logging System [P1.10]
+
+#### [NEW] `logging/logger.go` & `logging/service_provider.go`
+- Centralized logger using Go's native `log/slog` with JSON formatting.
+- Reads `LOG_LEVEL` from configuration.
+- Provider to bind the logger into the IoC container.
+
+### 10. CLI Framework (Artisan) [P1.11]
+
+#### [NEW] `console/kernel.go` & `artisan.go`
+- Console Kernel utilizing `spf13/cobra` for command registration.
+- `artisan.go` root entrypoint for executing CLI commands.
+
 ## Verification Plan
 
 ### Automated Tests

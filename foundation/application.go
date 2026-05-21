@@ -7,8 +7,9 @@ import (
 // Application represents the GoW framework application.
 type Application struct {
 	*container.Container
-	basePath string
-	booted   bool
+	basePath  string
+	booted    bool
+	providers []ServiceProvider
 }
 
 // NewApplication creates a new Application instance.
@@ -38,11 +39,22 @@ func (app *Application) Bootstrap(bootstrappers ...func(*Application)) {
 	}
 }
 
+// RegisterProvider registers a service provider with the application.
+func (app *Application) RegisterProvider(p ServiceProvider) {
+	p.Register(app)
+	app.providers = append(app.providers, p)
+}
+
 // Boot boots the application, preventing further container bindings.
 func (app *Application) Boot() {
 	if app.booted {
 		return
 	}
+
+	for _, p := range app.providers {
+		p.Boot(app)
+	}
+
 	app.booted = true
 	app.Freeze()
 }

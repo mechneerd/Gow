@@ -79,52 +79,52 @@
 - **Notes**: Kernel pipeline building is implemented
 
 ### [P1.6] Base Controller & Response Helpers
-- **Date**: PLANNED
+- **Date**: 2026-05-21
 - **Phase**: 1
 - **Feature**: Controller struct, JSON responses, redirects, views
-- **Status**: PLANNED
-- **Decision**: Controllers are structs with dependency injection
-- **Notes**: Response helpers as methods or package functions
+- **Status**: COMPLETED
+- **Decision**: Added http/response package with JSON and Redirect helpers
+- **Notes**: Controllers are just structs in Go, so we rely on DI and helpers.
 
 ### [P1.7] Configuration System
-- **Date**: PLANNED
+- **Date**: 2026-05-21
 - **Phase**: 1
 - **Feature**: Config structs, .env loading, dot notation access, caching
-- **Status**: PLANNED
-- **Decision**: Struct tags for env binding; gob serialization for cache
-- **Notes**: Use godotenv for .env parsing
+- **Status**: COMPLETED
+- **Decision**: Added config.Repository using joho/godotenv
+- **Notes**: Loads .env and falls back to os.Environ
 
 ### [P1.8] Service Provider System
-- **Date**: PLANNED
+- **Date**: 2026-05-21
 - **Phase**: 1
 - **Feature**: Register/Boot lifecycle, deferred providers
-- **Status**: PLANNED
-- **Decision**: Interface-based with base struct for embedding
-- **Notes**: Provider manifest for deferred loading optimization
+- **Status**: COMPLETED
+- **Decision**: Integrated ServiceProvider interface into foundation.Application
+- **Notes**: Providers register during Bootstrap and boot during App.Boot()
 
 ### [P1.9] Error Handling & Exception Rendering
-- **Date**: PLANNED
+- **Date**: 2026-05-21
 - **Phase**: 1
 - **Feature**: HttpException, handler, custom error pages, panic recovery
-- **Status**: PLANNED
-- **Decision**: Go errors adapted to HTTP exception pattern
-- **Notes**: Different dev/prod rendering
+- **Status**: COMPLETED
+- **Decision**: Emulate exceptions with a panic recovery middleware (HttpException)
+- **Notes**: Catch panics, return JSON error responses or 500 status
 
 ### [P1.10] Logging System
-- **Date**: PLANNED
+- **Date**: 2026-05-21
 - **Phase**: 1
 - **Feature**: Multi-channel logging, levels, context, rotation
-- **Status**: PLANNED
-- **Decision**: Build on zap or standard slog
-- **Notes**: Request ID injection via context
+- **Status**: COMPLETED
+- **Decision**: Used Go's native log/slog with JSON handler
+- **Notes**: Configuration reads LOG_LEVEL from environment
 
 ### [P1.11] CLI Framework (Artisan)
-- **Date**: PLANNED
+- **Date**: 2026-05-21
 - **Phase**: 1
 - **Feature**: Command registration, built-in commands, code generation
-- **Status**: PLANNED
-- **Decision**: Use cobra or urfave/cli as base
-- **Notes**: `artisan` command as main CLI entry point
+- **Status**: COMPLETED
+- **Decision**: Used spf13/cobra for console kernel
+- **Notes**: artisan.go entrypoint created
 
 ---
 
