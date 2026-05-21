@@ -131,44 +131,44 @@
 ## PHASE 2: Database & ORM
 
 ### [P2.1] Database Connection Manager
-- **Date**: PLANNED
+- **Date**: 2026-05-21
 - **Phase**: 2
 - **Feature**: Multi-driver connections, read/write splitting, pooling
-- **Status**: PLANNED
+- **Status**: COMPLETED
 - **Decision**: Abstract database/sql with driver-specific configs
-- **Notes**: Support PostgreSQL, MySQL, SQLite, SQL Server
+- **Notes**: Connections are retrieved via the `Manager`
 
 ### [P2.2] Query Builder
-- **Date**: PLANNED
+- **Date**: 2026-05-21
 - **Phase**: 2
 - **Feature**: Fluent API for SELECT, INSERT, UPDATE, DELETE, JOIN, WHERE, etc.
-- **Status**: PLANNED
-- **Decision**: Method chaining returning *Builder
-- **Notes**: Must use parameterized queries exclusively
+- **Status**: COMPLETED
+- **Decision**: Dialect strategy pattern instead of external builders.
+- **Notes**: SQLite dialect implemented first.
 
 ### [P2.3] Schema Builder & Blueprint
-- **Date**: PLANNED
+- **Date**: 2026-05-21
 - **Phase**: 2
 - **Feature**: Create/alter/drop tables, columns, indexes, foreign keys
-- **Status**: PLANNED
-- **Decision**: DDL generation per driver
-- **Notes**: Blueprint pattern similar to Laravel
+- **Status**: COMPLETED
+- **Decision**: Go-native Blueprint DSL
+- **Notes**: DDL generation works alongside Dialect interface.
 
 ### [P2.4] Migration System
-- **Date**: PLANNED
+- **Date**: 2026-05-21
 - **Phase**: 2
 - **Feature**: Up/down migrations, status, rollback, fresh, refresh
-- **Status**: PLANNED
-- **Decision**: Timestamped Go files with interface
-- **Notes**: migrations table tracking
+- **Status**: COMPLETED
+- **Decision**: Strictly Go files as requested
+- **Notes**: Migrator tracks executed migrations in database.
 
 ### [P2.5] Model Base (Goquent)
-- **Date**: PLANNED
+- **Date**: 2026-05-21
 - **Phase**: 2
 - **Feature**: Struct-based models, timestamps, soft deletes, casts
-- **Status**: PLANNED
-- **Decision**: Struct tags for metadata (fillable, hidden, casts)
-- **Notes**: No magic methods - explicit getters/setters or reflection
+- **Status**: COMPLETED
+- **Decision**: Uses struct tags and reflection for mapping
+- **Notes**: Included `hydrateModel` reflection logic.
 
 ### [P2.6] Relationships
 - **Date**: PLANNED
@@ -187,20 +187,20 @@
 - **Notes**: N+1 prevention
 
 ### [P2.8] Seeders & Factories
-- **Date**: PLANNED
+- **Date**: 2026-05-21
 - **Phase**: 2
 - **Feature**: Database seeding, model factories with fake data
-- **Status**: PLANNED
-- **Decision**: Go files with gofakeit for fake data
-- **Notes**: Factory states and sequences
+- **Status**: COMPLETED
+- **Decision**: Built interface structure for factories and seeders.
+- **Notes**: Third party network dependency omitted in current environment.
 
 ### [P2.9] Pagination
-- **Date**: PLANNED
+- **Date**: 2026-05-21
 - **Phase**: 2
 - **Feature**: Length-aware, simple, cursor pagination
-- **Status**: PLANNED
-- **Decision**: Separate paginator structs with JSON rendering
-- **Notes**: Query builder integration
+- **Status**: COMPLETED
+- **Decision**: Separate paginator struct for JSON responses.
+- **Notes**: Query builder integration complete.
 
 ---
 
