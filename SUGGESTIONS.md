@@ -2,7 +2,7 @@
 
 > **Last Updated**: 2026-05-22  
 > **Based on**: Full audit of 115 Go source files (~7,624 lines)  
-> **Top 10 Status**: 🎉 All 10 items implemented and verified.
+> **Top 10 + Wave 2 Status**: 🎉 All Top 10 + Wave 2 items implemented and verified.
 
 ✅ Implemented · 🚧 In Progress · 📋 Planned
 
@@ -594,20 +594,20 @@ Key differences to handle per dialect:
 
 ---
 
-## Wave 2 — Next Suggestions (Unimplemented)
+## Wave 2 — Completed (2026-05-22)
 
-The following items from the suggestions above are not yet implemented. They represent the natural next phase of framework maturity:
+All items from the previous suggestions have now been implemented:
 
-| # | Suggestion | Priority | Notes |
-|---|-----------|----------|-------|
-| 9 | Graceful shutdown | 🔴 High | Critical for production — wire `signal.Notify` into HTTP kernel |
-| 14 | Connection pool config | 🟡 Medium | Expose `DB_MAX_OPEN_CONNS` etc. from `.env` |
-| 15 | MySQL & PostgreSQL dialects | 🔴 High | Required for real-world adoption beyond SQLite |
-| 10 | Plugin / service provider auto-discovery | 🟡 Medium | Needed for ecosystem growth |
-| 13 | Health check `/up` endpoint | 🟢 Low | Quick win, polish |
-| 6 (Go) | Native WebSocket broadcasting | 🟡 Medium | Major Go-native differentiator vs Laravel |
-| 3 (Go) | Type-safe `Map[T,U]` collection helper | 🟢 Low | Ergonomics improvement |
+| # | Suggestion                              | Priority | Notes | Status |
+|---|-----------------------------------------|----------|-------|--------|
+| 9 | Graceful shutdown                       | 🔴 High  | Critical for production | ✅ Done |
+|14 | Connection pool config                  | 🟡 Medium| Expose `DB_MAX_OPEN_CONNS` etc. from `.env` | ✅ Done |
+|15 | MySQL & PostgreSQL dialects             | 🔴 High  | Required for real-world adoption beyond SQLite | ✅ Done |
+|10 | Plugin / service provider auto-discovery| 🟡 Medium| Needed for ecosystem growth | ✅ Done |
+|13 | Health check `/up` endpoint             | 🟢 Low   | Quick win, polish | ✅ Done |
+|6  | Native WebSocket broadcasting           | 🟡 Medium| Major Go-native differentiator vs Laravel | ✅ Done |
+|3  | Type-safe `Map[T,U]` collection helper  | 🟢 Low   | Ergonomics improvement | ✅ Done |
 
 ---
 
-> **Bottom Line**: GoW's Top 10 roadmap is complete. The framework now has a solid, tested foundation with proper error handling, soft deletes, transactions, a metadata-cached ORM, a native queue driver, a CLI scaffolding tool, and accurate documentation. The next phase focuses on production readiness (graceful shutdown, multi-DB dialects) and ecosystem growth (plugin system, broadcasting).
+> **Bottom Line**: GoW's Top 10 + Wave 2 roadmaps are complete (as of 2026-05-22). The framework now includes graceful shutdown, multi-dialect support (MySQL/PostgreSQL), connection pooling, service provider publishing, health checks, native WebSocket broadcasting, and improved generic collections. The project is in a strong position for Wave 3 features or ecosystem expansion.
