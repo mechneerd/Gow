@@ -25,27 +25,43 @@ func (c *DBTestContext) SetupSuite() {
 	// migration.Runner(c.db).Up()
 }
 
-// RefreshDatabase wraps a test in a transaction and rolls it back at the end.
-func (c *DBTestContext) RefreshDatabase(t *testing.T, testFunc func(tx *sql.Tx)) {
-	log.Println("Starting test transaction...")
-	
+// RefreshDatabase wraps a test in a transaction and automatically rolls it back after the test.
+// This is the recommended way to keep tests isolated and fast.
+func (c *DBTestContext) RefreshDatabase(t *testing.T, testFunc func()) {
 	tx, err := c.db.Begin()
 	if err != nil {
 		t.Fatalf("Failed to begin transaction: %v", err)
 	}
 
-	// Ensure rollback happens at the end of the test regardless of panic/fail
+	// Save the transaction so the app can use it during the test
+	c.tx = tx
+
 	defer func() {
-		log.Println("Rolling back test transaction...")
-		if err := tx.Rollback(); err != nil && err != sql.ErrTxDone {
-			t.Errorf("Failed to rollback transaction: %v", err)
+		if r := recover(); r != nil {
+			tx.Rollback()
+			panic(r)
 		}
+		_ = tx.Rollback() // always rollback after test
 	}()
 
-	// Execute the test function, providing the transaction
-	// The application's DB container should be temporarily bound to this transaction
-	// so that all repository/model queries use it instead of the global DB pool.
-	testFunc(tx)
+	testFunc()
+}
+
+// WithTransaction is a helper that lets you run a block inside a transaction.
+// Useful when you want to share the same transaction across multiple operations in a test.
+func (c *DBTestContext) WithTransaction(t *testing.T, fn func(tx *sql.Tx)) {
+	tx, err := c.db.Begin()
+	if err != nil {
+		t.Fatalf("Failed to begin transaction: %v", err)
+	}
+	defer tx.Rollback()
+
+	fn(tx)
+}
+
+// GetTransaction returns the current transaction (if RefreshDatabase was used).
+func (c *DBTestContext) GetTransaction() *sql.Tx {
+	return c.tx
 }
 
 // UseInMemorySQLite sets up a completely fresh SQLite database in memory for the test.

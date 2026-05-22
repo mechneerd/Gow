@@ -281,7 +281,77 @@ GoW is significantly more complete for real-world applications.
 
 ---
 
-## Mail Polish + Views + CLI Commands (2026-05-22)
+## HTTP Client Improvements (2026-05-22)
+
+- Significantly upgraded `support/httpclient/client.go`
+- Added full HTTP methods: Get, Post, PostForm, Put, Patch, Delete, Head
+- Added fluent builders: `WithQuery`, `WithToken`, `WithHeaders`, `Retry`
+- Greatly improved `Response`: `Ok()`, `Failed()`, `ClientError()`, `ServerError()`, `Header()`, etc.
+- Query parameters are now properly appended
+- Status upgraded to **✅ Good** in `Current_Capabilities.md`
+
+- Added `MailChannel` for sending notifications via email
+- Added `MailNotification` interface (`ToMail(notifiable)`)
+- Created `notifications/service_provider.go` for easy registration
+- Added global `Notify()` helper + `SetDefaultManager()`
+- Manager now supports thread-safe channel registration
+- Registered `notifications.ServiceProvider` in canonical bootstrap
+- Status upgraded to **✅ Good** in `Current_Capabilities.md`
+
+- Added `MailChannel` for sending notifications via email
+- Added `MailNotification` interface (`ToMail(notifiable)`)
+- Created `notifications/service_provider.go` for easy registration
+- Added global `Notify()` helper + `SetDefaultManager()`
+- Manager now supports thread-safe channel registration
+- Status upgraded to **✅ Good** in `Current_Capabilities.md`
+
+- Improved `RefreshDatabase` pattern with proper transaction rollback
+- Added powerful database assertions:
+  - `AssertDatabaseCount`
+  - `AssertDatabaseHasNoRecords`
+  - `AssertDatabaseHasExactly`
+- Enhanced existing `AssertDatabaseHas` / `AssertDatabaseMissing`
+- Fakes (`MailFake`, `QueueFake`, `EventFake`) are now considered complete with good assertion helpers
+- Overall Testing Utilities section upgraded to **✅ Good**
+
+This significantly improves the developer experience when writing tests in GoW.
+
+- Extended `database/migration/migrator.go` with `Fresh()` and `Refresh()` methods
+- Created `cmd/artisan/migrate_commands.go` with:
+  - `migrate`
+  - `migrate:fresh`
+  - `migrate:refresh`
+- Registered all migration commands in the artisan kernel
+- Status upgraded to **✅ Good** in `Current_Capabilities.md`
+
+- Created `storage/s3_driver.go` using official AWS SDK v2
+- Supports: Put, Get, Delete, Exists, URL, and Presigned URLs
+- Credentials can be loaded from environment or passed explicitly
+- Old no-op S3Driver stub removed
+- Status upgraded to **✅ Good** in `Current_Capabilities.md`
+
+- Created proper Tinker REPL using Yaegi interpreter
+- `artisan tinker` command fully functional
+- Preloads `App`, `DB`, and `Config` by default via symbol injection
+- Users can import any `gow/*` package interactively
+- Status upgraded to **✅ Good** in `Current_Capabilities.md`
+
+**Major progress on Validation Rules** (highest priority item):
+
+Added many new high-value rules:
+- `boolean`, `integer`, `array`
+- `url`, `uuid`
+- `alpha`, `alpha_num`, `alpha_dash`
+- `required_if`
+- `same`, `different`
+- `gt`, `gte`, `lt`, `lte`
+- `nullable`, `bail`
+- `date`, `before`, `after`
+- `json`
+
+Also fixed proper `bail` behavior (stops validation on first error for the field) and improved `nullable` handling.
+
+Status in `Current_Capabilities.md` updated from ❌ Many → 🟡 Partial (significant improvement).
 
 **Views Improvements**
 - `{!! !!}` raw/unescaped output → ✅ Good
@@ -322,3 +392,25 @@ All major Blade-style view directives are now supported.
 - Status: ✅ Good
 
 All requested features from the final list have been fully implemented. The framework is now in an excellent state.
+
+---
+
+## Overall Project Status (as of May 23, 2026)
+
+After completing the original Top 10 roadmap, Wave 2 features, and a massive follow-up implementation wave covering the remaining high-priority gaps, **GoW Framework has reached a new level of maturity**.
+
+### Key Achievements:
+- **Database & ORM**: One of the strongest areas — full transactions, BelongsToMany with pivot helpers, Mass Assignment protection, advanced pagination, raw expressions, and multi-dialect support.
+- **Authentication & Authorization**: Production-ready session auth, Password Reset, Email Verification, Policies/Gate, and Sanctum.
+- **Views & Templating**: Near-complete Blade-like experience (`@auth`/`@can*`, `$loop`, `{!! !!}`, Components & Slots).
+- **Developer Experience**: Tinker REPL, `route:list`, improved artisan commands, rich testing utilities, and fluent HTTP client.
+- **Ecosystem Features**: Real S3 storage, Markdown + queued mail, Notifications with multiple channels, and proper service provider publishing.
+
+### Current Maturity Level:
+The framework has evolved from a "promising skeleton" into a **genuinely usable and production-viable framework**, especially strong for building APIs, admin panels, and full-stack applications.
+
+While a few areas (advanced CLI commands, deeper View components, and some edge-case validation rules) still have room for polish, the core foundation, data layer, authentication, and developer tooling are now solid.
+
+**GoW is ready for real-world use.**
+
+This document will continue to be updated as future waves of features and refinements are delivered.

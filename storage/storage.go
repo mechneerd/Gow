@@ -77,25 +77,5 @@ func (d *LocalDriver) URL(path string) string {
 	return d.BaseURL + "/" + path
 }
 
-// S3Driver is a PLANNED feature for AWS S3 implementation.
-// In a future release, it will use the aws-sdk-go-v2. Currently all operations return ErrNotImplemented.
-type S3Driver struct {
-	Bucket string
-	Region string
-}
-
-func (d *S3Driver) Put(path string, contents io.Reader) error {
-	return ErrNotImplemented
-}
-func (d *S3Driver) Get(path string) (io.ReadCloser, error) {
-	return nil, ErrNotImplemented
-}
-func (d *S3Driver) Delete(path string) error {
-	return ErrNotImplemented
-}
-func (d *S3Driver) Exists(path string) bool {
-	return false
-}
-func (d *S3Driver) URL(path string) string {
-	return "https://" + d.Bucket + ".s3." + d.Region + ".amazonaws.com/" + path
-}
+// Note: Real S3Driver implementation has been moved to s3_driver.go
+// You can create it using: storage.NewS3Driver(bucket, region, accessKey, secretKey)

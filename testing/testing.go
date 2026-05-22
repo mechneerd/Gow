@@ -74,6 +74,45 @@ func (tc *TestCase) AssertDatabaseMissing(table string, conditions map[string]an
 	}
 }
 
+// AssertDatabaseCount asserts that a table has exactly `expected` number of rows.
+func (tc *TestCase) AssertDatabaseCount(table string, expected int) {
+	tc.Helper()
+	builder := query.NewBuilder(tc.DB.RawDB(), tc.DB.Dialect())
+	builder.Table(table)
+
+	count, err := builder.Count("*")
+	if err != nil {
+		tc.Fatalf("Error counting rows in table [%s]: %v", table, err)
+	}
+	if count != expected {
+		tc.Errorf("Failed asserting that table [%s] has %d rows. Found %d", table, expected, count)
+	}
+}
+
+// AssertDatabaseHasNoRecords asserts that a table is completely empty.
+func (tc *TestCase) AssertDatabaseHasNoRecords(table string) {
+	tc.AssertDatabaseCount(table, 0)
+}
+
+// AssertDatabaseHasExactly asserts that a table contains **exactly one** row matching the conditions.
+func (tc *TestCase) AssertDatabaseHasExactly(table string, conditions map[string]any) {
+	tc.Helper()
+	builder := query.NewBuilder(tc.DB.RawDB(), tc.DB.Dialect())
+	builder.Table(table)
+	
+	for k, v := range conditions {
+		builder.Where(k, "=", v)
+	}
+	
+	count, err := builder.Count("*")
+	if err != nil {
+		tc.Fatalf("Error querying database: %v", err)
+	}
+	if count != 1 {
+		tc.Errorf("Failed asserting that table [%s] has exactly 1 row matching %v. Found %d", table, conditions, count)
+	}
+}
+
 // ActingAs authenticates the current test request using the Sanctum middleware logic.
 func (tc *TestCase) ActingAs(token string) *TestCase {
 	// In a real framework we might set a context value globally for the test

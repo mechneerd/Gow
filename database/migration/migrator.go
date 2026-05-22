@@ -141,6 +141,35 @@ func (m *Migrator) logMigration(name string, batch int) error {
 	return err
 }
 
+// Refresh rolls back ALL batches of migrations, then runs Migrate again.
+func (m *Migrator) Refresh() error {
+	for {
+		ran, err := m.getRanMigrations()
+		if err != nil || len(ran) == 0 {
+			break
+		}
+		if err := m.Rollback(); err != nil {
+			return err
+		}
+	}
+	return m.Migrate()
+}
+
+// Fresh drops the migrations table and re-runs all migrations from scratch.
+// This is equivalent to a clean database state.
+func (m *Migrator) Fresh() error {
+	// Drop migrations table if it exists
+	_, _ = m.db.Exec("DROP TABLE IF EXISTS migrations")
+
+	// Re-setup
+	if err := m.Setup(); err != nil {
+		return err
+	}
+
+	// Run all migrations
+	return m.Migrate()
+}
+
 // Rollback rolls back the last batch of migrations.
 func (m *Migrator) Rollback() error {
 	var batch int

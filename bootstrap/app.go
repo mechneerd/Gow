@@ -6,6 +6,7 @@ import (
 	"gow/foundation"
 	"gow/logging"
 	"gow/mail"
+	"gow/notifications"
 )
 
 // NewApplication creates and boots a standard GoW Application with core providers.
@@ -17,6 +18,7 @@ func NewApplication(basePath string) *foundation.Application {
 	app.RegisterProvider(&logging.ServiceProvider{})
 	app.RegisterProvider(&broadcasting.ServiceProvider{})
 	app.RegisterProvider(&mail.ServiceProvider{})
+	app.RegisterProvider(&notifications.ServiceProvider{})
 
 	// Boot the application (freezes container)
 	app.Boot()

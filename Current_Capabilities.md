@@ -103,7 +103,7 @@ This document provides a clear, honest comparison of what **GoW currently has im
 |--------------------------------|-----------------------------|------------|-------|
 | Validator                      | Validator                   | ✅ Good    | ~14–16 rules + DB rules |
 | Form Request Validation        | FormRequest                 | ✅ Good    | Integrated |
-| Missing Rules (date, uuid, required_if, etc.) | 20+ rules | ❌ Many    | See `MISSING_FEATURES.md` |
+| Missing Rules (date, uuid, required_if, etc.) | 20+ rules | 🟡 Partial | Major progress: boolean, integer, array, url, uuid, alpha*, required_if, same/different, gt/gte/lt/lte, nullable, bail, date, before, after, json added |
 
 ---
 
@@ -139,7 +139,7 @@ This document provides a clear, honest comparison of what **GoW currently has im
 |----------------------------|--------------------------|------------|-------|
 | Mail Message Builder       | Mailable                 | ✅ Good    | `mail/message.go` |
 | Mailer / Sending           | Mail facade              | ✅ Good    | Improved SmtpDriver (base64 attachments, encryption modes documented), better QueueNow helper, Markdown support, ServiceProvider |
-| Notifications              | Notifications            | 🟡 Partial | Manager + Database channel started |
+| Notifications              | Notifications            | ✅ Good    | Manager + DatabaseChannel + new MailChannel + Notify() helper + ServiceProvider |
 | Mail Queueing              | ShouldQueue              | ✅ Good    | Full ShouldQueue support via SendMailJob + Queue/QueueNow. Mailer supports automatic dispatch when queue manager is attached. |
 
 ---
@@ -151,8 +151,8 @@ This document provides a clear, honest comparison of what **GoW currently has im
 | Encryption                 | Encrypter                   | ✅ Good    | AES-256 |
 | Hashing                    | Hash                        | ✅ Good    | Bcrypt + Argon2 |
 | Logging                    | Logging                     | ✅ Good    | slog-based with levels |
-| Storage (Filesystem)       | Storage                     | 🟡 Partial | Local works; S3 is still no-op |
-| HTTP Client                | Http Client                 | 🟡 Partial | Basic client in `support/httpclient` |
+| Storage (Filesystem)       | Storage                     | ✅ Good    | Local + Real S3 driver implemented using aws-sdk-go-v2 (Put, Get, Delete, Exists, URL, PresignedURL) |
+| HTTP Client                | Http Client                 | ✅ Good    | Fluent client with Get/Post/Put/Patch/Delete, query params, tokens, retries, JSON/form, and basic faking |
 | Process / Shell            | Process                     | ✅ Good    | `support/process` |
 | Health Checks              | Health route                | ✅ Good    | `/up` endpoint + checkers (Wave 2) |
 | Pipeline                   | Pipeline                    | ✅ Good    | `support/pipeline` |
@@ -165,9 +165,9 @@ This document provides a clear, honest comparison of what **GoW currently has im
 |----------------------------|--------------------------|------------|-------|
 | Artisan-like CLI           | Artisan                  | ✅ Good    | `cmd/artisan` + `gow` binary |
 | Generators (`make:*`)      | make:* commands          | ✅ Several | Controller, Model, Migration, Middleware, Command, etc. |
-| Migration Commands         | migrate, migrate:fresh   | 🟡 Partial | Basic migrate works; fresh/refresh missing |
+| Migration Commands         | migrate, migrate:fresh   | ✅ Good    | Full support: migrate, migrate:fresh, migrate:refresh implemented on Migrator + artisan commands |
 | Route listing              | route:list               | ✅ Good    | Full `route:list` command implemented (lists method, URI, name). Router exposes GetAllRoutes(). |
-| Tinker / REPL              | tinker                   | ❌ Missing | — |
+| Tinker / REPL              | tinker                   | ✅ Good    | Full REPL using Yaegi. Preloads App, DB, Config. Users can import any gow package at runtime. |
 
 ---
 
@@ -176,9 +176,9 @@ This document provides a clear, honest comparison of what **GoW currently has im
 | Feature                    | Laravel Equivalent          | GoW Status | Notes |
 |----------------------------|-----------------------------|------------|-------|
 | TestCase base              | TestCase                    | ✅ Good    | `testing/testcase.go` |
-| Database testing helpers   | RefreshDatabase, etc.       | 🟡 Partial | Basic DB helpers exist |
-| Fakes                      | Mail::fake, Queue::fake     | 🟡 Partial | Some fakes in `support/fakes` |
-| Assertions                 | AssertDatabaseHas, etc.     | ❌ Missing | — |
+| Database testing helpers   | RefreshDatabase, etc.       | ✅ Good    | RefreshDatabase + transaction support + AssertDatabaseHas/Missing/Count/Exactly implemented |
+| Fakes                      | Mail::fake, Queue::fake     | ✅ Good    | MailFake, QueueFake, EventFake with AssertSent / AssertPushed / AssertDispatched |
+| Assertions                 | AssertDatabaseHas, etc.     | ✅ Good    | Rich set: AssertDatabaseHas, Missing, Count, Exactly, HasNoRecords + HTTP assertions |
 
 ---
 
