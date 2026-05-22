@@ -19,6 +19,65 @@ type Model interface {
 	TableName() string
 }
 
+// filterMassAssignment applies fillable/guarded protection if the model implements MassAssignable.
+func filterMassAssignment(model any, values map[string]any, typ reflect.Type) map[string]any {
+	ma, ok := model.(MassAssignable)
+	if !ok {
+		return values // no protection defined, allow all (current default behavior)
+	}
+
+	fillable := ma.Fillable()
+	guarded := ma.Guarded()
+
+	// If guarded contains "*", guard everything unless explicitly fillable
+	guardAll := false
+	for _, g := range guarded {
+		if g == "*" {
+			guardAll = true
+			break
+		}
+	}
+
+	filtered := make(map[string]any)
+
+	for col, val := range values {
+		allowed := true
+
+		if len(fillable) > 0 {
+			allowed = false
+			for _, f := range fillable {
+				if f == col {
+					allowed = true
+					break
+				}
+			}
+		}
+
+		if guardAll {
+			allowed = false
+			for _, f := range fillable {
+				if f == col {
+					allowed = true
+					break
+				}
+			}
+		}
+
+		for _, g := range guarded {
+			if g == col {
+				allowed = false
+				break
+			}
+		}
+
+		if allowed {
+			filtered[col] = val
+		}
+	}
+
+	return filtered
+}
+
 // DB represents the ORM database connection.
 type DB struct {
 	Conn    query.QueryExecer
@@ -382,6 +441,9 @@ func (q *ModelQuery[T]) Insert(model *T) error {
 		values[field.Column] = val.Field(field.Index).Interface()
 	}
 
+	// Mass Assignment Protection
+	values = filterMassAssignment(model, values, typ)
+
 	res, err := q.builder.Insert(values)
 	if err != nil {
 		return err
@@ -445,6 +507,9 @@ func (q *ModelQuery[T]) Update(model *T) error {
 
 		values[field.Column] = val.Field(field.Index).Interface()
 	}
+
+	// Mass Assignment Protection
+	values = filterMassAssignment(model, values, typ)
 	
 	if pkValue == nil {
 		return sql.ErrNoRows // Cannot update without a primary key

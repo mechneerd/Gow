@@ -19,6 +19,7 @@ type Router struct {
 	mu                sync.RWMutex
 	trees             map[string]*node
 	namedRoutes       map[string]*Route
+	allRoutes         []*Route // flat list for route:list and introspection
 	middlewares       []func(http.Handler) http.Handler
 	groupPrefix       string
 	middlewareAliases map[string]func(http.Handler) http.Handler

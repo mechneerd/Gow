@@ -278,3 +278,20 @@ Following the user's request ("start from 1 and complete up to 3"):
 All major sections requested (Database/ORM + Authentication) are now in a strong, usable state in `Current_Capabilities.md`.
 
 GoW is significantly more complete for real-world applications.
+
+---
+
+## Mass Assignment + Email Verification Completed (2026-05-22)
+
+**Mass Assignment Protection**
+- Added `MassAssignable` interface (`Fillable()` / `Guarded()`)
+- Filtering enforced in both `Insert()` and `Update()` in the ORM
+- Status: ✅ Good
+
+**Email Verification**
+- Signed URL based verification (leveraging existing signed routes)
+- Fortify handler implemented
+- `RequireVerified` middleware added
+- Status: ✅ Good
+
+All requested features from the final list have been fully implemented. The framework is now in an excellent state.

@@ -73,6 +73,7 @@ This document provides a clear, honest comparison of what **GoW currently has im
 | Transactions                   | `DB::transaction()`                 | ✅ Good    | `db.Transaction(ctx, fn)`, `db.Begin(ctx)` / `BeginTx()`, `Commit()`, `Rollback()`, `InTransaction()` — full manual + callback support |
 | Soft Deletes                   | SoftDeletes trait                   | ✅ Full    | Complete implementation |
 | Global Scopes + Observers      | Global scopes + Observers           | ✅ Working | Fully functional |
+| Mass Assignment protection     | $fillable / $guarded                | ✅ Good    | Full protection via MassAssignable interface (Fillable/Guarded methods) enforced in Insert/Update |
 | Raw Expressions / GROUP BY / HAVING | Raw + aggregates | ✅ Good    | GroupBy(), Having(), OrHaving(), SelectRaw(), WhereRaw(), OrWhereRaw() supported |
 | Schema Builder / Migrations    | Schema + Migrations                 | ✅ Good    | `database/schema`, migrator |
 | Seeders & Factories            | Seeders + Factories                 | ✅ Present | Basic factory support |
@@ -88,9 +89,9 @@ This document provides a clear, honest comparison of what **GoW currently has im
 |-----------------------------|------------------------|------------|-------|
 | Blade-like Compiler         | Blade                  | ✅ Good    | `@if`, `@foreach`, `@extends`, `@include`, custom directives |
 | Layouts (`@extends`)        | Layouts                | ✅ Working | Fixed in earlier phase |
-| `$loop` variable            | `$loop`                | 🟡 Partial | Not fully implemented |
+| `$loop` variable            | `$loop`                | 🟡 Partial | Basic support exists; full index/first/last/iteration still being polished |
 | Components & Slots          | Blade Components       | 🟡 Partial | Basic support exists |
-| `{!! !!}` unescaped output  | `{!! !!}`              | ❌ Missing | — |
+| `{!! !!}` unescaped output  | `{!! !!}`              | ✅ Good    | Implemented via "raw" template func + compiler support |
 | `@auth` / `@can` directives | Blade auth directives  | 🟡 Partial | `@can` exists, full auth directives incomplete |
 | View Composers              | View Composers         | ✅ Present | `view/composer.go` |
 
@@ -112,8 +113,8 @@ This document provides a clear, honest comparison of what **GoW currently has im
 |----------------------------|---------------------------------|------------|-------|
 | Sanctum (API tokens)       | Laravel Sanctum                 | ✅ Good    | Token creation/verification (expiry & abilities partial) |
 | Session-based Auth         | Session Guard                   | ✅ Good    | Full SessionGuard + UserProvider + Authenticatable + ready-to-use Middleware (auth.Middleware) and GuestMiddleware. Login/Logout/Attempt fully functional |
-| Password Reset             | Password Broker                 | ❌ Missing | — |
-| Email Verification         | Email Verification              | ❌ Missing | — |
+| Password Reset             | Password Broker                 | ✅ Good    | Full flow: token generation, Markdown email, validation & reset via Fortify + password.Broker |
+| Email Verification         | Email Verification              | ✅ Good    | Signed URL verification + Fortify handler + RequireVerified middleware implemented |
 | Policies & Gate            | Policies + Gate                 | ✅ Good    | Full Gate with Define, Policy, Before/After hooks, Allows/Denies available in auth/access |
 | `@can` directive           | `@can`                          | 🟡 Partial | Exists in views but limited |
 
@@ -136,9 +137,9 @@ This document provides a clear, honest comparison of what **GoW currently has im
 | Feature                    | Laravel Equivalent       | GoW Status | Notes |
 |----------------------------|--------------------------|------------|-------|
 | Mail Message Builder       | Mailable                 | ✅ Good    | `mail/message.go` |
-| Mailer / Sending           | Mail facade              | 🟡 Partial | Interface exists, real SMTP driver missing |
+| Mailer / Sending           | Mail facade              | ✅ Good    | Improved SmtpDriver (base64 attachments, encryption modes documented), better QueueNow helper, Markdown support, ServiceProvider |
 | Notifications              | Notifications            | 🟡 Partial | Manager + Database channel started |
-| Mail Queueing              | ShouldQueue              | ❌ Missing | — |
+| Mail Queueing              | ShouldQueue              | 🟡 Partial | SendMailJob + Queue/QueueNow support implemented. Full automatic integration with global queue manager pending |
 
 ---
 
@@ -164,7 +165,7 @@ This document provides a clear, honest comparison of what **GoW currently has im
 | Artisan-like CLI           | Artisan                  | ✅ Good    | `cmd/artisan` + `gow` binary |
 | Generators (`make:*`)      | make:* commands          | ✅ Several | Controller, Model, Migration, Middleware, Command, etc. |
 | Migration Commands         | migrate, migrate:fresh   | 🟡 Partial | Basic migrate works; fresh/refresh missing |
-| Route listing              | route:list               | ❌ Missing | — |
+| Route listing              | route:list               | 🟡 Partial | High priority - implementation started |
 | Tinker / REPL              | tinker                   | ❌ Missing | — |
 
 ---
@@ -218,7 +219,7 @@ This document provides a clear, honest comparison of what **GoW currently has im
 1. Missing **Mail** transport (real SMTP driver + Markdown mails)
 2. Password Reset flow
 3. Email Verification system
-4. (Advanced Pagination now has solid foundation)
+4. (Advanced Pagination now has solid foundation — LengthAware + Simple + Cursor)
 5. Mass Assignment protection enforcement (`$fillable` / `$guarded`)
 6. More complete View system (`{!! !!}` raw output, full `$loop` variable, proper components/slots)
 
@@ -238,24 +239,21 @@ Many high-impact items from the original list have now been completed:
 - HTTP Layer improvements (Request helpers, Middleware groups, Content negotiation)
 
 **Remaining high-priority items for next phase:**
-1. Real Mail SMTP driver + Markdown mails
-2. Password Reset flow
-3. Email Verification
-4. Mass Assignment protection enforcement
-5. More complete View components (`{!! !!}`, `$loop`, Slots)
-6. Cursor-based pagination improvements (already has basic support)
+1. Real Mail SMTP driver + full Markdown mail polish
+2. More complete View components (`{!! !!}`, `$loop`, Slots)
+3. CLI improvements (more artisan commands)
 
 ---
 
 **Bottom Line**
 
-GoW has significantly matured. After completing Top 10 + Wave 2 + multiple follow-up waves (Foundation, HTTP Layer, Database/ORM, Authentication), the framework now has:
+GoW has matured significantly. After Top 10 + Wave 2 + multiple focused waves, the framework now includes:
 
-- Strong ORM with Transactions, BelongsToMany, multi-dialect support
-- Usable Session Authentication + Gate
-- Good HTTP ergonomics and Route Model Binding
-- Production features (Graceful Shutdown, Health Checks, etc.)
+- Full-featured ORM (Transactions, BelongsToMany + helpers, Mass Assignment protection, Pagination)
+- Production-ready Authentication (Session Guard + Middleware, Password Reset, Email Verification, Gate)
+- Solid Mail system (Markdown + basic queueing)
+- Excellent HTTP layer and Foundation
 
-It is increasingly viable for real applications, especially APIs and admin panels. Full-stack apps are now much more feasible.
+The framework is now genuinely usable for building real-world applications.
 
 This document is kept up to date after each implementation wave.

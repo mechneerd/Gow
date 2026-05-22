@@ -26,9 +26,9 @@ func NewCompiler(cachePath string) *Compiler {
 func (c *Compiler) CompileString(raw string) string {
 	compiled := raw
 
-	// 1. Echo statements: {{ $var }} -> {{ $var }} (Standard Go handles it)
-	// But let's support Blade unescaped {!! $var !!} by translating to {{ .var | raw }} if we register a func.
-	// For now, we'll map standard blade @directives.
+	// 1. Echo statements
+	// {!! $var !!} -> unescaped raw output (requires "raw" template func registered in Engine)
+	compiled = regexp.MustCompile(`\{\!\!\s*(.+?)\s*\!\!\}`).ReplaceAllString(compiled, `{{ raw $1 }}`)
 
 	// 2. Control Structures
 	compiled = strings.ReplaceAll(compiled, "@else", "{{ else }}")

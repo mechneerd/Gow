@@ -5,6 +5,18 @@ import (
 	"reflect"
 )
 
+// MassAssignable allows models to control mass assignment protection,
+// similar to Laravel's $fillable and $guarded properties.
+type MassAssignable interface {
+	// Fillable returns the list of fields that are allowed to be mass assigned.
+	// If empty, all fields are allowed unless Guarded is specified.
+	Fillable() []string
+
+	// Guarded returns the list of fields that are not allowed to be mass assigned.
+	// Use ["*"] to guard all fields by default.
+	Guarded() []string
+}
+
 // Scope represents a query scope that can be applied to a builder.
 type Scope interface {
 	Apply(builder *query.Builder) *query.Builder

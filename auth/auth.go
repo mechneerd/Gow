@@ -1,6 +1,11 @@
 package auth
 
-import "net/http"
+import (
+	"errors"
+	"net/http"
+)
+
+var ErrInvalidToken = errors.New("invalid or expired password reset token")
 
 type ContextKey string
 

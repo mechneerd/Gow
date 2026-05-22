@@ -73,6 +73,22 @@ func (m *BaseMailable) HTML(html string) *BaseMailable {
 	return m
 }
 
+// Markdown sets the email content from Markdown.
+// It automatically renders to HTML and keeps the original as Text fallback.
+func (m *BaseMailable) Markdown(md string) *BaseMailable {
+	htmlContent, err := RenderMarkdown(md)
+	if err != nil {
+		// Fallback to raw markdown if rendering fails
+		m.message.HTML = md
+		m.message.Text = md
+		return m
+	}
+
+	m.message.HTML = htmlContent
+	m.message.Text = StripForText(htmlContent) // or keep original md if preferred
+	return m
+}
+
 func (m *BaseMailable) Build() *Message {
 	return m.message
 }

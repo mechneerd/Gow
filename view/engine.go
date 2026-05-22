@@ -129,6 +129,17 @@ func (e *Engine) Make(name string, data map[string]any) (string, error) {
 			// Go templates do not natively support infinite loops.
 			return make([]struct{}, 100000)
 		},
+		// raw allows unescaped output: {!! $html !!}
+		"raw": func(s any) template.HTML {
+			switch v := s.(type) {
+			case string:
+				return template.HTML(v)
+			case template.HTML:
+				return v
+			default:
+				return template.HTML(fmt.Sprintf("%v", v))
+			}
+		},
 	}
 
 	// baseName is arbitrary for the template set, but ParseFiles will use the base name of each file for its templates
