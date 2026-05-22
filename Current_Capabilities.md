@@ -1,8 +1,8 @@
 # GoW Framework — Current Capabilities (vs Laravel)
 
 > **Date**: 2026-05-22 (Updated)  
-> **Framework Version**: Post Wave 2 + Foundation Hardening  
-> **Total Go source files**: ~157 (new bootstrap package)
+> **Framework Version**: Post Wave 2 + Major Feature Waves (ORM, Auth, HTTP, Foundation)  
+> **Total Go source files**: ~160+ (includes auth middleware, orm helpers, raw query improvements)
 
 This document provides a clear, honest comparison of what **GoW currently has implemented** versus Laravel equivalents.
 
@@ -36,18 +36,29 @@ This document provides a clear, honest comparison of what **GoW currently has im
 
 ## 2. HTTP Layer
 
+**Status: ✅ Significantly Improved (2026-05-22)**
+
+### Implementation Delivered
+- Extended `http/request/request.go` with many Laravel-style helpers: `Except()`, `Boolean()`, `Integer()`, `Float()`, `Collect()`, `ExpectsJson()`, `WantsJson()`, `Accepts()`, `Old()`.
+- Added **Middleware Groups & Aliases** support to the router (`Alias()`, `GroupMiddleware()`, `Middleware()`).
+- Implemented **Route Model Binding** (implicit + explicit):
+  - `router.Bind("user", resolver)`
+  - `routing.Model[T](req, "user")` generic helper
+  - Automatic resolution during request dispatch with 404 on binding failure
+- Content negotiation methods are now fully available.
+
 | Feature                          | Laravel Equivalent               | GoW Status | Notes |
 |----------------------------------|----------------------------------|------------|-------|
 | Router (Radix tree)              | Route                            | ✅ Strong  | All HTTP verbs, Groups, Resource routes, Named routes |
-| Route Model Binding              | Implicit + Explicit              | ❌ Missing | — |
+| Route Model Binding              | Implicit + Explicit              | ✅ Good    | `Bind()`, `ResolveBinding()`, `routing.Model[T]()`, `routing.Binding()` — full implicit + explicit support via registered resolvers |
 | Middleware (global + route)      | Middleware                       | ✅ Good    | 14+ middlewares implemented |
-| Middleware Groups & Aliases      | `middlewareGroups`, aliases      | ❌ Missing | — |
+| Middleware Groups & Aliases      | `middlewareGroups`, aliases      | ✅ Good    | `Alias()`, `GroupMiddleware()`, `Middleware()` supported |
 | Kernel + Graceful Shutdown       | `app/Http/Kernel.php`            | ✅ Full    | `http/kernel.go` — `Serve()` + `OnShutdown()` hooks (Wave 2) |
-| Request Helpers (`Input`, `Only`, `old()`) | `$request->input()`, `old()` | 🟡 Partial | Basic request object; many helpers still missing |
+| Request Helpers (`Input`, `Only`, `old()`) | `$request->input()`, `old()` | ✅ Good    | `Input`, `Only`, `Except`, `Boolean`, `Integer`, `Float`, `Collect`, `Old` + more |
 | Form Request                     | FormRequest                      | ✅ Good    | `http/request/form_request.go` |
 | API Resources                    | API Resources                    | ✅ Good    | `http/resources/resource.go` |
 | Exception Handling               | Exception Handler                | ✅ Good    | `http/exception` + `ErrorHandler` middleware |
-| Content Negotiation              | `wantsJson()`, `accepts()`       | ❌ Missing | — |
+| Content Negotiation              | `wantsJson()`, `accepts()`       | ✅ Good    | `ExpectsJson`, `WantsJson`, `Accepts` implemented |
 
 ---
 
@@ -58,14 +69,14 @@ This document provides a clear, honest comparison of what **GoW currently has im
 | Query Builder                  | Query Builder                       | ✅ Very Strong | Dialect-aware, all major methods |
 | Eloquent ORM                   | Eloquent                            | ✅ Strong  | Models, relations, soft deletes, scopes, observers |
 | Relationships (HasOne/HasMany/BelongsTo) | Eloquent Relations | ✅ Working | Eager loading fixed in earlier phase |
-| BelongsToMany (pivot)          | BelongsToMany                       | ❌ Missing | — |
-| Transactions                   | `DB::transaction()`                 | ❌ Missing | High priority for Wave 3 |
+| BelongsToMany (pivot)          | BelongsToMany                       | ✅ Good    | Eager loading (`With()`) works. Full helpers: Attach, Detach, Sync, Toggle implemented. Pivot table support complete |
+| Transactions                   | `DB::transaction()`                 | ✅ Good    | `db.Transaction(ctx, fn)`, `db.Begin(ctx)` / `BeginTx()`, `Commit()`, `Rollback()`, `InTransaction()` — full manual + callback support |
 | Soft Deletes                   | SoftDeletes trait                   | ✅ Full    | Complete implementation |
 | Global Scopes + Observers      | Global scopes + Observers           | ✅ Working | Fully functional |
-| Raw Expressions / GROUP BY / HAVING | Raw + aggregates | 🟡 Partial | Basic raw exists, advanced missing |
+| Raw Expressions / GROUP BY / HAVING | Raw + aggregates | ✅ Good    | GroupBy(), Having(), OrHaving(), SelectRaw(), WhereRaw(), OrWhereRaw() supported |
 | Schema Builder / Migrations    | Schema + Migrations                 | ✅ Good    | `database/schema`, migrator |
 | Seeders & Factories            | Seeders + Factories                 | ✅ Present | Basic factory support |
-| Pagination                     | Paginator                           | 🟡 Partial | Basic `Paginate()` works; cursor/simple missing |
+| Pagination                     | Paginator                           | ✅ Good    | Full implementation: LengthAwarePaginator, SimplePaginator, CursorPaginator + Paginate(), SimplePaginate(), CursorPaginate() on ModelQuery |
 | Database Dialects              | MySQL, Postgres, SQLite, SQL Server | ✅ Good    | SQLite + MySQL + PostgreSQL (Wave 2) |
 | Connection Pooling             | Via config                          | ✅ Good    | Auto-config from env (Wave 2) |
 
@@ -100,10 +111,10 @@ This document provides a clear, honest comparison of what **GoW currently has im
 | Feature                    | Laravel Equivalent              | GoW Status | Notes |
 |----------------------------|---------------------------------|------------|-------|
 | Sanctum (API tokens)       | Laravel Sanctum                 | ✅ Good    | Token creation/verification (expiry & abilities partial) |
-| Session-based Auth         | Session Guard                   | ❌ Missing | Only token auth currently works |
+| Session-based Auth         | Session Guard                   | ✅ Good    | Full SessionGuard + UserProvider + Authenticatable + ready-to-use Middleware (auth.Middleware) and GuestMiddleware. Login/Logout/Attempt fully functional |
 | Password Reset             | Password Broker                 | ❌ Missing | — |
 | Email Verification         | Email Verification              | ❌ Missing | — |
-| Policies & Gate            | Policies + Gate                 | ❌ Missing | — |
+| Policies & Gate            | Policies + Gate                 | ✅ Good    | Full Gate with Define, Policy, Before/After hooks, Allows/Denies available in auth/access |
 | `@can` directive           | `@can`                          | 🟡 Partial | Exists in views but limited |
 
 ---
@@ -169,62 +180,82 @@ This document provides a clear, honest comparison of what **GoW currently has im
 
 ---
 
-## Production Readiness Assessment (Post Wave 2)
+## Production Readiness Assessment (May 2026)
 
 | Area                        | Readiness | Comments |
 |-----------------------------|-----------|----------|
-| **Core HTTP + Routing**     | High      | Very usable with graceful shutdown |
-| **Database / ORM**          | High      | One of the best parts of GoW right now |
+| **Core HTTP + Routing**     | High      | Very usable with graceful shutdown + rich helpers |
+| **Database / ORM**          | High      | One of the strongest areas (Transactions, BelongsToMany, multi-dialect) |
 | **Queue + Broadcasting**    | Medium-High | Native Go advantages |
-| **Auth**                    | Low-Medium | Only API tokens work reliably |
+| **Auth**                    | Medium-High | Session Auth + Gate now functional + Sanctum |
 | **Mail / Notifications**    | Low       | Needs real drivers |
 | **Views + Validation**      | Medium    | Usable but incomplete |
-| **Transactions & Advanced ORM** | Low    | Blocker for many real apps |
-| **CLI & DX**                | Medium    | Good generators, missing many artisan commands |
-| **Overall Production**      | Medium    | Can be used for APIs and background jobs today. Not yet for full-stack apps with auth + mail. |
+| **Transactions & Advanced ORM** | High   | Now well supported |
+| **CLI & DX**                | Medium    | Good generators, missing some artisan commands |
+| **Overall Production**      | Medium-High | Can be used for APIs, background jobs, and many full-stack features. Mail is the main remaining gap for complete apps. |
 
 ---
 
 ## Key Strengths (What GoW Does Well Today)
 
 - Excellent generic container + service provider system
-- Strong, dialect-aware Query Builder + ORM with real relationships
-- Graceful shutdown + connection pooling (production polish)
+- Strong, dialect-aware Query Builder + ORM (Transactions, BelongsToMany + pivot helpers, scopes, observers, soft deletes)
+- Full database transactions with manual + callback API
+- Session-based Authentication + Gate/Policies (production ready)
+- Route Model Binding (implicit + explicit)
+- Rich HTTP layer (Request helpers, Middleware groups/aliases, Content negotiation)
 - Native WebSocket broadcasting (unique Go advantage)
 - Multiple queue drivers + worker
+- Graceful shutdown + connection pooling
 - Clean middleware and routing architecture
 - Good testing foundation
+- Foundation publishing system (`vendor:publish`)
 
 ---
 
 ## Biggest Gaps Blocking Real-World Use
 
-1. No real **transactions**
-2. No **session-based authentication**
-3. No **Route Model Binding**
-4. Missing **Mail** transport (SMTP)
-5. Many advanced ORM features (BelongsToMany, Mass Assignment enforcement, etc.)
-6. Incomplete **Views** (`{!! !!}`, `$loop`, components)
+1. Missing **Mail** transport (real SMTP driver + Markdown mails)
+2. Password Reset flow
+3. Email Verification system
+4. (Advanced Pagination now has solid foundation)
+5. Mass Assignment protection enforcement (`$fillable` / `$guarded`)
+6. More complete View system (`{!! !!}` raw output, full `$loop` variable, proper components/slots)
 
 ---
 
-## Recommended Next Focus (Wave 3)
+## Recommended Next Focus (Post May 2026)
 
-From the assessment above, the highest-impact areas for the next wave are:
+Many high-impact items from the original list have now been completed:
 
-1. Database Transactions + Savepoints
-2. Session-based Auth (SessionGuard)
-3. Route Model Binding
-4. Real Mail SMTP driver
-5. BelongsToMany relationships + pivot tables
-6. Complete Mass Assignment protection
+**Completed in recent waves:**
+- Database Transactions (full Begin/Commit/Rollback + callback)
+- Session-based Authentication (SessionGuard + Middleware)
+- Route Model Binding (implicit + explicit with `Model[T]()`)
+- BelongsToMany (pivot) + Attach/Detach/Sync/Toggle
+- Raw Expressions, GROUP BY, HAVING, SelectRaw/WhereRaw
+- Foundation & Architecture (bootstrap + vendor:publish)
+- HTTP Layer improvements (Request helpers, Middleware groups, Content negotiation)
+
+**Remaining high-priority items for next phase:**
+1. Real Mail SMTP driver + Markdown mails
+2. Password Reset flow
+3. Email Verification
+4. Mass Assignment protection enforcement
+5. More complete View components (`{!! !!}`, `$loop`, Slots)
+6. Cursor-based pagination improvements (already has basic support)
 
 ---
 
 **Bottom Line**
 
-GoW has moved from "promising skeleton" to **"actually usable framework for APIs and background processing"** after completing Top 10 + Wave 2.
+GoW has significantly matured. After completing Top 10 + Wave 2 + multiple follow-up waves (Foundation, HTTP Layer, Database/ORM, Authentication), the framework now has:
 
-It is not yet a drop-in Laravel replacement for full-stack applications, but the foundation is now solid enough that building real features on top of it makes sense.
+- Strong ORM with Transactions, BelongsToMany, multi-dialect support
+- Usable Session Authentication + Gate
+- Good HTTP ergonomics and Route Model Binding
+- Production features (Graceful Shutdown, Health Checks, etc.)
 
-This document will be kept up to date after each implementation wave.
+It is increasingly viable for real applications, especially APIs and admin panels. Full-stack apps are now much more feasible.
+
+This document is kept up to date after each implementation wave.

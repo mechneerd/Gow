@@ -32,6 +32,8 @@ type SelectQuery struct {
 	Aggregate *AggregateClause
 	Limit     *int
 	Offset    *int
+	GroupBys  []string
+	Havings   []WhereClause
 }
 
 // JoinClause represents a table JOIN condition.

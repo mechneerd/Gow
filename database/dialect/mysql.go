@@ -111,6 +111,32 @@ func (d *MySQLDialect) CompileSelect(query SelectQuery) (string, []any) {
 		}
 	}
 
+	// GROUP BY
+	if len(query.GroupBys) > 0 {
+		sql.WriteString(" GROUP BY ")
+		for i, g := range query.GroupBys {
+			if i > 0 {
+				sql.WriteString(", ")
+			}
+			sql.WriteString(d.QuoteIdentifier(g))
+		}
+	}
+
+	// HAVING
+	if len(query.Havings) > 0 {
+		sql.WriteString(" HAVING ")
+		havingArgs := args
+		for i, h := range query.Havings {
+			if i > 0 {
+				sql.WriteString(" " + h.Boolean + " ")
+			}
+			sql.WriteString(d.QuoteIdentifier(h.Column) + " " + h.Operator + " ")
+			sql.WriteString(d.Placeholder(len(havingArgs) + 1))
+			havingArgs = append(havingArgs, h.Value)
+		}
+		args = havingArgs
+	}
+
 	// LIMIT / OFFSET
 	if query.Limit != nil {
 		sql.WriteString(fmt.Sprintf(" LIMIT %d", *query.Limit))

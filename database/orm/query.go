@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
+	"gow/database/pagination"
 	"gow/database/query"
 	"reflect"
 	"strings"
@@ -21,38 +23,87 @@ type Model interface {
 type DB struct {
 	Conn    query.QueryExecer
 	Builder *query.Builder
+	tx      *sql.Tx // non-nil when this instance represents an active transaction
 }
 
 // Transaction executes a function within a database transaction.
 func (db *DB) Transaction(ctx context.Context, fn func(txDB *DB) error) error {
-	sqlDB, ok := db.Conn.(*sql.DB)
-	if !ok {
-		return errors.New("cannot start transaction: connection is not a root *sql.DB")
-	}
-
-	tx, err := sqlDB.BeginTx(ctx, nil)
+	txDB, err := db.Begin(ctx)
 	if err != nil {
 		return err
 	}
 
 	defer func() {
 		if p := recover(); p != nil {
-			tx.Rollback()
+			txDB.Rollback()
 			panic(p)
 		}
 	}()
 
-	txDB := &DB{
-		Conn:    tx,
-		Builder: db.Builder.WithConn(tx),
-	}
-
 	if err := fn(txDB); err != nil {
-		tx.Rollback()
+		txDB.Rollback()
 		return err
 	}
 
-	return tx.Commit()
+	return txDB.Commit()
+}
+
+// TransactionFn is a convenience method that runs the given function inside a transaction
+// using context.Background(). Useful for simple cases.
+func (db *DB) TransactionFn(fn func(txDB *DB) error) error {
+	return db.Transaction(context.Background(), fn)
+}
+
+// Begin starts a new database transaction and returns a new *DB instance
+// that operates within that transaction.
+func (db *DB) Begin(ctx context.Context) (*DB, error) {
+	if db.tx != nil {
+		return nil, errors.New("cannot begin nested transaction (use savepoints for nesting)")
+	}
+
+	sqlDB, ok := db.Conn.(*sql.DB)
+	if !ok {
+		return nil, errors.New("cannot start transaction: connection is not a root *sql.DB")
+	}
+
+	tx, err := sqlDB.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	txDB := &DB{
+		Conn:    tx,
+		Builder: db.Builder.WithConn(tx),
+		tx:      tx,
+	}
+	return txDB, nil
+}
+
+// BeginTx is a convenience method equivalent to Begin(context.Background()).
+func (db *DB) BeginTx() (*DB, error) {
+	return db.Begin(context.Background())
+}
+
+// Commit commits the current transaction.
+// It only works if this DB instance was created via Begin() or Transaction().
+func (db *DB) Commit() error {
+	if db.tx == nil {
+		return errors.New("Commit called on non-transactional DB")
+	}
+	return db.tx.Commit()
+}
+
+// Rollback rolls back the current transaction.
+func (db *DB) Rollback() error {
+	if db.tx == nil {
+		return errors.New("Rollback called on non-transactional DB")
+	}
+	return db.tx.Rollback()
+}
+
+// InTransaction returns true if this DB instance is operating inside a transaction.
+func (db *DB) InTransaction() bool {
+	return db.tx != nil
 }
 
 // ModelQuery is an ORM-wrapper around the Query Builder.
@@ -169,6 +220,111 @@ func (q *ModelQuery[T]) Get() ([]*T, error) {
 	}
 
 	return results, nil
+}
+
+// Paginate returns a length-aware paginator (with total count).
+func (q *ModelQuery[T]) Paginate(perPage, page int) *pagination.LengthAwarePaginator[T] {
+	if page < 1 {
+		page = 1
+	}
+	if perPage < 1 {
+		perPage = 15
+	}
+
+	// Clone for count
+	countQ := q.builder.Clone()
+	total, _ := countQ.Count("*")
+
+	// Apply pagination
+	offset := (page - 1) * perPage
+	q.builder.Offset(offset).Limit(perPage)
+
+	items, _ := q.Get() // reuse Get which handles soft deletes + eager loading
+
+	// Convert []*T to []T for the paginator (or keep as is)
+	var plainItems []T
+	for _, item := range items {
+		if item != nil {
+			plainItems = append(plainItems, *item)
+		}
+	}
+
+	return pagination.NewLengthAwarePaginator(plainItems, total, perPage, page, "")
+}
+
+// SimplePaginate returns a simple paginator (no total count).
+func (q *ModelQuery[T]) SimplePaginate(perPage, page int) *pagination.SimplePaginator[T] {
+	if page < 1 {
+		page = 1
+	}
+	if perPage < 1 {
+		perPage = 15
+	}
+
+	offset := (page - 1) * perPage
+	q.builder.Offset(offset).Limit(perPage + 1) // fetch one extra to detect if there's a next page
+
+	items, _ := q.Get()
+
+	hasMore := len(items) > perPage
+	if hasMore {
+		items = items[:perPage]
+	}
+
+	var plainItems []T
+	for _, item := range items {
+		if item != nil {
+			plainItems = append(plainItems, *item)
+		}
+	}
+
+	return pagination.NewSimplePaginator(plainItems, perPage, page, "", hasMore)
+}
+
+// CursorPaginate is a basic cursor-based paginator (keyset pagination).
+// For production use, you should pass a proper cursor column (usually `id` or `created_at`).
+func (q *ModelQuery[T]) CursorPaginate(perPage int, after any) *pagination.CursorPaginator[T] {
+	if perPage < 1 {
+		perPage = 15
+	}
+
+	if after != nil {
+		q.builder.Where("id", ">", after) // simplistic cursor on 'id'
+	}
+
+	q.builder.Limit(perPage + 1)
+
+	items, _ := q.Get()
+
+	hasMore := len(items) > perPage
+	if hasMore {
+		items = items[:perPage]
+	}
+
+	var plainItems []T
+	for _, item := range items {
+		if item != nil {
+			plainItems = append(plainItems, *item)
+		}
+	}
+
+	var nextCursor *string
+	if hasMore && len(plainItems) > 0 {
+		last := plainItems[len(plainItems)-1]
+		v := reflect.ValueOf(last)
+		if v.Kind() == reflect.Struct {
+			if idField := v.FieldByName("ID"); idField.IsValid() {
+				s := fmt.Sprintf("%v", idField.Interface())
+				nextCursor = &s
+			}
+		}
+	}
+
+	return &pagination.CursorPaginator[T]{
+		Items:      plainItems,
+		NextCursor: nextCursor,
+		PerPage:    perPage,
+	}
 }
 
 // Insert creates a new record from the model struct.

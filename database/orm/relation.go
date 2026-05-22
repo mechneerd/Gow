@@ -18,9 +18,73 @@ func eagerLoadRelationships[T any](db *DB, models []*T, relations []string) erro
 			return err
 		}
 	}
+
 	return nil
 }
 
+// --- BelongsToMany Helpers: Attach / Detach / Sync / Toggle ---
+
+// Attach adds a relationship in the pivot table.
+func Attach(db *DB, pivotTable, foreignKey, relatedKey string, parentID, relatedID any) error {
+	_, err := db.Builder.Clone().Table(pivotTable).Insert(map[string]any{
+		foreignKey: parentID,
+		relatedKey: relatedID,
+	})
+	return err
+}
+
+// Detach removes a specific relationship from the pivot table.
+func Detach(db *DB, pivotTable, foreignKey, relatedKey string, parentID, relatedID any) error {
+	_, err := db.Builder.Clone().Table(pivotTable).
+		Where(foreignKey, "=", parentID).
+		Where(relatedKey, "=", relatedID).
+		Delete()
+	return err
+}
+
+// Sync replaces all existing relationships with the given list of related IDs.
+func Sync(db *DB, pivotTable, foreignKey, relatedKey string, parentID any, relatedIDs []any) error {
+	// First delete all existing
+	_, err := db.Builder.Clone().Table(pivotTable).
+		Where(foreignKey, "=", parentID).
+		Delete()
+	if err != nil {
+		return err
+	}
+
+	// Then insert new ones
+	for _, rid := range relatedIDs {
+		if _, err := db.Builder.Clone().Table(pivotTable).Insert(map[string]any{
+			foreignKey: parentID,
+			relatedKey: rid,
+		}); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// Toggle adds the relationship if it doesn't exist, removes it if it does.
+func Toggle(db *DB, pivotTable, foreignKey, relatedKey string, parentID, relatedID any) error {
+	// Check if exists (simple existence check)
+	rows, err := db.Builder.Clone().Table(pivotTable).
+		Where(foreignKey, "=", parentID).
+		Where(relatedKey, "=", relatedID).
+		Limit(1).
+		Get()
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	exists := rows.Next()
+	rows.Close()
+
+	if exists {
+		return Detach(db, pivotTable, foreignKey, relatedKey, parentID, relatedID)
+	}
+	return Attach(db, pivotTable, foreignKey, relatedKey, parentID, relatedID)
+}
 func loadRelation[T any](db *DB, models []*T, relationName string) error {
 	var sample T
 	val := reflect.ValueOf(&sample).Elem()
@@ -32,12 +96,43 @@ func loadRelation[T any](db *DB, models []*T, relationName string) error {
 	}
 
 	gowTag := field.Tag.Get("gow")
-	if !strings.Contains(gowTag, "hasMany") && !strings.Contains(gowTag, "belongsTo") {
+	if !strings.Contains(gowTag, "hasMany") && !strings.Contains(gowTag, "belongsTo") && !strings.Contains(gowTag, "belongsToMany") {
 		return fmt.Errorf("relation %s on %s is missing relationship tags", relationName, typ.Name())
 	}
 
 	var isHasMany bool = strings.Contains(gowTag, "hasMany")
 	var isBelongsTo bool = strings.Contains(gowTag, "belongsTo")
+	var isBelongsToMany bool = strings.Contains(gowTag, "belongsToMany")
+
+	// Parse belongsToMany options
+	var pivotTable, foreignKey, relatedKey string
+	if isBelongsToMany {
+		parts := strings.Split(gowTag, ",")
+		for _, p := range parts {
+			p = strings.TrimSpace(p)
+			if strings.HasPrefix(p, "through=") {
+				pivotTable = strings.TrimPrefix(p, "through=")
+			}
+			if strings.HasPrefix(p, "foreignKey=") {
+				foreignKey = strings.TrimPrefix(p, "foreignKey=")
+			}
+			if strings.HasPrefix(p, "relatedKey=") {
+				relatedKey = strings.TrimPrefix(p, "relatedKey=")
+			}
+		}
+
+		if pivotTable == "" {
+			pivotTable = strings.ToLower(typ.Name()) + "_" + strings.ToLower(relationName)
+		}
+		if foreignKey == "" {
+			foreignKey = strings.ToLower(typ.Name()) + "_id"
+		}
+		if relatedKey == "" {
+			relatedKey = strings.ToLower(relationName) + "_id"
+		}
+
+		return loadBelongsToMany(db, models, relationName, pivotTable, foreignKey, relatedKey, gowTag)
+	}
 
 	// Collect local keys based on relation type
 	var ids []any
@@ -274,4 +369,174 @@ type HasOne[T any] struct {
 // BelongsToMany represents a many-to-many relationship via a pivot table.
 type BelongsToMany[T any] struct {
 	Models []T
+}
+
+// loadBelongsToMany handles eager loading for many-to-many relations.
+func loadBelongsToMany[T any](db *DB, models []*T, relationName, pivotTable, foreignKey, relatedKey, gowTag string) error {
+	if len(models) == 0 {
+		return nil
+	}
+
+	// 1. Collect parent IDs
+	parentIDs := []any{}
+	parentIndex := make(map[string]int)
+
+	for i, m := range models {
+		v := reflect.ValueOf(m).Elem()
+		idField := v.FieldByName("ID")
+		if !idField.IsValid() {
+			idField = v.FieldByName("Id")
+		}
+		if idField.IsValid() && idField.CanInterface() {
+			idVal := idField.Interface()
+			key := fmt.Sprintf("%v", idVal)
+			parentIDs = append(parentIDs, idVal)
+			parentIndex[key] = i
+		}
+	}
+
+	if len(parentIDs) == 0 {
+		return nil
+	}
+
+	// 2. Query pivot to build parentID -> []relatedID mapping
+	pivotQ := db.Builder.Clone().Table(pivotTable).WhereIn(foreignKey, parentIDs)
+	pivotResult, err := pivotQ.Get()
+	if err != nil {
+		return err
+	}
+	defer pivotResult.Close()
+
+	pCols, _ := pivotResult.Columns()
+	parentToRelatedIDs := make(map[string][]any)
+
+	for pivotResult.Next() {
+		vals := make([]any, len(pCols))
+		ptrs := make([]any, len(pCols))
+		for i := range vals {
+			ptrs[i] = &vals[i]
+		}
+		if err := pivotResult.Scan(ptrs...); err != nil {
+			continue
+		}
+
+		var pID, rID string
+		for i, c := range pCols {
+			if c == foreignKey {
+				pID = fmt.Sprintf("%v", vals[i])
+			}
+			if c == relatedKey {
+				rID = fmt.Sprintf("%v", vals[i])
+			}
+		}
+		if pID != "" && rID != "" {
+			parentToRelatedIDs[pID] = append(parentToRelatedIDs[pID], rID)
+		}
+	}
+
+	// Collect all related IDs
+	allRelatedIDs := []any{}
+	for _, ids := range parentToRelatedIDs {
+		allRelatedIDs = append(allRelatedIDs, ids...)
+	}
+	if len(allRelatedIDs) == 0 {
+		return nil
+	}
+
+	// 3. Load target models
+	var sample T
+	targetType := reflect.TypeOf(sample)
+	meta := getMetadata(targetType)
+	targetTable := meta.TableName
+	pk := meta.PrimaryKey
+	if pk == "" {
+		pk = "id"
+	}
+
+	targetQ := db.Builder.Clone().Table(targetTable).WhereIn(pk, allRelatedIDs)
+	targetResult, err := targetQ.Get()
+	if err != nil {
+		return err
+	}
+	defer targetResult.Close()
+
+	tCols, _ := targetResult.Columns()
+	relatedModels := make(map[string]reflect.Value) // relatedID -> reflect.Value
+
+	for targetResult.Next() {
+		targetPtr := reflect.New(targetType)
+		targetVal := targetPtr.Elem()
+
+		scanArgs := make([]any, len(tCols))
+		fieldMap := map[string]int{}
+		for i := 0; i < targetType.NumField(); i++ {
+			f := targetType.Field(i)
+			tag := f.Tag.Get("db")
+			if tag != "" {
+				fieldMap[tag] = i
+			} else {
+				fieldMap[strings.ToLower(f.Name)] = i
+			}
+		}
+
+		for i, col := range tCols {
+			if idx, ok := fieldMap[col]; ok {
+				scanArgs[i] = targetVal.Field(idx).Addr().Interface()
+			} else {
+				var dummy any
+				scanArgs[i] = &dummy
+			}
+		}
+
+		if err := targetResult.Scan(scanArgs...); err != nil {
+			return err
+		}
+
+		// Get PK value as string key
+		pkVal := ""
+		if pkField := targetVal.FieldByName("ID"); pkField.IsValid() {
+			pkVal = fmt.Sprintf("%v", pkField.Interface())
+		}
+		if pkVal != "" {
+			relatedModels[pkVal] = targetVal
+		}
+	}
+
+	// 4. Assign back to parent models
+	for parentKey, relatedIDList := range parentToRelatedIDs {
+		parentIdx, ok := parentIndex[parentKey]
+		if !ok {
+			continue
+		}
+		parent := models[parentIdx]
+		parentVal := reflect.ValueOf(parent).Elem()
+
+		relField := parentVal.FieldByName(relationName)
+		if !relField.IsValid() || !relField.CanSet() {
+			continue
+		}
+
+		// Build slice of related models
+		sliceType := reflect.SliceOf(targetType)
+		sliceVal := reflect.MakeSlice(sliceType, 0, len(relatedIDList))
+
+		for _, rid := range relatedIDList {
+			ridStr := fmt.Sprintf("%v", rid)
+			if rv, found := relatedModels[ridStr]; found {
+				sliceVal = reflect.Append(sliceVal, rv)
+			}
+		}
+
+		// Support both direct []T and BelongsToMany[T]
+		if relField.Type().Kind() == reflect.Slice {
+			relField.Set(sliceVal)
+		} else if relField.Type().Name() == "BelongsToMany" {
+			modelsField := relField.FieldByName("Models")
+			if modelsField.IsValid() && modelsField.CanSet() {
+				modelsField.Set(sliceVal)
+			}
+		}
+	}
+
+	return nil
 }

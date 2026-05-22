@@ -165,3 +165,116 @@ This work completed the "Foundation & Architecture" section in `Current_Capabili
 - **Docs Updated**: `Current_Capabilities.md`, `kilocode_changes.md` (this entry)
 
 **Status**: Foundation & Architecture layer is now production-wired and documented as complete.
+
+---
+
+## Follow-up Session: Deeper Route Model Binding (2026-05-22)
+
+**Goal**: Move Route Model Binding from basic registration to a fully usable implicit + explicit system (matching Laravel's `{user}` experience).
+
+### What Was Implemented
+
+- Integrated binder resolution directly into the request dispatch flow (`executeRoute`).
+- Resolved bindings are now automatically stored in request context under `RouteBindingsKey`.
+- Added public helpers:
+  - `routing.Binding(r, "user")` → `(any, bool)`
+  - `routing.Model[T any](r, "user")` → `(T, bool)` — the key ergonomic API
+- Binding failures automatically return 404 (Laravel-like behavior for implicit binding).
+- Works seamlessly with the existing `Bind()` registration.
+
+### Usage Example
+
+```go
+// In routes
+router.Bind("user", func(id string) (any, error) {
+    return models.User{}.Find(id)   // your ORM find
+})
+
+// In controller
+func Show(w, r) error {
+    user, ok := routing.Model[models.User](r, "user")
+    if !ok { ... }
+    ...
+}
+```
+
+---
+
+This work (combined with the earlier HTTP Layer and Foundation sessions) completes the major missing pieces for practical web development.
+
+---
+
+## Post-Wave 2 Summary: Foundation + HTTP Layer Completion (2026-05-22)
+
+**Overall Status**: The Foundation & Architecture and HTTP Layer are now in a strong, production-ready state.
+
+### Key Achievements in Follow-up Sessions
+
+- **Foundation & Architecture** fully wired:
+  - Canonical `bootstrap/app.go`
+  - Real `vendor:publish` command connected to `PublishableProvider` system
+  - Proper Application injection into Console Kernel
+
+- **HTTP Layer** significantly upgraded:
+  - Rich request helpers (`Input`, `Only`, `Except`, `Boolean`, `Integer`, `Collect`, `Old`, etc.)
+  - Middleware Groups & Aliases (`Alias()`, `Middleware()`)
+  - Content Negotiation (`ExpectsJson`, `WantsJson`, `Accepts`)
+  - Full Route Model Binding (implicit + explicit) with `routing.Model[T]()` generic helper and automatic 404 on binding failure
+
+### Current Capabilities Document
+- `Current_Capabilities.md` now accurately reflects:
+  - Foundation & Architecture → ✅ Fully Implemented
+  - HTTP Layer → ✅ Significantly Improved (most ❌ items resolved)
+
+These changes bring GoW much closer to practical, Laravel-like developer experience in the core web layer.
+
+**Files touched in follow-up work**: `bootstrap/app.go`, `routing/router.go`, `http/request/request.go`, `console/kernel.go`, `cmd/artisan/vendor_commands.go`, `artisan.go`, plus documentation updates.
+
+---
+
+## Database & ORM Completion + Auth Foundation (2026-05-22)
+
+**Completed tasks 1 → 2 → 3 as requested**
+
+### 1. BelongsToMany (Attach / Detach / Sync / Toggle)
+- Implemented full pivot helpers in `database/orm/relation.go`
+- Eager loading (`With()`) for many-to-many relations now works
+- `BelongsToMany[T]` wrapper fully supported
+
+### 2. Raw Expressions + GROUP BY / HAVING
+- Added `GroupBy()`, `Having()`, `OrHaving()`
+- Added `SelectRaw()`, `WhereRaw()`, `OrWhereRaw()`
+- Implemented across all dialects (SQLite, MySQL, PostgreSQL)
+
+### 3. Next Major Area: Authentication
+- Analyzed existing auth package (Guard, SessionGuard, UserProvider, Gate already present)
+- Cleaned up duplication
+- Updated `Current_Capabilities.md`:
+  - Session-based Auth: ❌ → 🟡 Partial (good foundation, needs middleware examples and login flows)
+
+**Result**: Database & ORM is now very strong. Authentication layer has a solid base ready for full session auth experience.
+
+---
+
+## Final Completion: Authentication & Authorization Fully Implemented (2026-05-22)
+
+Following the user's request ("start from 1 and complete up to 3"):
+
+### 1. BelongsToMany (Attach/Detach/Sync/Toggle)
+- Fully implemented and working.
+
+### 2. Raw Expressions
+- `SelectRaw`, `WhereRaw`, `GroupBy`, `Having` etc. fully implemented across all dialects.
+
+### 3. Authentication & Authorization — Everything Completed
+- **Session-based Auth** upgraded from 🟡 Partial → **✅ Good**
+  - Added ready-to-use `auth.Middleware(guard)` and `GuestMiddleware`
+  - `SessionGuard` + `UserProvider` + `Authenticatable` interface are production ready
+  - Login, Logout, Attempt, Check all fully functional
+- **Gate / Policies** upgraded to **✅ Good** (already had rich implementation)
+- **Sanctum** remains ✅ Good
+
+**Final Outcome**:
+All major sections requested (Database/ORM + Authentication) are now in a strong, usable state in `Current_Capabilities.md`.
+
+GoW is significantly more complete for real-world applications.

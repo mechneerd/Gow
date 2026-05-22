@@ -16,11 +16,16 @@ type HandlerFunc func(w http.ResponseWriter, r *http.Request) error
 
 // Router represents the HTTP router.
 type Router struct {
-	mu           sync.RWMutex
-	trees        map[string]*node
-	namedRoutes  map[string]*Route
-	middlewares  []func(http.Handler) http.Handler
-	groupPrefix  string
+	mu                sync.RWMutex
+	trees             map[string]*node
+	namedRoutes       map[string]*Route
+	middlewares       []func(http.Handler) http.Handler
+	groupPrefix       string
+	middlewareAliases map[string]func(http.Handler) http.Handler
+	middlewareGroups  map[string][]func(http.Handler) http.Handler
+
+	// Route model binders: paramName => resolver func(value string) (any, error)
+	binders map[string]func(string) (any, error)
 }
 
 // Route represents a registered route.
@@ -35,8 +40,11 @@ type Route struct {
 // NewRouter creates a new router instance.
 func NewRouter() *Router {
 	return &Router{
-		trees:       make(map[string]*node),
-		namedRoutes: make(map[string]*Route),
+		trees:             make(map[string]*node),
+		namedRoutes:       make(map[string]*Route),
+		middlewareAliases: make(map[string]func(http.Handler) http.Handler),
+		middlewareGroups:  make(map[string][]func(http.Handler) http.Handler),
+		binders:           make(map[string]func(string) (any, error)),
 	}
 }
 
@@ -180,20 +188,42 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 // ContextKey used for storing params in request context
 type ContextKey string
-const ParamsKey ContextKey = "params"
+
+const (
+	ParamsKey        ContextKey = "params"
+	RouteBindingsKey ContextKey = "route_bindings"
+)
 
 func (router *Router) executeRoute(route *Route, w http.ResponseWriter, req *http.Request, params map[string]string) {
+	ctx := req.Context()
+
 	if len(params) > 0 {
-		ctx := context.WithValue(req.Context(), ParamsKey, params)
-		req = req.WithContext(ctx)
+		ctx = context.WithValue(ctx, ParamsKey, params)
 	}
+
+	// Resolve implicit/explicit route model bindings
+	resolved := make(map[string]any)
+	for key, rawValue := range params {
+		if value, err := router.ResolveBinding(key, rawValue); err == nil {
+			resolved[key] = value
+		} else {
+			// If binding fails, we can choose to 404 here for implicit binding
+			http.NotFound(w, req)
+			return
+		}
+	}
+	if len(resolved) > 0 {
+		ctx = context.WithValue(ctx, RouteBindingsKey, resolved)
+	}
+
+	req = req.WithContext(ctx)
 
 	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if err := route.Handler(w, r); err != nil {
 			router.handleError(w, r, err)
 		}
 	})
-	
+
 	// Apply middlewares in reverse order so they execute in the order added
 	for i := len(route.Middlewares) - 1; i >= 0; i-- {
 		handler = route.Middlewares[i](handler)
@@ -275,4 +305,81 @@ func (r *Router) Use(mw func(http.Handler) http.Handler) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.middlewares = append(r.middlewares, mw)
+}
+
+// Alias registers a short name for a middleware (e.g. "auth" => auth.Middleware).
+func (r *Router) Alias(name string, mw func(http.Handler) http.Handler) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.middlewareAliases[name] = mw
+}
+
+// GroupMiddleware registers a named group of middlewares (e.g. "web", "api").
+func (r *Router) GroupMiddleware(name string, mws ...func(http.Handler) http.Handler) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.middlewareGroups[name] = append(r.middlewareGroups[name], mws...)
+}
+
+// Middleware applies one or more named middlewares (from aliases or groups) to the current group.
+func (r *Router) Middleware(names ...string) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	for _, name := range names {
+		// Check alias first
+		if mw, ok := r.middlewareAliases[name]; ok {
+			r.middlewares = append(r.middlewares, mw)
+			continue
+		}
+		// Check group
+		if group, ok := r.middlewareGroups[name]; ok {
+			r.middlewares = append(r.middlewares, group...)
+		}
+	}
+}
+
+// Bind registers a model binder for a route parameter.
+// Example: router.Bind("user", func(id string) (any, error) { return user.Find(id) })
+func (r *Router) Bind(param string, resolver func(string) (any, error)) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.binders[param] = resolver
+}
+
+// ResolveBinding attempts to resolve a route parameter using a registered binder.
+func (r *Router) ResolveBinding(param string, value string) (any, error) {
+	r.mu.RLock()
+	resolver, ok := r.binders[param]
+	r.mu.RUnlock()
+
+	if !ok {
+		return value, nil // return raw value if no binder
+	}
+	return resolver(value)
+}
+
+// Binding retrieves a resolved route model binding by parameter name.
+func Binding(r *http.Request, key string) (any, bool) {
+	if bindings, ok := r.Context().Value(RouteBindingsKey).(map[string]any); ok {
+		if val, exists := bindings[key]; exists {
+			return val, true
+		}
+	}
+	return nil, false
+}
+
+// Model is a generic helper to retrieve a strongly-typed bound model from the route.
+// Usage:
+//   user, ok := routing.Model[models.User](req, "user")
+func Model[T any](r *http.Request, key string) (T, bool) {
+	var zero T
+	val, ok := Binding(r, key)
+	if !ok {
+		return zero, false
+	}
+	if typed, ok := val.(T); ok {
+		return typed, true
+	}
+	return zero, false
 }

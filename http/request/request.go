@@ -4,9 +4,12 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"gow/routing"
+	"gow/support/collection"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
@@ -119,4 +122,86 @@ func parseJSONBody(r *http.Request) map[string]any {
 	r.Body = io.NopCloser(bytes.NewReader(raw))
 
 	return jsonMap
+}
+
+// Except returns all input except the given keys.
+func Except(r *http.Request, keys ...string) map[string]any {
+	all := All(r)
+	for _, key := range keys {
+		delete(all, key)
+	}
+	return all
+}
+
+// Boolean returns the input value as bool (accepts "1", "true", "on", "yes").
+func Boolean(r *http.Request, key string) bool {
+	val := strings.ToLower(Input(r, key))
+	return val == "1" || val == "true" || val == "on" || val == "yes"
+}
+
+// Integer returns the input value as int (0 on failure).
+func Integer(r *http.Request, key string) int {
+	val := Input(r, key)
+	i, _ := strconv.Atoi(val)
+	return i
+}
+
+// Float returns the input value as float64 (0 on failure).
+func Float(r *http.Request, key string) float64 {
+	val := Input(r, key)
+	f, _ := strconv.ParseFloat(val, 64)
+	return f
+}
+
+// Collect returns selected (or all) input as a generic Collection.
+func Collect(r *http.Request, keys ...string) *collection.Collection[any] {
+	var data []any
+	if len(keys) == 0 {
+		for _, v := range All(r) {
+			data = append(data, v)
+		}
+	} else {
+		only := Only(r, keys...)
+		for _, v := range only {
+			data = append(data, v)
+		}
+	}
+	return collection.Collect(data)
+}
+
+// ExpectsJson returns true if the client expects a JSON response (Accept or X-Requested-With).
+func ExpectsJson(r *http.Request) bool {
+	accept := r.Header.Get("Accept")
+	return strings.Contains(accept, "application/json") ||
+		strings.Contains(r.Header.Get("X-Requested-With"), "XMLHttpRequest")
+}
+
+// WantsJson is an alias for ExpectsJson (Laravel naming).
+func WantsJson(r *http.Request) bool {
+	return ExpectsJson(r)
+}
+
+// Accepts checks if the request accepts a given content type.
+func Accepts(r *http.Request, contentType string) bool {
+	accept := r.Header.Get("Accept")
+	return strings.Contains(accept, contentType)
+}
+
+// Old retrieves old input flashed from the previous request.
+// It first checks the request context (if middleware stored it), then falls back to empty string.
+// Full integration with session flash is done via middleware/session.go + session.Manager.Old().
+func Old(r *http.Request, key string, defaultValue ...string) string {
+	// Check if old input was stored in context by session middleware
+	if oldInput, ok := r.Context().Value("old_input").(map[string]any); ok {
+		if v, exists := oldInput[key]; exists {
+			if s, ok := v.(string); ok {
+				return s
+			}
+			return fmt.Sprintf("%v", v)
+		}
+	}
+	if len(defaultValue) > 0 {
+		return defaultValue[0]
+	}
+	return ""
 }

@@ -140,6 +140,66 @@ func (b *Builder) Offset(offset int) *Builder {
 	return b
 }
 
+// GroupBy adds GROUP BY columns.
+func (b *Builder) GroupBy(columns ...string) *Builder {
+	b.query.GroupBys = append(b.query.GroupBys, columns...)
+	return b
+}
+
+// Having adds a HAVING clause (after GROUP BY).
+func (b *Builder) Having(column, operator string, value any) *Builder {
+	b.query.Havings = append(b.query.Havings, dialect.WhereClause{
+		Type:     "Basic",
+		Column:   column,
+		Operator: operator,
+		Value:    value,
+		Boolean:  "AND",
+	})
+	return b
+}
+
+// OrHaving adds an OR HAVING clause.
+func (b *Builder) OrHaving(column, operator string, value any) *Builder {
+	b.query.Havings = append(b.query.Havings, dialect.WhereClause{
+		Type:     "Basic",
+		Column:   column,
+		Operator: operator,
+		Value:    value,
+		Boolean:  "OR",
+	})
+	return b
+}
+
+// SelectRaw allows raw SELECT expressions (e.g. "COUNT(*) as total").
+func (b *Builder) SelectRaw(sql string, args ...any) *Builder {
+	// For simplicity, we store raw columns separately or prepend to Columns
+	b.query.Columns = append(b.query.Columns, sql)
+	// Note: args for raw select are not yet fully wired in all dialects
+	return b
+}
+
+// WhereRaw adds a raw WHERE condition.
+func (b *Builder) WhereRaw(sql string, args ...any) *Builder {
+	b.query.Wheres = append(b.query.Wheres, dialect.WhereClause{
+		Type:    "Raw",
+		RawSQL:  sql,
+		RawArgs: args,
+		Boolean: "AND",
+	})
+	return b
+}
+
+// OrWhereRaw adds a raw OR WHERE condition.
+func (b *Builder) OrWhereRaw(sql string, args ...any) *Builder {
+	b.query.Wheres = append(b.query.Wheres, dialect.WhereClause{
+		Type:    "Raw",
+		RawSQL:  sql,
+		RawArgs: args,
+		Boolean: "OR",
+	})
+	return b
+}
+
 // ToSQL compiles the query to SQL.
 func (b *Builder) ToSQL() (string, []any) {
 	return b.dialect.CompileSelect(b.query)
