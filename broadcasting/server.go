@@ -42,6 +42,9 @@ type Hub struct {
 
 	// Unregister requests from clients.
 	Unregister chan *Client
+
+	// quit is closed to stop the Run loop.
+	quit chan struct{}
 }
 
 // NewHub creates a new Hub instance.
@@ -50,6 +53,17 @@ func NewHub() *Hub {
 		Broadcast:  make(chan BroadcastMessage, 256),
 		Register:   make(chan *Client),
 		Unregister: make(chan *Client),
+		quit:       make(chan struct{}),
+	}
+}
+
+// Stop signals the hub to stop its Run loop for graceful shutdown.
+func (h *Hub) Stop() {
+	select {
+	case <-h.quit:
+		// already stopped
+	default:
+		close(h.quit)
 	}
 }
 
@@ -57,6 +71,9 @@ func NewHub() *Hub {
 func (h *Hub) Run() {
 	for {
 		select {
+		case <-h.quit:
+			// graceful stop requested
+			return
 		case client := <-h.Register:
 			h.clients.Store(client, true)
 		case client := <-h.Unregister:

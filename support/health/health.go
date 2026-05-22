@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"runtime/debug"
 	"time"
 )
 
@@ -48,17 +49,28 @@ func (m *Manager) Handler() http.HandlerFunc {
 		}
 
 		response := map[string]any{
-			"status": "ok",
+			"status":    "ok",
+			"time":      time.Now().UTC().Format(time.RFC3339),
+			"version":   getAppVersion(),
+			"components": results,
 		}
 		
 		if status != http.StatusOK {
 			response["status"] = "error"
 		}
-		
-		response["components"] = results
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(status)
 		json.NewEncoder(w).Encode(response)
 	}
+}
+
+// getAppVersion returns the module version from build info or "dev".
+func getAppVersion() string {
+	if info, ok := debug.ReadBuildInfo(); ok {
+		if info.Main.Version != "" && info.Main.Version != "(devel)" {
+			return info.Main.Version
+		}
+	}
+	return "dev"
 }

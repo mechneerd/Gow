@@ -70,3 +70,30 @@ func (c *Collection[T]) Chunk(size int) []*Collection[T] {
 	}
 	return result
 }
+
+// Map transforms each element using fn and returns a new Collection of the result type.
+func Map[T, U any](c *Collection[T], fn func(T) U) *Collection[U] {
+	result := make([]U, len(c.items))
+	for i, item := range c.items {
+		result[i] = fn(item)
+	}
+	return Collect(result)
+}
+
+// FlatMap transforms each element to a slice and flattens the results.
+func FlatMap[T, U any](c *Collection[T], fn func(T) []U) *Collection[U] {
+	var result []U
+	for _, item := range c.items {
+		result = append(result, fn(item)...)
+	}
+	return Collect(result)
+}
+
+// Reduce reduces the collection to a single value using the provided accumulator function.
+func Reduce[T, U any](c *Collection[T], fn func(U, T) U, initial U) U {
+	result := initial
+	for _, item := range c.items {
+		result = fn(result, item)
+	}
+	return result
+}

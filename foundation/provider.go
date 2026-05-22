@@ -14,3 +14,10 @@ func (p *BaseServiceProvider) Register(app *Application) {}
 
 // Boot is the default empty boot method.
 func (p *BaseServiceProvider) Boot(app *Application) {}
+
+// PublishableProvider extends ServiceProvider to support asset publishing (configs, views, etc).
+// Implementers return a map of source (relative or absolute) => destination (relative to app base).
+type PublishableProvider interface {
+	ServiceProvider
+	Publishes() map[string]string
+}

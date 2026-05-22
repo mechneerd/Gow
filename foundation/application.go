@@ -10,6 +10,7 @@ type Application struct {
 	basePath  string
 	booted    bool
 	providers []ServiceProvider
+	discovery *ProviderRegistry
 }
 
 // NewApplication creates a new Application instance.
@@ -17,6 +18,7 @@ func NewApplication(basePath string) *Application {
 	app := &Application{
 		Container: container.New(),
 		basePath:  basePath,
+		discovery: NewProviderRegistry(),
 	}
 	app.registerBaseBindings()
 	return app
@@ -43,6 +45,7 @@ func (app *Application) Bootstrap(bootstrappers ...func(*Application)) {
 func (app *Application) RegisterProvider(p ServiceProvider) {
 	p.Register(app)
 	app.providers = append(app.providers, p)
+	app.discovery.Register(p)
 }
 
 // Boot boots the application, preventing further container bindings.
@@ -57,4 +60,22 @@ func (app *Application) Boot() {
 
 	app.booted = true
 	app.Freeze()
+}
+
+// ProviderRegistry returns the internal provider registry used for discovery and publishing.
+func (app *Application) ProviderRegistry() *ProviderRegistry {
+	if app.discovery == nil {
+		app.discovery = NewProviderRegistry()
+	}
+	return app.discovery
+}
+
+// DiscoverProviders invokes the auto-discovery mechanism (currently a placeholder).
+func (app *Application) DiscoverProviders() {
+	AutoDiscover(app)
+}
+
+// PublishProvider publishes the assets of a PublishableProvider into the application's base path.
+func (app *Application) PublishProvider(p PublishableProvider) error {
+	return PublishAssets(p, app.basePath)
 }

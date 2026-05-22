@@ -1,7 +1,6 @@
 package database
 
 import (
-	"database/sql"
 	"errors"
 	"gow/config"
 	"sync"
@@ -25,10 +24,16 @@ func NewManager(cfg *config.Repository) *Manager {
 }
 
 // AddConnection adds a pre-configured connection to the manager.
+// It automatically applies connection pool settings from the config repository
+// using PoolConfigFromEnv and ConfigurePool.
 func (m *Manager) AddConnection(name string, conn *Connection) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.connections[name] = conn
+
+	// Apply pool configuration automatically
+	pc := PoolConfigFromEnv(m.config)
+	ConfigurePool(conn.DB, pc)
 }
 
 // Connection gets a database connection by name.

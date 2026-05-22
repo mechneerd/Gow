@@ -1,0 +1,73 @@
+package foundation
+
+import (
+	"fmt"
+	"io"
+	"os"
+	"path/filepath"
+)
+
+// ProviderRegistry manages lists of service providers including publishables.
+type ProviderRegistry struct {
+	providers    []ServiceProvider
+	publishables []PublishableProvider
+}
+
+// NewProviderRegistry creates a new empty registry.
+func NewProviderRegistry() *ProviderRegistry {
+	return &ProviderRegistry{}
+}
+
+// Register adds a provider, tracking if it is publishable.
+func (r *ProviderRegistry) Register(p ServiceProvider) {
+	r.providers = append(r.providers, p)
+	if pp, ok := p.(PublishableProvider); ok {
+		r.publishables = append(r.publishables, pp)
+	}
+}
+
+// Providers returns all registered service providers.
+func (r *ProviderRegistry) Providers() []ServiceProvider {
+	return r.providers
+}
+
+// Publishables returns only the publishable providers.
+func (r *ProviderRegistry) Publishables() []PublishableProvider {
+	return r.publishables
+}
+
+// AutoDiscover performs auto-discovery of providers for the given application.
+// In the current implementation it is a no-op placeholder (Go does not support
+// runtime package scanning without external tools). Providers should be explicitly
+// registered via app.RegisterProvider or bootstrap.
+func AutoDiscover(app *Application) {
+	// Future: could support a providers list in config or known package paths.
+	// For now this exists to satisfy the Wave 2 contract.
+}
+
+// PublishAssets copies the files declared by the PublishableProvider into the
+// application's base path using the Publishes() map (src => destRel).
+func PublishAssets(provider PublishableProvider, basePath string) error {
+	for src, dstRel := range provider.Publishes() {
+		dst := filepath.Join(basePath, dstRel)
+		if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
+			return err
+		}
+		srcFile, err := os.Open(src)
+		if err != nil {
+			return fmt.Errorf("publish source not found: %s: %w", src, err)
+		}
+		defer srcFile.Close()
+
+		dstFile, err := os.Create(dst)
+		if err != nil {
+			return err
+		}
+		defer dstFile.Close()
+
+		if _, err := io.Copy(dstFile, srcFile); err != nil {
+			return err
+		}
+	}
+	return nil
+}
