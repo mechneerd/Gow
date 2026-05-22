@@ -6,8 +6,8 @@ import (
 	"log"
 )
 
-// Driver handles the actual transmission of the event.
-type Driver interface {
+// Broadcaster handles the actual transmission of the event.
+type Broadcaster interface {
 	Broadcast(channels []string, eventName string, payload map[string]any) error
 }
 
@@ -22,25 +22,25 @@ func (d *LogDriver) Broadcast(channels []string, eventName string, payload map[s
 
 // Manager resolves broadcast drivers and dispatches events.
 type Manager struct {
-	drivers       map[string]Driver
+	drivers       map[string]Broadcaster
 	defaultDriver string
 }
 
 // NewManager creates a new Broadcaster Manager.
 func NewManager(defaultDriver string) *Manager {
 	return &Manager{
-		drivers:       make(map[string]Driver),
+		drivers:       make(map[string]Broadcaster),
 		defaultDriver: defaultDriver,
 	}
 }
 
-// Extend registers a custom driver (e.g., Pusher, Redis).
-func (m *Manager) Extend(name string, driver Driver) {
+// Extend registers a custom driver (e.g., Pusher, Redis, WebSocket).
+func (m *Manager) Extend(name string, driver Broadcaster) {
 	m.drivers[name] = driver
 }
 
 // Connection gets a driver by name.
-func (m *Manager) Connection(name string) Driver {
+func (m *Manager) Connection(name string) Broadcaster {
 	if name == "" {
 		name = m.defaultDriver
 	}
@@ -48,29 +48,19 @@ func (m *Manager) Connection(name string) Driver {
 }
 
 // Broadcast dispatches the event via the default connection.
-func (m *Manager) Broadcast(event Event) error {
+func (m *Manager) Broadcast(channels []string, eventName string, payload map[string]any) error {
 	driver := m.Connection("")
 	if driver == nil {
 		return fmt.Errorf("broadcast driver [%s] not found", m.defaultDriver)
 	}
 
-	channelObjects := event.BroadcastOn()
-	if len(channelObjects) == 0 {
+	if len(channels) == 0 {
 		return nil
 	}
 
-	channels := make([]string, len(channelObjects))
-	for i, c := range channelObjects {
-		channels[i] = c.Name()
-	}
-
-	eventName := event.BroadcastAs()
 	if eventName == "" {
-		// Default to a generic name or reflection-based name
 		eventName = "event"
 	}
-
-	payload := event.BroadcastWith()
 
 	return driver.Broadcast(channels, eventName, payload)
 }

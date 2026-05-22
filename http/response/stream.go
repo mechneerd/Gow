@@ -5,6 +5,12 @@ import (
 	"net/http"
 )
 
+// flushWriter wraps an http.ResponseWriter to auto-flush.
+type flushWriter struct {
+	http.ResponseWriter
+	flusher http.Flusher
+}
+
 // Stream allows streaming a response back to the client using a callback.
 func Stream(w http.ResponseWriter, callback func(w http.ResponseWriter)) error {
 	flusher, ok := w.(http.Flusher)
@@ -13,12 +19,6 @@ func Stream(w http.ResponseWriter, callback func(w http.ResponseWriter)) error {
 	}
 
 	w.Header().Set("Transfer-Encoding", "chunked")
-	
-	// Create a wrapper to auto-flush on writes if needed, or rely on callback
-	type flushWriter struct {
-		http.ResponseWriter
-		flusher http.Flusher
-	}
 	
 	fw := &flushWriter{w, flusher}
 

@@ -44,3 +44,64 @@ func TestBuilderInsert(t *testing.T) {
 		t.Errorf("Unexpected args: %v", args)
 	}
 }
+
+func TestBuilderJoins(t *testing.T) {
+	d := &dialect.SQLiteDialect{}
+	b := NewBuilder(nil, d)
+
+	b.Table("users").
+		Join("posts", "users.id", "=", "posts.user_id").
+		LeftJoin("profiles", "users.id", "=", "profiles.user_id")
+
+	sql, _ := b.ToSQL()
+	expected := `SELECT * FROM "users" INNER JOIN "posts" ON "users.id" = "posts.user_id" LEFT JOIN "profiles" ON "users.id" = "profiles.user_id"`
+	
+	if sql != expected {
+		t.Errorf("Expected %s, got %s", expected, sql)
+	}
+}
+
+func TestBuilderAdvancedWheres(t *testing.T) {
+	d := &dialect.SQLiteDialect{}
+	b := NewBuilder(nil, d)
+
+	b.Table("users").
+		WhereIn("id", []any{1, 2, 3}).
+		WhereNull("deleted_at").
+		WhereNotNull("email").
+		WhereBetween("age", []any{18, 65})
+
+	sql, args := b.ToSQL()
+	expected := `SELECT * FROM "users" WHERE "id" IN (?, ?, ?) AND "deleted_at" IS NULL AND "email" IS NOT NULL AND "age" BETWEEN ? AND ?`
+
+	if sql != expected {
+		t.Errorf("Expected %s, got %s", expected, sql)
+	}
+	
+	if len(args) != 5 {
+		t.Errorf("Expected 5 args, got %d", len(args))
+	}
+}
+
+func TestBuilderConditional(t *testing.T) {
+	d := &dialect.SQLiteDialect{}
+	b := NewBuilder(nil, d)
+
+	b.Table("users").
+		When(true, func(q *Builder) {
+			q.Where("active", "=", 1)
+		}).
+		When(false, func(q *Builder) {
+			q.Where("admin", "=", 1)
+		})
+
+	sql, args := b.ToSQL()
+	expected := `SELECT * FROM "users" WHERE "active" = ?`
+	
+	if sql != expected {
+		t.Errorf("Expected SQL: %s, got %s", expected, sql)
+	}
+	if len(args) != 1 {
+		t.Errorf("Expected 1 arg, got %d", len(args))
+	}
+}

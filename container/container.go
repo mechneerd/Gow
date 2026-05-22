@@ -180,9 +180,15 @@ func (c *Container) Resolve(typ reflect.Type) (any, error) {
 	c.mu.RUnlock()
 
 	if !ok {
-		// Attempt to resolve struct if it's concrete type
+		// Attempt to resolve struct or pointer to struct if it's concrete type
 		if typ.Kind() == reflect.Struct {
-			return c.build(typ)
+			ptr, err := c.build(typ)
+			if err != nil {
+				return nil, err
+			}
+			return reflect.ValueOf(ptr).Elem().Interface(), nil
+		} else if typ.Kind() == reflect.Ptr && typ.Elem().Kind() == reflect.Struct {
+			return c.build(typ.Elem())
 		}
 		return nil, fmt.Errorf("%w: %v", ErrBindingNotFound, typ)
 	}
@@ -263,7 +269,7 @@ func (c *Container) build(typ reflect.Type) (any, error) {
 		// For Laravel, constructor injection is preferred. In Go, struct injection is common.
 		// Let's use `inject` tag as explicit marker for struct injection, 
 		// otherwise we rely on constructors (factories).
-		if field.Tag.Get("inject") != "" {
+		if _, ok := field.Tag.Lookup("inject"); ok {
 			dep, err := c.Resolve(field.Type)
 			if err != nil {
 				return nil, fmt.Errorf("failed to inject field %s: %w", field.Name, err)

@@ -1,12 +1,16 @@
 package orm
 
 import (
+	"context"
 	"database/sql"
 	"gow/database/dialect"
 	"gow/database/query"
 	"gow/database/schema"
 	"testing"
-	// _ "github.com/mattn/go-sqlite3" // Removed to avoid CGO/Network issues
+	"time"
+	"errors"
+
+	_ "modernc.org/sqlite"
 )
 
 type User struct {
@@ -14,10 +18,15 @@ type User struct {
 	Name      string    `db:"name"`
 	Email     string    `db:"email"`
 	CreatedAt time.Time `db:"created_at" gow:"autoCreateTime"`
+	UpdatedAt time.Time `db:"updated_at" gow:"autoUpdateTime"`
 }
 
 func TestORMAndSchema(t *testing.T) {
-	t.Skip("Skipping execution test to avoid sqlite3 dependency.")
+	conn, err := sql.Open("sqlite", ":memory:")
+	if err != nil {
+		t.Fatalf("Failed to open sqlite memory db: %v", err)
+	}
+	defer conn.Close()
 
 	d := &dialect.SQLiteDialect{}
 	
@@ -65,5 +74,59 @@ func TestORMAndSchema(t *testing.T) {
 	}
 	if fetched.ID != user.ID {
 		t.Errorf("Expected ID %d, got %d", user.ID, fetched.ID)
+	}
+}
+
+func TestORMTransactions(t *testing.T) {
+	conn, err := sql.Open("sqlite", ":memory:")
+	if err != nil {
+		t.Fatalf("Failed to open sqlite memory db: %v", err)
+	}
+	defer conn.Close()
+
+	d := &dialect.SQLiteDialect{}
+	builder := schema.NewBuilder(conn, d)
+	_ = builder.Create("users", func(table *schema.Blueprint) {
+		table.ID()
+		table.String("name", 255)
+		table.String("email", 255).Unique()
+		table.Timestamps()
+	})
+
+	db := &DB{
+		Conn:    conn,
+		Builder: query.NewBuilder(conn, d),
+	}
+
+	// Test successful transaction
+	err = db.Transaction(context.Background(), func(txDB *DB) error {
+		q := NewQuery[User](txDB)
+		return q.Insert(&User{Name: "TxUser", Email: "tx@example.com"})
+	})
+	if err != nil {
+		t.Fatalf("Transaction failed: %v", err)
+	}
+
+	// Verify insertion
+	fetched, _ := NewQuery[User](db).Where("email", "=", "tx@example.com").First()
+	if fetched == nil {
+		t.Error("Expected user to be created in transaction")
+	}
+
+	// Test rollback on error
+	err = db.Transaction(context.Background(), func(txDB *DB) error {
+		q := NewQuery[User](txDB)
+		_ = q.Insert(&User{Name: "FailUser", Email: "fail@example.com"})
+		return errors.New("rollback requested")
+	})
+
+	if err == nil || err.Error() != "rollback requested" {
+		t.Errorf("Expected rollback error, got: %v", err)
+	}
+
+	// Verify rollback
+	failedUser, _ := NewQuery[User](db).Where("email", "=", "fail@example.com").First()
+	if failedUser != nil {
+		t.Error("Expected user NOT to be created due to rollback")
 	}
 }

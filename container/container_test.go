@@ -103,3 +103,101 @@ func TestContainerFreeze(t *testing.T) {
 		t.Errorf("Expected ErrFrozen, got %v", err)
 	}
 }
+
+type Filesystem interface {
+	Disk() string
+}
+
+type LocalFilesystem struct{}
+
+func (l *LocalFilesystem) Disk() string { return "local" }
+
+type S3Filesystem struct{}
+
+func (s *S3Filesystem) Disk() string { return "s3" }
+
+type PhotoController struct {
+	FS Filesystem
+}
+
+type VideoController struct {
+	FS Filesystem
+}
+
+func TestContextualBinding(t *testing.T) {
+	c := New()
+
+	c.Bind((*PhotoController)(nil), func(fs Filesystem) *PhotoController {
+		return &PhotoController{FS: fs}
+	})
+
+	c.Bind((*VideoController)(nil), func(fs Filesystem) *VideoController {
+		return &VideoController{FS: fs}
+	})
+
+	c.When((*PhotoController)(nil)).
+		Needs((*Filesystem)(nil)).
+		Give(func() Filesystem { return &LocalFilesystem{} })
+
+	c.When((*VideoController)(nil)).
+		Needs((*Filesystem)(nil)).
+		Give(func() Filesystem { return &S3Filesystem{} })
+
+	pc, err := Make[*PhotoController](c)
+	if err != nil {
+		t.Fatalf("Failed to resolve PhotoController: %v", err)
+	}
+	if pc.FS.Disk() != "local" {
+		t.Errorf("Expected local disk, got %s", pc.FS.Disk())
+	}
+
+	vc, err := Make[*VideoController](c)
+	if err != nil {
+		t.Fatalf("Failed to resolve VideoController: %v", err)
+	}
+	if vc.FS.Disk() != "s3" {
+		t.Errorf("Expected s3 disk, got %s", vc.FS.Disk())
+	}
+}
+
+func TestContainerInstances(t *testing.T) {
+	c := New()
+	fs := &LocalFilesystem{}
+
+	err := c.Instance((*Filesystem)(nil), fs)
+	if err != nil {
+		t.Fatalf("Failed to register instance: %v", err)
+	}
+
+	resolved, err := Make[Filesystem](c)
+	if err != nil {
+		t.Fatalf("Failed to resolve instance: %v", err)
+	}
+
+	if resolved != fs {
+		t.Error("Expected the exact instance to be resolved")
+	}
+}
+
+type AutoWiredController struct {
+	DB Database `inject:""`
+}
+
+func TestStructInjection(t *testing.T) {
+	c := New()
+
+	c.Instance((*Database)(nil), &MySQLDatabase{ConnectionString: "injected"})
+
+	ctrl, err := Make[*AutoWiredController](c)
+	if err != nil {
+		t.Fatalf("Failed to resolve struct: %v", err)
+	}
+
+	if ctrl.DB == nil {
+		t.Fatal("Expected DB to be injected")
+	}
+
+	if ctrl.DB.Connect() != "Connected to injected" {
+		t.Errorf("Unexpected result: %s", ctrl.DB.Connect())
+	}
+}

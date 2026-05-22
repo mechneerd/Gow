@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"crypto/tls"
 	"net/http"
 	"strings"
 )
@@ -50,7 +51,7 @@ func (tp *TrustedProxies) Handle(next http.Handler) http.Handler {
 			
 			if forwardedProto := r.Header.Get("X-Forwarded-Proto"); forwardedProto != "" {
 				if forwardedProto == "https" {
-					r.TLS = &struct{}{} // Hack to trick some downstream handlers that it's secure
+					r.TLS = &tls.ConnectionState{} // Hack to trick some downstream handlers that it's secure
 				}
 			}
 		}

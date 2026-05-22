@@ -1,10 +1,9 @@
 package middleware
 
 import (
-	gowhttp "gow/http"
-	"gow/session"
 	"crypto/rand"
 	"encoding/hex"
+	gowhttp "gow/http"
 	"net/http"
 )
 

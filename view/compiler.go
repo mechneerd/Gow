@@ -48,16 +48,15 @@ func (c *Compiler) CompileString(raw string) string {
 	foreachRe := regexp.MustCompile(`@foreach\s*\((.*?)\)`)
 	compiled = foreachRe.ReplaceAllString(compiled, "{{ range $1 }}")
 
-	// @while(condition) - Go templates don't support while natively without a custom function, but we can compile to range or just omit if too complex.
-	// We'll map @while to a block or just a conditional for now, or assume users use a helper. 
-	// For now, let's replace @while with a comment warning or a mock block to not break.
+	// @while(condition) - We implement this using a custom template func 'while'
+	// that returns a large slice, and we break out of it when the condition is false.
 	whileRe := regexp.MustCompile(`@while\s*\((.*?)\)`)
-	compiled = whileRe.ReplaceAllString(compiled, `{{/* while $1 */}}`)
-	compiled = strings.ReplaceAll(compiled, "@endwhile", "")
+	compiled = whileRe.ReplaceAllString(compiled, "{{ range while }}{{ if not ($1) }}{{ break }}{{ end }}")
+	compiled = strings.ReplaceAll(compiled, "@endwhile", "{{ end }}")
 
 	// @for(init; condition; post) - Go templates don't natively support C-style for loops inside templates easily.
 	// We will compile this into a generic action to warn users or simulate it. 
-	// For simplicity, we assume users will use @foreach in Go context, but we will mock @for to range over an array if they pass one.
+	// For simplicity, we assume users will use @foreach in Go context.
 	forRe := regexp.MustCompile(`@for\s*\((.*?)\)`)
 	compiled = forRe.ReplaceAllString(compiled, "{{ range $1 }}")
 
@@ -134,11 +133,17 @@ func (c *Compiler) CompileString(raw string) string {
 	checkedRe := regexp.MustCompile(`@checked\s*\((.*?)\)`)
 	compiled = checkedRe.ReplaceAllString(compiled, `{{ if $1 }}checked="checked"{{ end }}`)
 
-	// @once -> {{ if not .__once_executed }}{{ $.__once_executed := true }} ...
-	// Since Go templates don't support simple block execution tracking easily without func maps,
-	// we simplify @once to a standard block definition.
-	compiled = strings.ReplaceAll(compiled, "@once", `{{/* @once start */}}`)
-	compiled = strings.ReplaceAll(compiled, "@endonce", `{{/* @once end */}}`)
+	// Generate a short hash of the raw template to ensure @once IDs are unique per file
+	fileHash := fmt.Sprintf("%x", sha256.Sum256([]byte(raw)))[:8]
+
+	// @once
+	onceCount := 0
+	onceRe := regexp.MustCompile(`@once`)
+	compiled = onceRe.ReplaceAllStringFunc(compiled, func(match string) string {
+		onceCount++
+		return fmt.Sprintf(`{{ if once "%s_%d" }}`, fileHash, onceCount)
+	})
+	compiled = strings.ReplaceAll(compiled, "@endonce", `{{ end }}`)
 
 	// x-component -> simplified to include
 	compRe := regexp.MustCompile(`<x-(.*?)\s*/?>`)

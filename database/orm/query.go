@@ -1,12 +1,16 @@
 package orm
 
 import (
+	"context"
 	"database/sql"
+	"errors"
 	"gow/database/query"
 	"reflect"
 	"strings"
 	"time"
 )
+
+var ErrCancelled = errors.New("operation cancelled by model observer")
 
 // Model represents a generic interface for all Goquent models.
 type Model interface {
@@ -15,8 +19,40 @@ type Model interface {
 
 // DB represents the ORM database connection.
 type DB struct {
-	Conn    *sql.DB
+	Conn    query.QueryExecer
 	Builder *query.Builder
+}
+
+// Transaction executes a function within a database transaction.
+func (db *DB) Transaction(ctx context.Context, fn func(txDB *DB) error) error {
+	sqlDB, ok := db.Conn.(*sql.DB)
+	if !ok {
+		return errors.New("cannot start transaction: connection is not a root *sql.DB")
+	}
+
+	tx, err := sqlDB.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		if p := recover(); p != nil {
+			tx.Rollback()
+			panic(p)
+		}
+	}()
+
+	txDB := &DB{
+		Conn:    tx,
+		Builder: db.Builder.WithConn(tx),
+	}
+
+	if err := fn(txDB); err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return tx.Commit()
 }
 
 // ModelQuery is an ORM-wrapper around the Query Builder.
@@ -31,8 +67,18 @@ func NewQuery[T any](db *DB) *ModelQuery[T] {
 	var model T
 	table := getTableName(model)
 
+	builder := db.Builder.Clone().Table(table)
+	
+	// Apply global scopes
+	modelName := reflect.TypeOf((*T)(nil)).Elem().Name()
+	if scopes, ok := globalScopes[modelName]; ok {
+		for _, scope := range scopes {
+			builder = scope.Apply(builder)
+		}
+	}
+
 	return &ModelQuery[T]{
-		builder: db.Builder.Table(table),
+		builder: builder,
 		db:      db,
 		with:    make([]string, 0),
 	}
@@ -100,6 +146,10 @@ func (q *ModelQuery[T]) Get() ([]*T, error) {
 
 // Insert creates a new record from the model struct.
 func (q *ModelQuery[T]) Insert(model *T) error {
+	if !DispatchModelEvent(model, "creating") {
+		return ErrCancelled
+	}
+
 	val := reflect.ValueOf(model).Elem()
 	typ := val.Type()
 
@@ -143,6 +193,7 @@ func (q *ModelQuery[T]) Insert(model *T) error {
 		}
 	}
 
+	DispatchModelEvent(model, "created")
 	return nil
 }
 
@@ -155,6 +206,10 @@ func (q *ModelQuery[T]) Find(id any) (*T, error) {
 
 // Update updates an existing model.
 func (q *ModelQuery[T]) Update(model *T) error {
+	if !DispatchModelEvent(model, "updating") {
+		return ErrCancelled
+	}
+
 	val := reflect.ValueOf(model).Elem()
 	typ := val.Type()
 
@@ -198,12 +253,18 @@ func (q *ModelQuery[T]) Update(model *T) error {
 
 	q.builder.Where(pkColumn, "=", pkValue)
 	_, err := q.builder.Update(values)
+	if err == nil {
+		DispatchModelEvent(model, "updated")
+	}
 	return err
 }
 
 // Delete deletes the given model (or rows matching the query if model is nil).
 func (q *ModelQuery[T]) Delete(model *T) error {
 	if model != nil {
+		if !DispatchModelEvent(model, "deleting") {
+			return ErrCancelled
+		}
 		val := reflect.ValueOf(model).Elem()
 		typ := val.Type()
 		var pkValue any
@@ -229,6 +290,9 @@ func (q *ModelQuery[T]) Delete(model *T) error {
 	}
 	
 	_, err := q.builder.Delete()
+	if err == nil && model != nil {
+		DispatchModelEvent(model, "deleted")
+	}
 	return err
 }
 

@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"fmt"
 	"gow/cache"
 	gowhttp "gow/http"
 	"net/http"

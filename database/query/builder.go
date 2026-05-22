@@ -40,9 +40,16 @@ func dispatchQueryEvent(sql string, bindings []any, duration time.Duration) {
 	}
 }
 
+// QueryExecer abstracts *sql.DB and *sql.Tx
+type QueryExecer interface {
+	QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error)
+	QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row
+	ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
+}
+
 // Builder provides a fluent API for building SQL queries.
 type Builder struct {
-	conn      *sql.DB
+	conn      QueryExecer
 	dialect   dialect.Dialect
 	ctx       context.Context
 	
@@ -50,13 +57,30 @@ type Builder struct {
 }
 
 // NewBuilder creates a new query builder.
-func NewBuilder(conn *sql.DB, d dialect.Dialect) *Builder {
+func NewBuilder(conn QueryExecer, d dialect.Dialect) *Builder {
 	return &Builder{
 		conn:    conn,
 		dialect: d,
 		ctx:     context.Background(),
 		query:   dialect.SelectQuery{},
 	}
+}
+
+// Clone creates a copy of the builder, optionally with a different connection.
+func (b *Builder) Clone() *Builder {
+	return &Builder{
+		conn:    b.conn,
+		dialect: b.dialect,
+		ctx:     b.ctx,
+		query:   b.query, // careful, slices in query might be shared if mutated later, but usually we clone fresh builders for new queries
+	}
+}
+
+// WithConn returns a new builder with the given connection (useful for transactions).
+func (b *Builder) WithConn(conn QueryExecer) *Builder {
+	clone := b.Clone()
+	clone.conn = conn
+	return clone
 }
 
 // Table sets the target table.

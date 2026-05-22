@@ -55,30 +55,7 @@ func (c *Collection[T]) Each(callback func(T)) *Collection[T] {
 }
 
 // Chunk breaks the collection into multiple, smaller collections of a given size.
-func (c *Collection[T]) Chunk(size int) [][]*Collection[T] {
-	// A chunk of collections is slightly awkward in Go, but we will return [][]T or a slice of collections
-	var result []*Collection[T]
-	
-	if size <= 0 {
-		return result
-	}
-
-	for i := 0; i < len(c.items); i += size {
-		end := i + size
-		if end > len(c.items) {
-			end = len(c.items)
-		}
-		result = append(result, Collect(c.items[i:end]))
-	}
-	
-	// Because of go generics and return signatures, it's easier to just return []*Collection[T]
-	// Let's modify the signature to match what we actually want.
-	// Wait, the return type above is [][]*Collection[T], which is wrong. Let me fix the return type by not returning nested.
-	return nil // Handled below
-}
-
-// Real Chunk implementation
-func (c *Collection[T]) Chunked(size int) []*Collection[T] {
+func (c *Collection[T]) Chunk(size int) []*Collection[T] {
 	var result []*Collection[T]
 	if size <= 0 {
 		return result

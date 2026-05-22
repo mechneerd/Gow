@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"gow/auth"
 	gowhttp "gow/http"
 	"net/http"
@@ -21,10 +22,10 @@ func Authenticate(authManager *auth.Manager, guardName string) func(http.Handler
 				return
 			}
 
-			// Add the authenticated user ID to the request context
+			// Add the authenticated user to the request context
 			// so downstream handlers can easily fetch the user.
-			// ctx := context.WithValue(r.Context(), "user_id", guard.ID())
-			// r = r.WithContext(ctx)
+			ctx := context.WithValue(r.Context(), auth.UserContextKey, guard.User())
+			r = r.WithContext(ctx)
 
 			next.ServeHTTP(w, r)
 		})

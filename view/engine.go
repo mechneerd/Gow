@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 )
 
@@ -99,7 +100,24 @@ func (e *Engine) Make(name string, data map[string]any) (string, error) {
 		}
 	}
 
-	tmpl, err := template.ParseFiles(filesToParse...)
+	onceMap := make(map[string]bool)
+	funcMap := template.FuncMap{
+		"once": func(id string) bool {
+			if onceMap[id] {
+				return false
+			}
+			onceMap[id] = true
+			return true
+		},
+		"while": func() []struct{} {
+			// Returns a very large slice to simulate a while loop.
+			// Go templates do not natively support infinite loops.
+			return make([]struct{}, 100000)
+		},
+	}
+
+	baseName := filepath.Base(filesToParse[0])
+	tmpl, err := template.New(baseName).Funcs(funcMap).ParseFiles(filesToParse...)
 	if err != nil {
 		return "", err
 	}

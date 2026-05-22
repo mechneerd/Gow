@@ -1,12 +1,20 @@
 package orm
 
 import (
+	"gow/database/query"
 	"reflect"
 )
 
 // Scope represents a query scope that can be applied to a builder.
 type Scope interface {
-	Apply(builder *Builder) *Builder
+	Apply(builder *query.Builder) *query.Builder
+}
+
+// ScopeFunc is a convenience wrapper to use a function as a Scope.
+type ScopeFunc func(builder *query.Builder) *query.Builder
+
+func (f ScopeFunc) Apply(builder *query.Builder) *query.Builder {
+	return f(builder)
 }
 
 // GlobalScopes registry.
@@ -41,9 +49,94 @@ type Cast interface {
 	Set(value any) (any, error)
 }
 
-// DispatchModelEvent fires registered observers for the specific event type.
+// EventDispatcher interface allows ORM to dispatch global events without strong coupling to the events package.
+type EventDispatcher interface {
+	Dispatch(event any)
+}
+
+var globalEventManager EventDispatcher
+
+// SetEventManager injects the global event manager.
+func SetEventManager(m EventDispatcher) {
+	globalEventManager = m
+}
+
+// DispatchModelEvent fires registered observers, interface hooks, and global events.
 // Returning false from a "ing" event (like Creating) halts the operation.
 func DispatchModelEvent(model any, event string) bool {
+	// 1. Interface Hooks
+	switch event {
+	case "creating":
+		if hook, ok := model.(BeforeCreateHook); ok {
+			if err := hook.BeforeCreate(); err != nil {
+				return false
+			}
+		}
+		if hook, ok := model.(BeforeSaveHook); ok {
+			if err := hook.BeforeSave(); err != nil {
+				return false
+			}
+		}
+	case "created":
+		if hook, ok := model.(AfterCreateHook); ok {
+			hook.AfterCreate()
+		}
+		if hook, ok := model.(AfterSaveHook); ok {
+			hook.AfterSave()
+		}
+	case "updating":
+		if hook, ok := model.(BeforeUpdateHook); ok {
+			if err := hook.BeforeUpdate(); err != nil {
+				return false
+			}
+		}
+		if hook, ok := model.(BeforeSaveHook); ok {
+			if err := hook.BeforeSave(); err != nil {
+				return false
+			}
+		}
+	case "updated":
+		if hook, ok := model.(AfterUpdateHook); ok {
+			hook.AfterUpdate()
+		}
+		if hook, ok := model.(AfterSaveHook); ok {
+			hook.AfterSave()
+		}
+	case "deleting":
+		if hook, ok := model.(BeforeDeleteHook); ok {
+			if err := hook.BeforeDelete(); err != nil {
+				return false
+			}
+		}
+	case "deleted":
+		if hook, ok := model.(AfterDeleteHook); ok {
+			hook.AfterDelete()
+		}
+	}
+
+	// 2. Global Events (events.Manager)
+	if globalEventManager != nil {
+		switch event {
+		case "creating":
+			globalEventManager.Dispatch(ModelCreating{Model: model})
+			globalEventManager.Dispatch(ModelSaving{Model: model})
+		case "created":
+			globalEventManager.Dispatch(ModelCreated{Model: model})
+			globalEventManager.Dispatch(ModelSaved{Model: model})
+		case "updating":
+			globalEventManager.Dispatch(ModelUpdating{Model: model})
+			globalEventManager.Dispatch(ModelSaving{Model: model})
+		case "updated":
+			globalEventManager.Dispatch(ModelUpdated{Model: model})
+			globalEventManager.Dispatch(ModelSaved{Model: model})
+		case "deleting":
+			globalEventManager.Dispatch(ModelDeleting{Model: model})
+		case "deleted":
+			globalEventManager.Dispatch(ModelDeleted{Model: model})
+		}
+	}
+
+	// 3. Legacy String Observers (optional, can be deprecated)
 	modelType := reflect.TypeOf(model)
 	if modelType.Kind() == reflect.Ptr {
 		modelType = modelType.Elem()

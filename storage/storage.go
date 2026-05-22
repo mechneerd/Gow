@@ -1,10 +1,13 @@
 package storage
 
 import (
+	"errors"
 	"io"
 	"os"
 	"path/filepath"
 )
+
+var ErrNotImplemented = errors.New("driver not implemented")
 
 // Driver interface for different storage backends (Local, S3, GCS).
 type Driver interface {
@@ -74,24 +77,24 @@ func (d *LocalDriver) URL(path string) string {
 	return d.BaseURL + "/" + path
 }
 
-// S3Driver is a placeholder for AWS S3 implementation.
-// In a full implementation, it would use the aws-sdk-go-v2.
+// S3Driver is a PLANNED feature for AWS S3 implementation.
+// In a future release, it will use the aws-sdk-go-v2. Currently all operations return ErrNotImplemented.
 type S3Driver struct {
 	Bucket string
 	Region string
 }
 
 func (d *S3Driver) Put(path string, contents io.Reader) error {
-	return nil // Simulate S3 Put
+	return ErrNotImplemented
 }
 func (d *S3Driver) Get(path string) (io.ReadCloser, error) {
-	return nil, nil // Simulate S3 Get
+	return nil, ErrNotImplemented
 }
 func (d *S3Driver) Delete(path string) error {
-	return nil // Simulate S3 Delete
+	return ErrNotImplemented
 }
 func (d *S3Driver) Exists(path string) bool {
-	return false // Simulate S3 Exists
+	return false
 }
 func (d *S3Driver) URL(path string) string {
 	return "https://" + d.Bucket + ".s3." + d.Region + ".amazonaws.com/" + path
