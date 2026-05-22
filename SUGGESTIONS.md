@@ -1,7 +1,10 @@
 # GoW Framework — Suggestions & Recommendations
 
-> **Last Updated**: 2026-05-22
-> **Based on**: Full audit of 115 Go source files (~7,624 lines)
+> **Last Updated**: 2026-05-22  
+> **Based on**: Full audit of 115 Go source files (~7,624 lines)  
+> **Top 10 Status**: 🎉 All 10 items implemented and verified.
+
+✅ Implemented · 🚧 In Progress · 📋 Planned
 
 ---
 
@@ -17,6 +20,8 @@ The codebase has 6 things that are **declared/documented but silently broken**. 
 | 4 | `Collection.Chunk()` returns nil | [collection.go:77](support/collection/collection.go) | Remove broken method, rename `Chunked()` to `Chunk()` | ✅ Done |
 | 5 | `@while`/`@once` compile to comments | [compiler.go](view/compiler.go) | Implement via custom template funcs | ✅ Done |
 | 6 | S3Driver is all no-ops | [storage.go](storage/storage.go) | Implement with aws-sdk-go-v2 or label as "planned" | ✅ Done |
+
+> ✅ **All 6 broken features fixed.**
 
 ---
 
@@ -43,6 +48,8 @@ http/middleware/*_test.go        — Each middleware independently
 - Add a `testing/helpers.go` with `NewTestDB()` that returns a pre-migrated SQLite connection
 - Every new feature should include tests in the **same PR**
 
+> ✅ **Core test suite added**: `database/orm`, `session`, `auth/sanctum`, `queue` all covered.
+
 ---
 
 ## 3. Reconcile Documentation with Reality
@@ -67,6 +74,8 @@ docs/
 ```
 
 Add a badge system in docs: `✅ Implemented` | `🚧 In Progress` | `📋 Planned`
+
+> ✅ **Done.** Badge legend applied to all 16 docs. `queues.md` promoted from roadmap stub to guide. `docs/README.md` rewritten as a status-table index.
 
 ---
 
@@ -102,6 +111,8 @@ func (c *UserController) Show(w http.ResponseWriter, r *http.Request) {
 ```
 
 The container already supports this — lean into it instead of creating global function shortcuts.
+
+> 📋 **Design principle adopted.** No facades added. All new features (queue, exception, request helpers) use explicit DI.
 
 ---
 
@@ -153,6 +164,8 @@ func getMeta[T any]() *modelMeta {
 ```
 
 This is a **massive** performance improvement — reflection is expensive, especially in hot paths.
+
+> ✅ **Done.** `database/orm/metadata.go` introduced with `ModelMetadata` + `FieldMeta` structs cached in `sync.Map`. All ORM hot paths now do zero per-call reflection.
 
 ---
 
@@ -206,6 +219,8 @@ type Hub struct {
 ```
 
 This is a **huge** selling point over Laravel: no external WebSocket service required.
+
+> ✅ **Queue done** (`queue/driver_memory.go` — `Push`, `Pop`, `TryPop`, `Len`). 📋 **Broadcasting** via native WebSocket is in the roadmap.
 
 ### Collections: Lean Into Type Safety
 
@@ -280,6 +295,8 @@ my-app/
 
 Ship this as a scaffolding template via `gow new my-app`.
 
+> ✅ **Done.** `gow new <name>` generates the full structure above. See `cmd/gow/main.go`.
+
 ---
 
 ## 8. Add a `gow` CLI Tool (Separate Binary)
@@ -305,6 +322,8 @@ gow route:list
 ```
 
 This is a massive DX improvement and is expected from any modern framework.
+
+> ✅ **Done.** `cmd/gow/main.go` — Cobra CLI with `gow new`, `gow version`, `gow serve` (stub). Build: `go build -o gow.exe ./cmd/gow`.
 
 ---
 
@@ -338,6 +357,8 @@ defer cancel()
 srv.Shutdown(ctx)
 ```
 
+> 📋 **Planned.** Signal handling not yet wired into the framework kernel.
+
 ---
 
 ## 10. Consider a Plugin / Package System
@@ -370,6 +391,8 @@ func (p *MyPackageProvider) Publishes() map[string]string {
     }
 }
 ```
+
+> 📋 **Planned.** Service providers exist but auto-discovery and `Publishes()` are not yet implemented.
 
 ---
 
@@ -423,6 +446,8 @@ func Show(w http.ResponseWriter, r *http.Request) error {
 
 This is significantly cleaner and allows centralized error formatting (JSON for API, HTML for web).
 
+> ✅ **Done.** `http/exception/exception.go` — `HttpException` with `Render()` for JSON/HTML. Router updated to `HandlerFunc = func(w, r) error`. Central `ErrorHandler` wired in.
+
 ---
 
 ## 12. Add Request Context Helpers
@@ -463,6 +488,8 @@ func User(r *http.Request) any { ... }
 func Session(r *http.Request) *session.Manager { ... }
 ```
 
+> ✅ **Done.** `http/request/request.go` — `Input()`, `All()`, `Query()`, `Has()`, `Only()`, `File()`, with JSON body caching via `r.Context()`. Router passes enriched request through.
+
 ---
 
 ## 13. Add a Health Check Endpoint (Quick Win)
@@ -493,6 +520,8 @@ func (r *Router) HealthCheck() {
 }
 ```
 
+> 📋 **Planned.** Health check endpoint not yet wired. The `healthManager` concept is stubbed in utilities.
+
 ---
 
 ## 14. Performance: Add Connection Pooling Config
@@ -514,6 +543,8 @@ func ConfigurePool(db *sql.DB, cfg DatabaseConfig) {
     db.SetConnMaxIdleTime(cfg.ConnMaxIdleTime)
 }
 ```
+
+> 📋 **Planned.** Connection pool config not yet exposed. `database/sql` defaults are used.
 
 ---
 
@@ -540,6 +571,8 @@ Key differences to handle per dialect:
 - Boolean handling: `1/0` vs `true/false`
 - LIMIT syntax: `LIMIT x OFFSET y` vs `LIMIT x, y`
 
+> 📋 **Planned.** Only SQLite dialect exists today.
+
 ---
 
 ## Summary: Top 10 Actions (Prioritized)
@@ -557,8 +590,24 @@ Key differences to handle per dialect:
 | 9 | Reconcile docs with reality | 1 day | 🟡 Medium — user trust | ✅ Done |
 | 10 | Create `gow` CLI binary + `gow new` scaffolding | 2-3 days | 🟡 Medium — DX & onboarding | ✅ Done |
 
-**Total estimated effort for top 10**: ~2-3 weeks of focused work.
+**Total estimated effort for top 10**: ~2-3 weeks of focused work. ✅ **Completed 2026-05-22.**
 
 ---
 
-> **Bottom Line**: GoW has a solid architectural skeleton. The framework's biggest risks are (1) broken code that's documented as working, and (2) zero test coverage. Address those two issues and you'll have a genuinely usable foundation. Then focus on the Go-native advantages (goroutines, type-safe generics, native WebSocket) that make GoW worth choosing over existing Go frameworks.
+## Wave 2 — Next Suggestions (Unimplemented)
+
+The following items from the suggestions above are not yet implemented. They represent the natural next phase of framework maturity:
+
+| # | Suggestion | Priority | Notes |
+|---|-----------|----------|-------|
+| 9 | Graceful shutdown | 🔴 High | Critical for production — wire `signal.Notify` into HTTP kernel |
+| 14 | Connection pool config | 🟡 Medium | Expose `DB_MAX_OPEN_CONNS` etc. from `.env` |
+| 15 | MySQL & PostgreSQL dialects | 🔴 High | Required for real-world adoption beyond SQLite |
+| 10 | Plugin / service provider auto-discovery | 🟡 Medium | Needed for ecosystem growth |
+| 13 | Health check `/up` endpoint | 🟢 Low | Quick win, polish |
+| 6 (Go) | Native WebSocket broadcasting | 🟡 Medium | Major Go-native differentiator vs Laravel |
+| 3 (Go) | Type-safe `Map[T,U]` collection helper | 🟢 Low | Ergonomics improvement |
+
+---
+
+> **Bottom Line**: GoW's Top 10 roadmap is complete. The framework now has a solid, tested foundation with proper error handling, soft deletes, transactions, a metadata-cached ORM, a native queue driver, a CLI scaffolding tool, and accurate documentation. The next phase focuses on production readiness (graceful shutdown, multi-DB dialects) and ecosystem growth (plugin system, broadcasting).
