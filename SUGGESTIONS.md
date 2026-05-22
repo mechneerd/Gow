@@ -9,14 +9,14 @@
 
 The codebase has 6 things that are **declared/documented but silently broken**. These erode trust and cause confusing bugs for users. Fix them first:
 
-| # | Issue | File | Fix |
-|---|-------|------|-----|
-| 1 | Eager loading returns nil | [relation.go:65](database/orm/relation.go) | Execute the actual `SELECT ... WHERE fk IN (...)` query |
-| 2 | Observers never called | [query.go](database/orm/query.go) | Add `DispatchModelEvent()` calls in Insert/Update/Delete |
-| 3 | Global scopes never applied | [model.go](database/orm/model.go) | Apply scopes in `NewQuery()` |
-| 4 | `Collection.Chunk()` returns nil | [collection.go:77](support/collection/collection.go) | Remove broken method, rename `Chunked()` to `Chunk()` |
-| 5 | `@while`/`@once` compile to comments | [compiler.go](view/compiler.go) | Implement via custom template funcs |
-| 6 | S3Driver is all no-ops | [storage.go](storage/storage.go) | Implement with aws-sdk-go-v2 or label as "planned" |
+| # | Issue | File | Fix | Status |
+|---|-------|------|-----|--------|
+| 1 | Eager loading returns nil | [relation.go:65](database/orm/relation.go) | Execute the actual `SELECT ... WHERE fk IN (...)` query | ✅ Done |
+| 2 | Observers never called | [query.go](database/orm/query.go) | Add `DispatchModelEvent()` calls in Insert/Update/Delete | ✅ Done |
+| 3 | Global scopes never applied | [model.go](database/orm/model.go) | Apply scopes in `NewQuery()` | ✅ Done |
+| 4 | `Collection.Chunk()` returns nil | [collection.go:77](support/collection/collection.go) | Remove broken method, rename `Chunked()` to `Chunk()` | ✅ Done |
+| 5 | `@while`/`@once` compile to comments | [compiler.go](view/compiler.go) | Implement via custom template funcs | ✅ Done |
+| 6 | S3Driver is all no-ops | [storage.go](storage/storage.go) | Implement with aws-sdk-go-v2 or label as "planned" | ✅ Done |
 
 ---
 
@@ -544,18 +544,18 @@ Key differences to handle per dialect:
 
 ## Summary: Top 10 Actions (Prioritized)
 
-| # | Action | Effort | Impact |
-|---|--------|--------|--------|
-| 1 | Fix 6 broken features | 1-2 days | 🔴 Critical — foundation trust |
-| 2 | Add core tests (container, router, ORM, validator) | 2-3 days | 🔴 Critical — can't ship without |
-| 3 | Implement transactions | 1 day | 🔴 Critical — can't build real apps |
-| 4 | Build soft deletes into ORM | 1 day | 🔴 High — most models need this |
-| 5 | Fix `@extends` layout resolution | 1 day | 🔴 High — views are fundamentally broken |
-| 6 | Add request helpers + error handler pattern | 1-2 days | 🔴 High — core DX |
-| 7 | Cache struct metadata (performance) | 1 day | 🟡 Medium — big perf win |
-| 8 | Add goroutine-based queue driver | 1 day | 🟡 Medium — Go-native advantage |
-| 9 | Reconcile docs with reality | 1 day | 🟡 Medium — user trust |
-| 10 | Create `gow` CLI binary + `gow new` scaffolding | 2-3 days | 🟡 Medium — DX & onboarding |
+| # | Action | Effort | Impact | Status |
+|---|--------|--------|--------|--------|
+| 1 | Fix 6 broken features | 1-2 days | 🔴 Critical — foundation trust | ✅ Done |
+| 2 | Add core tests (container, router, ORM, validator) | 2-3 days | 🔴 Critical — can't ship without | 🚧 Partial |
+| 3 | Implement transactions | 1 day | 🔴 Critical — can't build real apps | ✅ Done |
+| 4 | Build soft deletes into ORM | 1 day | 🔴 High — most models need this | ✅ Done |
+| 5 | Fix `@extends` layout resolution | 1 day | 🔴 High — views are fundamentally broken | ✅ Done |
+| 6 | Add request helpers + error handler pattern | 1-2 days | 🔴 High — core DX | ✅ Done |
+| 7 | Cache struct metadata (performance) | 1 day | 🟡 Medium — big perf win | |
+| 8 | Add goroutine-based queue driver | 1 day | 🟡 Medium — Go-native advantage | |
+| 9 | Reconcile docs with reality | 1 day | 🟡 Medium — user trust | |
+| 10 | Create `gow` CLI binary + `gow new` scaffolding | 2-3 days | 🟡 Medium — DX & onboarding | |
 
 **Total estimated effort for top 10**: ~2-3 weeks of focused work.
 

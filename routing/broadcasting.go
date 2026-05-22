@@ -7,32 +7,30 @@ import (
 	"encoding/json"
 	"gow/auth"
 	"gow/broadcasting"
+	"gow/http/exception"
 	"net/http"
 	"strings"
 )
 
 // BroadcastRoutes registers the standard POST /broadcasting/auth endpoint.
 func (r *Router) BroadcastRoutes(channelManager *broadcasting.ChannelManager, appSecret string) {
-	r.Post("/broadcasting/auth", func(w http.ResponseWriter, req *http.Request) {
+	r.Post("/broadcasting/auth", func(w http.ResponseWriter, req *http.Request) error {
 		req.ParseForm()
 		socketID := req.FormValue("socket_id")
 		channelName := req.FormValue("channel_name")
 
 		if socketID == "" || channelName == "" {
-			http.Error(w, "socket_id and channel_name are required", http.StatusForbidden)
-			return
+			return exception.Forbidden("socket_id and channel_name are required")
 		}
 
 		user := auth.User(req)
 		if user == nil {
-			http.Error(w, "Unauthenticated", http.StatusUnauthorized)
-			return
+			return exception.Unauthorized("Unauthenticated")
 		}
 
 		authorized, channelData := channelManager.Authorize(user, channelName)
 		if !authorized {
-			http.Error(w, "Forbidden", http.StatusForbidden)
-			return
+			return exception.Forbidden("Forbidden")
 		}
 
 		isPresence := strings.HasPrefix(channelName, "presence-")
@@ -43,8 +41,7 @@ func (r *Router) BroadcastRoutes(channelManager *broadcasting.ChannelManager, ap
 		if isPresence {
 			channelDataJSON, err := json.Marshal(channelData)
 			if err != nil {
-				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-				return
+				return exception.InternalServerError("Internal Server Error")
 			}
 			signatureString = socketID + ":" + channelName + ":" + string(channelDataJSON)
 			
@@ -70,5 +67,6 @@ func (r *Router) BroadcastRoutes(channelManager *broadcasting.ChannelManager, ap
 
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(responseData)
+		return nil
 	})
 }

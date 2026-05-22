@@ -2,13 +2,17 @@ package routing
 
 import (
 	"context"
+	"errors"
+	"gow/http/exception"
+	"log"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 )
 
 // HandlerFunc is the GoW handler function signature.
-type HandlerFunc func(w http.ResponseWriter, r *http.Request)
+type HandlerFunc func(w http.ResponseWriter, r *http.Request) error
 
 // Router represents the HTTP router.
 type Router struct {
@@ -178,13 +182,17 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 type ContextKey string
 const ParamsKey ContextKey = "params"
 
-func (r *Router) executeRoute(route *Route, w http.ResponseWriter, req *http.Request, params map[string]string) {
+func (router *Router) executeRoute(route *Route, w http.ResponseWriter, req *http.Request, params map[string]string) {
 	if len(params) > 0 {
 		ctx := context.WithValue(req.Context(), ParamsKey, params)
 		req = req.WithContext(ctx)
 	}
 
-	var handler http.Handler = http.HandlerFunc(route.Handler)
+	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := route.Handler(w, r); err != nil {
+			router.handleError(w, r, err)
+		}
+	})
 	
 	// Apply middlewares in reverse order so they execute in the order added
 	for i := len(route.Middlewares) - 1; i >= 0; i-- {
@@ -192,6 +200,24 @@ func (r *Router) executeRoute(route *Route, w http.ResponseWriter, req *http.Req
 	}
 
 	handler.ServeHTTP(w, req)
+}
+
+func (router *Router) handleError(w http.ResponseWriter, r *http.Request, err error) {
+	var httpErr *exception.HttpException
+	if errors.As(err, &httpErr) {
+		httpErr.Render(w, r)
+		return
+	}
+
+	// For non-HttpExceptions, log the error and return 500
+	log.Printf("[Router Error] %s: %s - %v", r.Method, r.URL.Path, err)
+
+	w.WriteHeader(http.StatusInternalServerError)
+	if os.Getenv("APP_DEBUG") == "true" {
+		w.Write([]byte(err.Error()))
+	} else {
+		w.Write([]byte("Internal Server Error"))
+	}
 }
 
 // Get helper

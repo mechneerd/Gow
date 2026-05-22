@@ -10,6 +10,8 @@ type ModelUpdating struct{ Model any }
 type ModelUpdated struct{ Model any }
 type ModelDeleting struct{ Model any }
 type ModelDeleted struct{ Model any }
+type ModelRestoring struct{ Model any }
+type ModelRestored struct{ Model any }
 
 // Interface Hooks that models can implement.
 
@@ -43,4 +45,12 @@ type BeforeDeleteHook interface {
 
 type AfterDeleteHook interface {
 	AfterDelete() error
+}
+
+type BeforeRestoreHook interface {
+	BeforeRestore() error
+}
+
+type AfterRestoreHook interface {
+	AfterRestore() error
 }

@@ -30,7 +30,7 @@ func (d *Dispatcher) Wrap(handler any) HandlerFunc {
 		panic("Dispatcher.Wrap: handler must be a function")
 	}
 
-	return func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) error {
 		in := make([]reflect.Value, typ.NumIn())
 		params := r.Context().Value(ParamsKey).(map[string]string)
 
@@ -114,6 +114,13 @@ func (d *Dispatcher) Wrap(handler any) HandlerFunc {
 			in[i] = reflect.Zero(paramType)
 		}
 
-		val.Call(in)
+		out := val.Call(in)
+		
+		if len(out) > 0 {
+			if err, ok := out[0].Interface().(error); ok && err != nil {
+				return err
+			}
+		}
+		return nil
 	}
 }

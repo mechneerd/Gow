@@ -112,6 +112,16 @@ func DispatchModelEvent(model any, event string) bool {
 		if hook, ok := model.(AfterDeleteHook); ok {
 			hook.AfterDelete()
 		}
+	case "restoring":
+		if hook, ok := model.(BeforeRestoreHook); ok {
+			if err := hook.BeforeRestore(); err != nil {
+				return false
+			}
+		}
+	case "restored":
+		if hook, ok := model.(AfterRestoreHook); ok {
+			hook.AfterRestore()
+		}
 	}
 
 	// 2. Global Events (events.Manager)
@@ -133,6 +143,10 @@ func DispatchModelEvent(model any, event string) bool {
 			globalEventManager.Dispatch(ModelDeleting{Model: model})
 		case "deleted":
 			globalEventManager.Dispatch(ModelDeleted{Model: model})
+		case "restoring":
+			globalEventManager.Dispatch(ModelRestoring{Model: model})
+		case "restored":
+			globalEventManager.Dispatch(ModelRestored{Model: model})
 		}
 	}
 

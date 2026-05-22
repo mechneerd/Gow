@@ -48,8 +48,8 @@ func (r *Router) registerResource(name string, controller any, apiOnly bool) {
 
 		methodVal := val.MethodByName(methodName)
 		if methodVal.IsValid() {
-			// We expect the method to match HandlerFunc: func(http.ResponseWriter, *http.Request)
-			handler, ok := methodVal.Interface().(func(http.ResponseWriter, *http.Request))
+			// We expect the method to match HandlerFunc: func(http.ResponseWriter, *http.Request) error
+			handler, ok := methodVal.Interface().(func(http.ResponseWriter, *http.Request) error)
 			if ok {
 				route := r.AddRoute(routeInfo.method, routeInfo.path, handler)
 				// Set a default name like "photos.index"

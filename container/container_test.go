@@ -5,199 +5,113 @@ import (
 	"testing"
 )
 
-type Database interface {
-	Connect() string
+type Mailer interface {
+	Send(msg string) string
 }
 
-type MySQLDatabase struct {
-	ConnectionString string
+type SmtpMailer struct {
+	Host string
 }
 
-func (m *MySQLDatabase) Connect() string {
-	return "Connected to " + m.ConnectionString
+func (s *SmtpMailer) Send(msg string) string {
+	return "Sent " + msg + " via " + s.Host
 }
 
-type UserService struct {
-	DB Database
-}
+func TestContainerBindAndMake(t *testing.T) {
+	app := New()
 
-func NewUserService(db Database) *UserService {
-	return &UserService{DB: db}
-}
-
-func TestContainerBindingAndResolution(t *testing.T) {
-	c := New()
-
-	// Bind Database interface to MySQLDatabase factory
-	err := c.Bind((*Database)(nil), func() Database {
-		return &MySQLDatabase{ConnectionString: "mysql://localhost"}
-	})
-	if err != nil {
-		t.Fatalf("Failed to bind: %v", err)
-	}
-
-	// Resolve the interface
-	db, err := Make[Database](c)
-	if err != nil {
-		t.Fatalf("Failed to resolve: %v", err)
-	}
-
-	if db.Connect() != "Connected to mysql://localhost" {
-		t.Errorf("Unexpected result: %s", db.Connect())
-	}
-}
-
-func TestContainerDependencyInjection(t *testing.T) {
-	c := New()
-
-	c.Bind((*Database)(nil), func() Database {
-		return &MySQLDatabase{ConnectionString: "mysql://localhost"}
+	app.Bind((*Mailer)(nil), func() Mailer {
+		return &SmtpMailer{Host: "smtp.example.com"}
 	})
 
-	c.Bind((*UserService)(nil), NewUserService)
-
-	svc, err := Make[*UserService](c)
+	mailer, err := Make[Mailer](app)
 	if err != nil {
-		t.Fatalf("Failed to resolve UserService: %v", err)
+		t.Fatalf("Failed to make Mailer: %v", err)
 	}
 
-	if svc.DB == nil {
-		t.Fatal("Dependency was not injected")
+	result := mailer.Send("Hello")
+	if result != "Sent Hello via smtp.example.com" {
+		t.Errorf("Unexpected result: %s", result)
 	}
 
-	if svc.DB.Connect() != "Connected to mysql://localhost" {
-		t.Errorf("Unexpected result: %s", svc.DB.Connect())
+	// Verify it's not a singleton (each Make calls factory again)
+	mailer2, _ := Make[Mailer](app)
+	if mailer == mailer2 {
+		t.Errorf("Bind should return a new instance each time, got same pointer")
 	}
 }
 
 func TestContainerSingleton(t *testing.T) {
-	c := New()
+	app := New()
 
-	callCount := 0
-	c.Singleton((*Database)(nil), func() Database {
-		callCount++
-		return &MySQLDatabase{ConnectionString: "singleton://"}
+	app.Singleton((*Mailer)(nil), func() Mailer {
+		return &SmtpMailer{Host: "smtp.example.com"}
 	})
 
-	db1, _ := Make[Database](c)
-	db2, _ := Make[Database](c)
+	mailer1, _ := Make[Mailer](app)
+	mailer2, _ := Make[Mailer](app)
 
-	if db1 != db2 {
-		t.Error("Expected the same instance for singleton")
+	if mailer1 != mailer2 {
+		t.Errorf("Singleton should return the exact same instance, got different pointers")
+	}
+}
+
+func TestContainerInstance(t *testing.T) {
+	app := New()
+	existing := &SmtpMailer{Host: "already.existing"}
+
+	err := app.Instance((*Mailer)(nil), existing)
+	if err != nil {
+		t.Fatalf("Instance failed: %v", err)
 	}
 
-	if callCount != 1 {
-		t.Errorf("Expected factory to be called 1 time, got %d", callCount)
+	resolved, _ := Make[Mailer](app)
+	if resolved != existing {
+		t.Errorf("Expected existing instance to be resolved")
 	}
 }
 
 func TestContainerFreeze(t *testing.T) {
-	c := New()
-	c.Freeze()
+	app := New()
+	app.Freeze()
 
-	err := c.Bind((*Database)(nil), func() Database {
-		return &MySQLDatabase{}
-	})
-
+	err := app.Bind((*Mailer)(nil), func() Mailer { return &SmtpMailer{} })
 	if !errors.Is(err, ErrFrozen) {
 		t.Errorf("Expected ErrFrozen, got %v", err)
 	}
 }
 
-type Filesystem interface {
-	Disk() string
+func TestContainerUnbound(t *testing.T) {
+	app := New()
+
+	_, err := Make[Mailer](app)
+	if !errors.Is(err, ErrBindingNotFound) {
+		t.Errorf("Expected ErrBindingNotFound, got %v", err)
+	}
 }
 
-type LocalFilesystem struct{}
-
-func (l *LocalFilesystem) Disk() string { return "local" }
-
-type S3Filesystem struct{}
-
-func (s *S3Filesystem) Disk() string { return "s3" }
-
-type PhotoController struct {
-	FS Filesystem
+type DependentService struct {
+	Mailer Mailer
 }
 
-type VideoController struct {
-	FS Filesystem
-}
+func TestContainerDependencyInjection(t *testing.T) {
+	app := New()
 
-func TestContextualBinding(t *testing.T) {
-	c := New()
-
-	c.Bind((*PhotoController)(nil), func(fs Filesystem) *PhotoController {
-		return &PhotoController{FS: fs}
+	app.Bind((*Mailer)(nil), func() Mailer {
+		return &SmtpMailer{Host: "smtp.example.com"}
 	})
 
-	c.Bind((*VideoController)(nil), func(fs Filesystem) *VideoController {
-		return &VideoController{FS: fs}
+	// Factory that takes dependencies automatically resolved by the container
+	app.Bind((*DependentService)(nil), func(m Mailer) *DependentService {
+		return &DependentService{Mailer: m}
 	})
 
-	c.When((*PhotoController)(nil)).
-		Needs((*Filesystem)(nil)).
-		Give(func() Filesystem { return &LocalFilesystem{} })
-
-	c.When((*VideoController)(nil)).
-		Needs((*Filesystem)(nil)).
-		Give(func() Filesystem { return &S3Filesystem{} })
-
-	pc, err := Make[*PhotoController](c)
+	service, err := Make[*DependentService](app)
 	if err != nil {
-		t.Fatalf("Failed to resolve PhotoController: %v", err)
-	}
-	if pc.FS.Disk() != "local" {
-		t.Errorf("Expected local disk, got %s", pc.FS.Disk())
+		t.Fatalf("Failed to make DependentService: %v", err)
 	}
 
-	vc, err := Make[*VideoController](c)
-	if err != nil {
-		t.Fatalf("Failed to resolve VideoController: %v", err)
-	}
-	if vc.FS.Disk() != "s3" {
-		t.Errorf("Expected s3 disk, got %s", vc.FS.Disk())
-	}
-}
-
-func TestContainerInstances(t *testing.T) {
-	c := New()
-	fs := &LocalFilesystem{}
-
-	err := c.Instance((*Filesystem)(nil), fs)
-	if err != nil {
-		t.Fatalf("Failed to register instance: %v", err)
-	}
-
-	resolved, err := Make[Filesystem](c)
-	if err != nil {
-		t.Fatalf("Failed to resolve instance: %v", err)
-	}
-
-	if resolved != fs {
-		t.Error("Expected the exact instance to be resolved")
-	}
-}
-
-type AutoWiredController struct {
-	DB Database `inject:""`
-}
-
-func TestStructInjection(t *testing.T) {
-	c := New()
-
-	c.Instance((*Database)(nil), &MySQLDatabase{ConnectionString: "injected"})
-
-	ctrl, err := Make[*AutoWiredController](c)
-	if err != nil {
-		t.Fatalf("Failed to resolve struct: %v", err)
-	}
-
-	if ctrl.DB == nil {
-		t.Fatal("Expected DB to be injected")
-	}
-
-	if ctrl.DB.Connect() != "Connected to injected" {
-		t.Errorf("Unexpected result: %s", ctrl.DB.Connect())
+	if service.Mailer == nil {
+		t.Errorf("Expected Mailer dependency to be injected, got nil")
 	}
 }

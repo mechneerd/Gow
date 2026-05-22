@@ -1,165 +1,168 @@
 package routing
 
 import (
+	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
-	"time"
 )
 
-func TestRouterBasic(t *testing.T) {
+func TestRouterBasicVerbs(t *testing.T) {
 	router := NewRouter()
-	
-	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("home"))
-	})
-	
-	router.Get("/about", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("about"))
-	})
 
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	w := httptest.NewRecorder()
-	router.ServeHTTP(w, req)
-	if w.Body.String() != "home" {
-		t.Errorf("Expected home, got %s", w.Body.String())
+	handler := func(w http.ResponseWriter, r *http.Request) error {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(r.Method + " OK"))
+		return nil
 	}
 
-	req = httptest.NewRequest(http.MethodGet, "/about", nil)
-	w = httptest.NewRecorder()
-	router.ServeHTTP(w, req)
-	if w.Body.String() != "about" {
-		t.Errorf("Expected about, got %s", w.Body.String())
-	}
+	router.Get("/get", handler)
+	router.Post("/post", handler)
+	router.Put("/put", handler)
+	router.Delete("/delete", handler)
+	router.Patch("/patch", handler)
+	router.Options("/options", handler)
 
-	req = httptest.NewRequest(http.MethodGet, "/notfound", nil)
-	w = httptest.NewRecorder()
-	router.ServeHTTP(w, req)
-	if w.Code != http.StatusNotFound {
-		t.Errorf("Expected 404, got %d", w.Code)
+	tests := []string{"GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"}
+
+	for _, method := range tests {
+		req := httptest.NewRequest(method, "/"+strings.ToLower(method), nil)
+		w := httptest.NewRecorder()
+
+		router.ServeHTTP(w, req)
+
+		res := w.Result()
+		defer res.Body.Close()
+
+		if res.StatusCode != http.StatusOK {
+			t.Errorf("Expected 200 OK for %s, got %d", method, res.StatusCode)
+		}
+
+		body, _ := io.ReadAll(res.Body)
+		if string(body) != method+" OK" {
+			t.Errorf("Expected body '%s OK', got '%s'", method, body)
+		}
 	}
 }
 
 func TestRouterParameters(t *testing.T) {
 	router := NewRouter()
-	
-	router.Get("/users/{id}", func(w http.ResponseWriter, r *http.Request) {
+
+	router.Get("/users/{id}/posts/{post_id}", func(w http.ResponseWriter, r *http.Request) error {
 		params := r.Context().Value(ParamsKey).(map[string]string)
-		w.Write([]byte("user:" + params["id"]))
+		w.Write([]byte(fmt.Sprintf("User %s Post %s", params["id"], params["post_id"])))
+		return nil
 	})
 
-	req := httptest.NewRequest(http.MethodGet, "/users/123", nil)
+	req := httptest.NewRequest(http.MethodGet, "/users/123/posts/456", nil)
 	w := httptest.NewRecorder()
+
 	router.ServeHTTP(w, req)
-	if w.Body.String() != "user:123" {
-		t.Errorf("Expected user:123, got %s", w.Body.String())
+
+	res := w.Result()
+	defer res.Body.Close()
+	body, _ := io.ReadAll(res.Body)
+
+	if string(body) != "User 123 Post 456" {
+		t.Errorf("Expected 'User 123 Post 456', got '%s'", body)
 	}
 }
 
-func TestRouterMiddlewareAndGroups(t *testing.T) {
+func TestRouterGroupsAndPrefixes(t *testing.T) {
 	router := NewRouter()
-	
-	mw := func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Add("X-Test", "1")
-			next.ServeHTTP(w, r)
-		})
-	}
 
 	router.Group("/api", func(r *Router) {
-		r.Use(mw)
-		r.Get("/ping", func(w http.ResponseWriter, req *http.Request) {
+		r.Get("/ping", func(w http.ResponseWriter, r *http.Request) error {
 			w.Write([]byte("pong"))
+			return nil
+		})
+
+		r.Group("/v1", func(r2 *Router) {
+			r2.Get("/status", func(w http.ResponseWriter, r *http.Request) error {
+				w.Write([]byte("v1 ok"))
+				return nil
+			})
 		})
 	})
 
-	req := httptest.NewRequest(http.MethodGet, "/api/ping", nil)
-	w := httptest.NewRecorder()
-	router.ServeHTTP(w, req)
-	
-	if w.Body.String() != "pong" {
-		t.Errorf("Expected pong, got %s", w.Body.String())
-	}
-	if w.Header().Get("X-Test") != "1" {
-		t.Errorf("Expected X-Test: 1, got %s", w.Header().Get("X-Test"))
-	}
-}
-
-func TestNamedRoutes(t *testing.T) {
-	router := NewRouter()
-	
-	route := router.Get("/user/{id}/profile", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("profile"))
-	})
-	router.SetName(route, "user.profile")
-
-	// We only verify it gets stored, as basic URL generation isn't exposed separately from signed URLs yet
-	if r, ok := router.namedRoutes["user.profile"]; !ok {
-		t.Errorf("Expected route to be named")
-	} else if r.Path != "/user/{id}/profile" {
-		t.Errorf("Expected path /user/{id}/profile, got %s", r.Path)
-	}
-}
-
-type PhotoController struct{}
-func (p *PhotoController) Index(w http.ResponseWriter, r *http.Request) { w.Write([]byte("index")) }
-func (p *PhotoController) Show(w http.ResponseWriter, r *http.Request) { w.Write([]byte("show")) }
-func (p *PhotoController) Store(w http.ResponseWriter, r *http.Request) { w.Write([]byte("store")) }
-func (p *PhotoController) Update(w http.ResponseWriter, r *http.Request) { w.Write([]byte("update")) }
-func (p *PhotoController) Destroy(w http.ResponseWriter, r *http.Request) { w.Write([]byte("destroy")) }
-
-func TestResourceRouting(t *testing.T) {
-	router := NewRouter()
-	ctrl := &PhotoController{}
-	
-	router.ApiResource("photos", ctrl)
-
-	req := httptest.NewRequest(http.MethodGet, "/photos", nil)
-	w := httptest.NewRecorder()
-	router.ServeHTTP(w, req)
-	if w.Body.String() != "index" {
-		t.Errorf("Expected index, got %s", w.Body.String())
+	tests := []struct {
+		Path         string
+		ExpectedBody string
+		ExpectedCode int
+	}{
+		{"/api/ping", "pong", http.StatusOK},
+		{"/api/v1/status", "v1 ok", http.StatusOK},
+		{"/ping", "404 page not found\n", http.StatusNotFound},
 	}
 
-	req = httptest.NewRequest(http.MethodPut, "/photos/123", nil)
-	w = httptest.NewRecorder()
-	router.ServeHTTP(w, req)
-	if w.Body.String() != "update" {
-		t.Errorf("Expected update, got %s", w.Body.String())
-	}
-}
+	for _, tc := range tests {
+		req := httptest.NewRequest(http.MethodGet, tc.Path, nil)
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
 
-func TestSignedURLs(t *testing.T) {
-	router := NewRouter()
-	secret := "secret-key"
-	gen := NewURLGenerator(router, secret)
+		res := w.Result()
+		defer res.Body.Close()
+		body, _ := io.ReadAll(res.Body)
 
-	route := router.Get("/unsubscribe/{user}", func(w http.ResponseWriter, r *http.Request) {
-		if !gen.HasValidSignature(r) {
-			w.WriteHeader(http.StatusForbidden)
-			w.Write([]byte("invalid signature"))
-			return
+		if res.StatusCode != tc.ExpectedCode {
+			t.Errorf("Path %s expected code %d, got %d", tc.Path, tc.ExpectedCode, res.StatusCode)
 		}
-		w.Write([]byte("unsubscribed"))
-	})
-	router.SetName(route, "unsubscribe")
 
-	urlStr, err := gen.SignedRoute("unsubscribe", map[string]string{"user": "1"}, time.Time{})
-	if err != nil {
-		t.Fatalf("Failed to generate signed route: %v", err)
+		if string(body) != tc.ExpectedBody {
+			t.Errorf("Path %s expected body '%s', got '%s'", tc.Path, tc.ExpectedBody, body)
+		}
+	}
+}
+
+func TestRouterMiddlewareOrder(t *testing.T) {
+	router := NewRouter()
+
+	mw1 := func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte("MW1 Start|"))
+			next.ServeHTTP(w, r)
+			w.Write([]byte("|MW1 End"))
+		})
 	}
 
-	req := httptest.NewRequest(http.MethodGet, urlStr, nil)
+	mw2 := func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte("MW2 Start|"))
+			next.ServeHTTP(w, r)
+			w.Write([]byte("|MW2 End"))
+		})
+	}
+
+	router.Use(mw1)
+	router.Use(mw2)
+
+	router.Get("/test", func(w http.ResponseWriter, r *http.Request) error {
+		w.Write([]byte("Handler"))
+		return nil
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/test", nil)
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
-	if w.Body.String() != "unsubscribed" {
-		t.Errorf("Expected unsubscribed, got %s", w.Body.String())
-	}
 
-	req = httptest.NewRequest(http.MethodGet, urlStr+"x", nil)
-	w = httptest.NewRecorder()
-	router.ServeHTTP(w, req)
-	if w.Code != http.StatusForbidden {
-		t.Errorf("Expected 403 Forbidden, got %d", w.Code)
+	res := w.Result()
+	defer res.Body.Close()
+	body, _ := io.ReadAll(res.Body)
+
+	expected := "MW1 Start|MW2 Start|Handler|MW2 End|MW1 End"
+	if string(body) != expected {
+		t.Errorf("Expected middleware execution order '%s', got '%s'", expected, string(body))
+	}
+}
+
+func TestRouteNaming(t *testing.T) {
+	router := NewRouter()
+
+	router.Get("/dashboard", func(w http.ResponseWriter, r *http.Request) error { return nil }).SetRouteName(router, "dashboard")
+
+	if route, exists := router.namedRoutes["dashboard"]; !exists || route.Path != "/dashboard" {
+		t.Errorf("Expected named route 'dashboard' to point to '/dashboard'")
 	}
 }

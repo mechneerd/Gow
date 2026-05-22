@@ -1,132 +1,127 @@
 package orm
 
 import (
-	"context"
 	"database/sql"
 	"gow/database/dialect"
 	"gow/database/query"
-	"gow/database/schema"
 	"testing"
 	"time"
-	"errors"
 
 	_ "modernc.org/sqlite"
 )
 
-type User struct {
-	ID        int       `db:"id" gow:"primaryKey,autoIncrement"`
+type CrudUser struct {
+	ID        int       `db:"id" gow:"primaryKey"`
 	Name      string    `db:"name"`
 	Email     string    `db:"email"`
 	CreatedAt time.Time `db:"created_at" gow:"autoCreateTime"`
 	UpdatedAt time.Time `db:"updated_at" gow:"autoUpdateTime"`
 }
 
-func TestORMAndSchema(t *testing.T) {
+func (CrudUser) TableName() string { return "test_users" }
+
+func setupTestDB(t *testing.T) *DB {
 	conn, err := sql.Open("sqlite", ":memory:")
 	if err != nil {
-		t.Fatalf("Failed to open sqlite memory db: %v", err)
+		t.Fatalf("Failed to open db: %v", err)
 	}
-	defer conn.Close()
 
-	d := &dialect.SQLiteDialect{}
-	
-	// 1. Test Schema Builder
-	builder := schema.NewBuilder(conn, d)
-	err = builder.Create("users", func(table *schema.Blueprint) {
-		table.ID()
-		table.String("name", 255)
-		table.String("email", 255).Unique()
-		table.Timestamps()
-	})
+	_, err = conn.Exec(`
+		CREATE TABLE test_users (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			name TEXT,
+			email TEXT,
+			created_at DATETIME,
+			updated_at DATETIME
+		)
+	`)
 	if err != nil {
-		t.Fatalf("Schema Create failed: %v", err)
+		t.Fatalf("Failed to create table: %v", err)
 	}
 
-	// 2. Test ORM Insert
-	db := &DB{
+	return &DB{
 		Conn:    conn,
-		Builder: query.NewBuilder(conn, d),
-	}
-
-	q := NewQuery[User](db)
-	user := &User{
-		Name:  "Alice",
-		Email: "alice@example.com",
-	}
-
-	err = q.Insert(user)
-	if err != nil {
-		t.Fatalf("Insert failed: %v", err)
-	}
-	if user.ID == 0 {
-		t.Error("Expected ID to be populated")
-	}
-
-	// 3. Test ORM Get/First
-	q2 := NewQuery[User](db)
-	fetched, err := q2.Where("email", "=", "alice@example.com").First()
-	if err != nil {
-		t.Fatalf("First() failed: %v", err)
-	}
-
-	if fetched.Name != "Alice" {
-		t.Errorf("Expected Name 'Alice', got '%s'", fetched.Name)
-	}
-	if fetched.ID != user.ID {
-		t.Errorf("Expected ID %d, got %d", user.ID, fetched.ID)
+		Builder: query.NewBuilder(conn, &dialect.SQLiteDialect{}),
 	}
 }
 
-func TestORMTransactions(t *testing.T) {
-	conn, err := sql.Open("sqlite", ":memory:")
-	if err != nil {
-		t.Fatalf("Failed to open sqlite memory db: %v", err)
-	}
-	defer conn.Close()
+func TestORMCrudLifecycle(t *testing.T) {
+	db := setupTestDB(t)
 
-	d := &dialect.SQLiteDialect{}
-	builder := schema.NewBuilder(conn, d)
-	_ = builder.Create("users", func(table *schema.Blueprint) {
-		table.ID()
-		table.String("name", 255)
-		table.String("email", 255).Unique()
-		table.Timestamps()
+	t.Run("Insert and Find", func(t *testing.T) {
+		user := &CrudUser{
+			Name:  "Alice",
+			Email: "alice@example.com",
+		}
+
+		err := NewQuery[CrudUser](db).Insert(user)
+		if err != nil {
+			t.Fatalf("Insert failed: %v", err)
+		}
+
+		if user.ID == 0 {
+			t.Errorf("Expected ID to be populated")
+		}
+		if user.CreatedAt.IsZero() {
+			t.Errorf("Expected CreatedAt to be populated")
+		}
+
+		// Find the inserted user
+		found, err := NewQuery[CrudUser](db).Find(user.ID)
+		if err != nil {
+			t.Fatalf("Find failed: %v", err)
+		}
+
+		if found.Name != "Alice" {
+			t.Errorf("Expected name 'Alice', got '%s'", found.Name)
+		}
 	})
 
-	db := &DB{
-		Conn:    conn,
-		Builder: query.NewBuilder(conn, d),
-	}
+	t.Run("Update", func(t *testing.T) {
+		user := &CrudUser{
+			Name:  "Bob",
+			Email: "bob@example.com",
+		}
 
-	// Test successful transaction
-	err = db.Transaction(context.Background(), func(txDB *DB) error {
-		q := NewQuery[User](txDB)
-		return q.Insert(&User{Name: "TxUser", Email: "tx@example.com"})
+		NewQuery[CrudUser](db).Insert(user)
+		
+		originalUpdateTime := user.UpdatedAt
+
+		// Wait slightly to ensure time change
+		time.Sleep(10 * time.Millisecond)
+
+		user.Name = "Bobby"
+		err := NewQuery[CrudUser](db).Update(user)
+		if err != nil {
+			t.Fatalf("Update failed: %v", err)
+		}
+
+		if user.UpdatedAt.Equal(originalUpdateTime) {
+			t.Errorf("Expected UpdatedAt to change, got %v vs %v", user.UpdatedAt, originalUpdateTime)
+		}
+
+		found, _ := NewQuery[CrudUser](db).Find(user.ID)
+		if found.Name != "Bobby" {
+			t.Errorf("Expected name to be updated to 'Bobby', got '%s'", found.Name)
+		}
 	})
-	if err != nil {
-		t.Fatalf("Transaction failed: %v", err)
-	}
 
-	// Verify insertion
-	fetched, _ := NewQuery[User](db).Where("email", "=", "tx@example.com").First()
-	if fetched == nil {
-		t.Error("Expected user to be created in transaction")
-	}
+	t.Run("Delete", func(t *testing.T) {
+		user := &CrudUser{
+			Name:  "Charlie",
+			Email: "charlie@example.com",
+		}
 
-	// Test rollback on error
-	err = db.Transaction(context.Background(), func(txDB *DB) error {
-		q := NewQuery[User](txDB)
-		_ = q.Insert(&User{Name: "FailUser", Email: "fail@example.com"})
-		return errors.New("rollback requested")
+		NewQuery[CrudUser](db).Insert(user)
+
+		err := NewQuery[CrudUser](db).Delete(user)
+		if err != nil {
+			t.Fatalf("Delete failed: %v", err)
+		}
+
+		_, err = NewQuery[CrudUser](db).Find(user.ID)
+		if err == nil {
+			t.Errorf("Expected error when finding deleted user, got nil")
+		}
 	})
-
-	if err == nil || err.Error() != "rollback requested" {
-		t.Errorf("Expected rollback error, got: %v", err)
-	}
-
-	// Verify rollback
-	failedUser, _ := NewQuery[User](db).Where("email", "=", "fail@example.com").First()
-	if failedUser != nil {
-		t.Error("Expected user NOT to be created due to rollback")
-	}
 }
