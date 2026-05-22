@@ -1,5 +1,8 @@
 # Goquent ORM
 
+> **Status**: ?? In Progress (Core working, tests/edge cases pending)
+
+
 The Goquent ORM provides a beautiful, simple Active Record implementation for working with your database. Each database table has a corresponding "Model" struct that is used to interact with that table.
 
 ## Defining Models

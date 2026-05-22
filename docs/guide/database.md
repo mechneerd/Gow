@@ -1,5 +1,8 @@
 # Database & Tooling
 
+> **Status**: ?? In Progress (Core working, tests/edge cases pending)
+
+
 GoW ships with a powerful set of database tools beyond just the ORM, allowing you to manage schemas, profile queries, and prune obsolete records seamlessly.
 
 ## Schema Dumping

@@ -1,5 +1,8 @@
 # Queues
 
+> **Status**: ?? Planned (Currently stubbed or not implemented)
+
+
 While building your web application, you may have some tasks, such as parsing and storing an uploaded CSV file, that take too long to perform during a typical web request. GoW's queue behavior allows you to defer the processing of a time-consuming task until a later time.
 
 ## Drivers

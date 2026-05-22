@@ -1,5 +1,8 @@
 # Cache & Session
 
+> **Status**: ?? In Progress (Core working, tests/edge cases pending)
+
+
 GoW provides an expressive, unified API for various caching and session backends.
 
 ## Cache

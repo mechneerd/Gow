@@ -1,5 +1,8 @@
 # File Storage
 
+> **Status**: ?? Planned (Currently stubbed or not implemented)
+
+
 GoW provides a powerful filesystem abstraction using a multi-disk `Storage` manager. This allows you to easily swap between local filesystems and cloud storage like Amazon S3 without changing your application code.
 
 ## Configuration

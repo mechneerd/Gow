@@ -1,5 +1,8 @@
 # Utilities
 
+> **Status**: ?? In Progress (Core working, tests/edge cases pending)
+
+
 GoW provides several powerful utilities to simplify your daily development workflow.
 
 ## Feature Flags (Pennant Equivalent)

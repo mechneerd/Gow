@@ -1,5 +1,8 @@
 # Authorization
 
+> **Status**: ?? Planned (Currently stubbed or not implemented)
+
+
 In addition to providing built-in authentication services, GoW also provides a simple way to authorize user actions against a given resource.
 
 ## Gates

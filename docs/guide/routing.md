@@ -1,5 +1,8 @@
 # Routing
 
+> **Status**: ?? In Progress (Core working, tests/edge cases pending)
+
+
 GoW provides an expressive and highly performant routing engine, utilizing a trie-based structure capable of parameter extraction and middleware grouping.
 
 ## Basic Routing

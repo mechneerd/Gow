@@ -1,5 +1,8 @@
 # Middleware
 
+> **Status**: ?? In Progress (Core working, tests/edge cases pending)
+
+
 Middleware provide a convenient mechanism for inspecting and filtering HTTP requests entering your application. For example, GoW includes a middleware that verifies the user of your application is authenticated.
 
 ## Defining Middleware

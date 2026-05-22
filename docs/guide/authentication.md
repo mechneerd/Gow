@@ -1,5 +1,8 @@
 # Authentication
 
+> **Status**: ?? In Progress (Core working, tests/edge cases pending)
+
+
 GoW provides robust, built-in services for authenticating users out of the box, utilizing guards, providers, and token issuance strategies.
 
 ## Headless Authentication (Fortify Equivalent)

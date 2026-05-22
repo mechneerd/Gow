@@ -1,5 +1,8 @@
 # Installation
 
+> **Status**: ?? In Progress (Core working, tests/edge cases pending)
+
+
 To get started with GoW, you will need to have Go version 1.24 or higher installed on your machine.
 
 ## Creating a New Project

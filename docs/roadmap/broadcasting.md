@@ -1,5 +1,8 @@
 # Broadcasting
 
+> **Status**: ?? Planned (Currently stubbed or not implemented)
+
+
 In many modern web applications, WebSockets are used to implement real-time, live-updating user interfaces. When some data is updated on the server, a message is typically sent over a WebSocket connection to be handled by the client.
 
 To assist you in building these types of features, GoW makes it easy to "broadcast" your events over a WebSocket connection.

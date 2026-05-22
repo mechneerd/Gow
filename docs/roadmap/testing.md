@@ -1,5 +1,8 @@
 # Testing
 
+> **Status**: ?? Planned (Currently stubbed or not implemented)
+
+
 Testing is a first-class citizen in GoW. By integrating deeply with Go's standard `testing` package and popular assertion libraries like `testify/assert`, GoW makes writing feature and unit tests a breeze.
 
 ## HTTP Testing

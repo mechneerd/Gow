@@ -1,5 +1,8 @@
 # Events
 
+> **Status**: ?? In Progress (Core working, tests/edge cases pending)
+
+
 GoW's events provide a simple observer pattern implementation, allowing you to subscribe and listen for various events that occur in your application. 
 
 ## Registering Events & Listeners
