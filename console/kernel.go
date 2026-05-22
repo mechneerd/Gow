@@ -1,6 +1,7 @@
 package console
 
 import (
+	"context"
 	"gow/foundation"
 	"os"
 
@@ -34,6 +35,10 @@ func (k *Kernel) RegisterCommand(cmd *cobra.Command) {
 
 // Run executes the console kernel.
 func (k *Kernel) Run() {
+	// Make the Application available to all commands via context
+	ctx := context.WithValue(k.rootCmd.Context(), "app", k.app)
+	k.rootCmd.SetContext(ctx)
+
 	if err := k.rootCmd.Execute(); err != nil {
 		os.Exit(1)
 	}

@@ -2,71 +2,58 @@ package artisan
 
 import (
 	"fmt"
-	"io"
-	"os"
-	"path/filepath"
+
+	"gow/foundation"
 
 	"github.com/spf13/cobra"
 )
 
-// VendorPublishCmd publishes assets, configs, and migrations from third-party packages.
+// VendorPublishCmd publishes assets from PublishableProviders registered in the Application.
 var VendorPublishCmd = &cobra.Command{
 	Use:   "vendor:publish",
-	Short: "Publish any publishable assets from vendor packages",
+	Short: "Publish any publishable assets from service providers",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Discovering packages...")
-		
-		// In Go, since we don't have Composer's auto-discovery JSON out of the box,
-		// we scan vendor directories or a `govel.json` manifest to find publishable stubs.
-		// For demonstration, we simulate publishing a config file.
-		
-		targetDir := filepath.Join("config")
-		os.MkdirAll(targetDir, 0755)
-		
-		// Simulated package discovery
-		packages := []struct{
-			Name string
-			Files map[string]string // Source -> Destination
-		}{
-			{
-				Name: "govel/fortify",
-				Files: map[string]string{
-					"vendor/govel/fortify/stubs/fortify.go": "config/fortify.go",
-				},
-			},
+		providerFlag, _ := cmd.Flags().GetString("provider")
+
+		// We expect the Application to be passed from the console kernel
+		appIface := cmd.Context().Value("app")
+		app, ok := appIface.(*foundation.Application)
+		if !ok || app == nil {
+			fmt.Println("Error: Application not available in context")
+			return
 		}
 
-		publishedCount := 0
-		for _, pkg := range packages {
-			for src, dst := range pkg.Files {
-				// Simulating file copy
-				// copyFile(src, dst)
-				fmt.Printf("Copied %s to %s\n", src, dst)
-				publishedCount++
+		registry := app.ProviderRegistry()
+		publishables := registry.Publishables()
+
+		if len(publishables) == 0 {
+			fmt.Println("No publishable providers registered.")
+			return
+		}
+
+		published := 0
+		for _, p := range publishables {
+			name := fmt.Sprintf("%T", p)
+			if providerFlag != "" && name != providerFlag {
+				continue
 			}
+
+			fmt.Printf("Publishing from %s...\n", name)
+			if err := foundation.PublishAssets(p, app.BasePath()); err != nil {
+				fmt.Printf("  Error publishing %s: %v\n", name, err)
+				continue
+			}
+			published++
 		}
 
-		if publishedCount == 0 {
-			fmt.Println("Nothing to publish.")
+		if published == 0 {
+			fmt.Println("Nothing was published.")
 		} else {
-			fmt.Println("Publishing complete.")
+			fmt.Printf("Published %d provider(s).\n", published)
 		}
 	},
 }
 
-func copyFile(src, dst string) error {
-	in, err := os.Open(src)
-	if err != nil {
-		return err
-	}
-	defer in.Close()
-
-	out, err := os.Create(dst)
-	if err != nil {
-		return err
-	}
-	defer out.Close()
-
-	_, err = io.Copy(out, in)
-	return err
+func init() {
+	VendorPublishCmd.Flags().StringP("provider", "p", "", "Publish assets from a specific provider only")
 }

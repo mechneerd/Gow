@@ -3,20 +3,20 @@
 package main
 
 import (
+	"gow/bootstrap"
 	"gow/console"
-	"gow/foundation"
 
 	"github.com/spf13/cobra"
 )
 
 func main() {
-	// 1. Create Application
-	app := foundation.NewApplication(".")
+	// Use canonical bootstrap that registers all core providers
+	app := bootstrap.NewApplication(".")
 
-	// 2. Create Console Kernel
+	// Create Console Kernel
 	kernel := console.NewKernel(app)
 
-	// Example: Register a basic command
+	// Example basic command (for testing)
 	kernel.RegisterCommand(&cobra.Command{
 		Use:   "hello",
 		Short: "Prints a greeting",
@@ -25,9 +25,6 @@ func main() {
 		},
 	})
 
-	// 3. Boot App
-	app.Boot()
-
-	// 4. Run Kernel
+	// Run the console kernel
 	kernel.Run()
 }
