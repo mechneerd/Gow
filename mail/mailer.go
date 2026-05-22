@@ -94,13 +94,19 @@ func (d *SmtpDriver) Send(msg *Message) error {
 
 // Mailer abstracts sending emails using a configured driver.
 type Mailer struct {
-	driver Driver
-	from   string
+	driver       Driver
+	from         string
+	queueManager *queue.Manager
 }
 
 // NewMailer creates a new Mailer instance.
 func NewMailer(driver Driver) *Mailer {
 	return &Mailer{driver: driver}
+}
+
+// SetQueueManager allows the Mailer to automatically dispatch queued jobs.
+func (m *Mailer) SetQueueManager(qm *queue.Manager) {
+	m.queueManager = qm
 }
 
 // SetFrom sets the default from address for all emails.
@@ -128,8 +134,7 @@ func (m *Mailer) Queue(mailable Mailable) (*SendMailJob, error) {
 	return nil, err
 }
 
-// QueueNow is a convenience that automatically sends the job using the default queue if available.
-// In most setups you should use the returned job + your queue manager for more control.
+// QueueNow is a convenience that automatically dispatches the job to the queue if a queue manager is set.
 func (m *Mailer) QueueNow(mailable Mailable) error {
 	job, err := m.Queue(mailable)
 	if err != nil {
@@ -138,10 +143,9 @@ func (m *Mailer) QueueNow(mailable Mailable) error {
 	if job == nil {
 		return nil
 	}
-	// Best effort: try global queue manager if the artisan commands registered one
-	if queueManager != nil {
-		return queueManager.Push(job)
+	if m.queueManager != nil {
+		return m.queueManager.Push(job)
 	}
-	// Fallback: send immediately
+	// Fallback to immediate send if no queue manager
 	return m.Send(mailable)
 }

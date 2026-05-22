@@ -44,9 +44,10 @@ func (c *Compiler) CompileString(raw string) string {
 	elseIfRe := regexp.MustCompile(`@elseif\s*\((.*?)\)`)
 	compiled = elseIfRe.ReplaceAllString(compiled, "{{ else if $1 }}")
 
-	// @foreach(range) -> {{ range range }}
-	foreachRe := regexp.MustCompile(`@foreach\s*\((.*?)\)`)
-	compiled = foreachRe.ReplaceAllString(compiled, "{{ range $1 }}")
+	// @foreach($items as $item) with full $loop support
+	// We compile it to use index form + mkloop so $loop is available inside the block.
+	foreachRe := regexp.MustCompile(`@foreach\s*\(\s*(.+?)\s+as\s+(.+?)\s*\)`)
+	compiled = foreachRe.ReplaceAllString(compiled, `{{ range $index, $2 := $1 }}{{ $loop := mkloop $index (len $1) }}`)
 
 	// @while(condition) - We implement this using a custom template func 'while'
 	// that returns a large slice, and we break out of it when the condition is false.
@@ -102,19 +103,27 @@ func (c *Compiler) CompileString(raw string) string {
 	// 5. CSRF
 	compiled = strings.ReplaceAll(compiled, "@csrf", `<input type="hidden" name="_token" value="{{ ._csrf_token }}">`)
 
-	// 6. Authorization
-	// @can('update', $post) -> {{ if can "update" $post }}
+	// 6. Authorization Directives (Full Implementation)
+
+	// @auth -> {{ if auth }}
+	compiled = strings.ReplaceAll(compiled, "@auth", `{{ if auth }}`)
+	compiled = strings.ReplaceAll(compiled, "@endauth", "{{ end }}")
+
+	// @guest -> {{ if guest }}
+	compiled = strings.ReplaceAll(compiled, "@guest", `{{ if guest }}`)
+	compiled = strings.ReplaceAll(compiled, "@endguest", "{{ end }}")
+
+	// @can('update', $post)
 	canRe := regexp.MustCompile(`@can\s*\((.*?)\)`)
 	compiled = canRe.ReplaceAllStringFunc(compiled, func(match string) string {
 		val := canRe.FindStringSubmatch(match)[1]
-		// Convert args: 'update', $post -> "update" $post
 		val = strings.ReplaceAll(val, ",", " ")
 		val = strings.ReplaceAll(val, "'", "\"")
 		return fmt.Sprintf(`{{ if can %s }}`, val)
 	})
 	compiled = strings.ReplaceAll(compiled, "@endcan", "{{ end }}")
 
-	// @cannot('update', $post) -> {{ if not (can "update" $post) }}
+	// @cannot('update', $post)
 	cannotRe := regexp.MustCompile(`@cannot\s*\((.*?)\)`)
 	compiled = cannotRe.ReplaceAllStringFunc(compiled, func(match string) string {
 		val := cannotRe.FindStringSubmatch(match)[1]
@@ -123,6 +132,16 @@ func (c *Compiler) CompileString(raw string) string {
 		return fmt.Sprintf(`{{ if not (can %s) }}`, val)
 	})
 	compiled = strings.ReplaceAll(compiled, "@endcannot", "{{ end }}")
+
+	// @canany('update', 'delete', $post)
+	canAnyRe := regexp.MustCompile(`@canany\s*\((.*?)\)`)
+	compiled = canAnyRe.ReplaceAllStringFunc(compiled, func(match string) string {
+		val := canAnyRe.FindStringSubmatch(match)[1]
+		val = strings.ReplaceAll(val, ",", " ")
+		val = strings.ReplaceAll(val, "'", "\"")
+		return fmt.Sprintf(`{{ if canany %s }}`, val)
+	})
+	compiled = strings.ReplaceAll(compiled, "@endcanany", "{{ end }}")
 
 	// 7. Advanced Directives
 	// @class(['p-4', 'font-bold' => true]) -> we would map to a func `class(...)`
@@ -145,9 +164,30 @@ func (c *Compiler) CompileString(raw string) string {
 	})
 	compiled = strings.ReplaceAll(compiled, "@endonce", `{{ end }}`)
 
-	// x-component -> simplified to include
-	compRe := regexp.MustCompile(`<x-(.*?)\s*/?>`)
-	compiled = compRe.ReplaceAllString(compiled, `{{ template "components.$1" . }}`)
+	// ==================== Components & Slots (Improved Implementation) ====================
+
+	// We now use a more practical approach:
+	// <x-alert ...>content</x-alert> is compiled to a call that renders the component view
+	// using the engine's Make method with a special context.
+
+	// Self-closing: <x-alert type="error" />
+	selfClose := regexp.MustCompile(`<x-([a-zA-Z0-9_-]+)([^>]*?)\s*/>`)
+	compiled = selfClose.ReplaceAllStringFunc(compiled, func(m string) string {
+		matches := selfClose.FindStringSubmatch(m)
+		name := matches[1]
+		attrs := matches[2]
+		return fmt.Sprintf(`{{ component "%s" . "%s" "" }}`, name, attrs)
+	})
+
+	// With content (slots)
+	withSlot := regexp.MustCompile(`<x-([a-zA-Z0-9_-]+)([^>]*?)>([\s\S]*?)</x-\1>`)
+	compiled = withSlot.ReplaceAllStringFunc(compiled, func(m string) string {
+		matches := withSlot.FindStringSubmatch(m)
+		name := matches[1]
+		attrs := matches[2]
+		slot := strings.TrimSpace(matches[3])
+		return fmt.Sprintf(`{{ component "%s" . "%s" "%s" }}`, name, attrs, slot)
+	})
 
 	return compiled
 }

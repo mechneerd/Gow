@@ -89,10 +89,10 @@ This document provides a clear, honest comparison of what **GoW currently has im
 |-----------------------------|------------------------|------------|-------|
 | Blade-like Compiler         | Blade                  | ✅ Good    | `@if`, `@foreach`, `@extends`, `@include`, custom directives |
 | Layouts (`@extends`)        | Layouts                | ✅ Working | Fixed in earlier phase |
-| `$loop` variable            | `$loop`                | 🟡 Partial | Basic support exists; full index/first/last/iteration still being polished |
-| Components & Slots          | Blade Components       | 🟡 Partial | Basic support exists |
+| `$loop` variable            | `$loop`                | ✅ Good    | Full support: $loop.Index, $loop.Iteration, $loop.First, $loop.Last, $loop.Even, $loop.Odd, $loop.Remaining via mkloop helper |
+| Components & Slots          | Blade Components       | ✅ Good    | Full support for <x-foo attr="val">slot content</x-foo> with attributes + slots passed to component views via "attributes" and "slot" |
 | `{!! !!}` unescaped output  | `{!! !!}`              | ✅ Good    | Implemented via "raw" template func + compiler support |
-| `@auth` / `@can` directives | Blade auth directives  | 🟡 Partial | `@can` exists, full auth directives incomplete |
+| `@auth` / `@can` directives | Blade auth directives  | ✅ Good    | Full support: @auth / @guest / @can / @cannot / @canany with proper end tags and template functions |
 | View Composers              | View Composers         | ✅ Present | `view/composer.go` |
 
 ---
@@ -106,6 +106,7 @@ This document provides a clear, honest comparison of what **GoW currently has im
 | Missing Rules (date, uuid, required_if, etc.) | 20+ rules | ❌ Many    | See `MISSING_FEATURES.md` |
 
 ---
+
 
 ## 6. Authentication & Authorization
 
@@ -139,7 +140,7 @@ This document provides a clear, honest comparison of what **GoW currently has im
 | Mail Message Builder       | Mailable                 | ✅ Good    | `mail/message.go` |
 | Mailer / Sending           | Mail facade              | ✅ Good    | Improved SmtpDriver (base64 attachments, encryption modes documented), better QueueNow helper, Markdown support, ServiceProvider |
 | Notifications              | Notifications            | 🟡 Partial | Manager + Database channel started |
-| Mail Queueing              | ShouldQueue              | 🟡 Partial | SendMailJob + Queue/QueueNow support implemented. Full automatic integration with global queue manager pending |
+| Mail Queueing              | ShouldQueue              | ✅ Good    | Full ShouldQueue support via SendMailJob + Queue/QueueNow. Mailer supports automatic dispatch when queue manager is attached. |
 
 ---
 
@@ -165,7 +166,7 @@ This document provides a clear, honest comparison of what **GoW currently has im
 | Artisan-like CLI           | Artisan                  | ✅ Good    | `cmd/artisan` + `gow` binary |
 | Generators (`make:*`)      | make:* commands          | ✅ Several | Controller, Model, Migration, Middleware, Command, etc. |
 | Migration Commands         | migrate, migrate:fresh   | 🟡 Partial | Basic migrate works; fresh/refresh missing |
-| Route listing              | route:list               | 🟡 Partial | High priority - implementation started |
+| Route listing              | route:list               | ✅ Good    | Full `route:list` command implemented (lists method, URI, name). Router exposes GetAllRoutes(). |
 | Tinker / REPL              | tinker                   | ❌ Missing | — |
 
 ---

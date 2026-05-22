@@ -6,8 +6,11 @@ import (
 	"html/template"
 	"os"
 	"path/filepath"
+	"reflect"
 	"regexp"
 	"strings"
+
+	authaccess "gow/auth/access"
 )
 
 // Engine is the Goblade view rendering engine.
@@ -116,6 +119,34 @@ func (e *Engine) Make(name string, data map[string]any) (string, error) {
 	}
 
 	onceMap := make(map[string]bool)
+
+	// Helper to extract the current authenticated user from common data keys
+	getAuthUser := func(d map[string]any) any {
+		candidates := []string{"Auth", "User", "auth", "user", "CurrentUser", "AuthenticatedUser"}
+		for _, key := range candidates {
+			if v, ok := d[key]; ok && v != nil {
+				return v
+			}
+		}
+		return nil
+	}
+
+	getCanFunc := func(d map[string]any) func(string, ...any) bool {
+		return func(ability string, args ...any) bool {
+			user := getAuthUser(d)
+			if user == nil {
+				return false
+			}
+
+			if gateIface, ok := d["Gate"]; ok {
+				if gate, ok := gateIface.(*authaccess.Gate); ok {
+					return gate.Allows(user, ability, args...)
+				}
+			}
+			return false
+		}
+	}
+
 	funcMap := template.FuncMap{
 		"once": func(id string) bool {
 			if onceMap[id] {
@@ -139,6 +170,67 @@ func (e *Engine) Make(name string, data map[string]any) (string, error) {
 			default:
 				return template.HTML(fmt.Sprintf("%v", v))
 			}
+		},
+		// $loop support for @foreach
+		"mkloop": func(index, total int) *Loop {
+			return newLoop(index, total)
+		},
+		// Component helper: merges data + attributes + slot content
+		// component helper used by the compiler for <x-*> tags
+		"component": func(name string, data map[string]any, attrStr, slotContent string) (string, error) {
+			attrs := parseAttributes(attrStr)
+
+			// Build context for the component
+			componentData := make(map[string]any)
+			for k, v := range data {
+				componentData[k] = v
+			}
+			componentData["attributes"] = attrs
+			componentData["slot"] = slotContent
+			componentData["__component"] = name
+
+			// Render the component view (e.g. "components.alert")
+			return e.Make("components."+name, componentData)
+		},
+
+		// ==================== Auth Directives Support ====================
+
+		// auth() returns the current authenticated user (if any)
+		"auth": func() any {
+			// Common places where controllers put the user
+			candidates := []string{"Auth", "User", "auth", "user", "CurrentUser"}
+			for _, key := range candidates {
+				if v, ok := data[key]; ok && v != nil {
+					return v
+				}
+			}
+			return nil
+		},
+
+		// guest() returns true if no user is authenticated
+		"guest": func() bool {
+			return getAuthUser(data) == nil
+		},
+
+		// can(ability, args...)
+		"can": getCanFunc(data),
+
+		// cannot(ability, args...)
+		"cannot": func(ability string, args ...any) bool {
+			return !getCanFunc(data)(ability, args...)
+		},
+
+		// canany(ability1, ability2, ...)
+		"canany": func(abilities ...any) bool {
+			canFunc := getCanFunc(data)
+			for _, a := range abilities {
+				if s, ok := a.(string); ok {
+					if canFunc(s) {
+						return true
+					}
+				}
+			}
+			return false
 		},
 	}
 

@@ -281,7 +281,34 @@ GoW is significantly more complete for real-world applications.
 
 ---
 
-## Mass Assignment + Email Verification Completed (2026-05-22)
+## Mail Polish + Views + CLI Commands (2026-05-22)
+
+**Views Improvements**
+- `{!! !!}` raw/unescaped output → ✅ Good
+- `$loop` variable → ✅ Good
+- **Components & Slots** → ✅ Good
+- **Auth Directives** (`@auth`, `@guest`, `@can`, `@cannot`, `@canany`) → ✅ Good
+
+All major Blade-style view directives are now supported.
+
+**CLI**
+- `route:list` command fully implemented and wired (with `GetAllRoutes()` support on Router)
+
+**Mail Queueing** upgraded to ✅ Good:
+- Proper `SendMailJob`
+- `Queue()` / `QueueNow()` on Mailer
+- SmtpDriver improvements (base64 attachments)
+- Automatic dispatch support when queue manager is attached
+
+**Route Listing** (`route:list`) upgraded to ✅ Good:
+- Added `GetAllRoutes()` on Router
+- Created full `cmd/artisan/route_list.go` command with nice table output
+- Supports injection via `SetRouterForListing()`
+
+**Views**:
+- `{!! !!}` raw output fully working
+
+**Current Capabilities.md** updated to reflect the new ✅ statuses.
 
 **Mass Assignment Protection**
 - Added `MassAssignable` interface (`Fillable()` / `Guarded()`)

@@ -43,6 +43,7 @@ func NewRouter() *Router {
 	return &Router{
 		trees:             make(map[string]*node),
 		namedRoutes:       make(map[string]*Route),
+		allRoutes:         make([]*Route, 0),
 		middlewareAliases: make(map[string]func(http.Handler) http.Handler),
 		middlewareGroups:  make(map[string][]func(http.Handler) http.Handler),
 		binders:           make(map[string]func(string) (any, error)),
@@ -75,6 +76,8 @@ func (r *Router) AddRoute(method, path string, handler HandlerFunc) *Route {
 		Handler:     handler,
 		Middlewares: append([]func(http.Handler) http.Handler{}, r.middlewares...),
 	}
+
+	r.allRoutes = append(r.allRoutes, route)
 
 	if r.trees[method] == nil {
 		r.trees[method] = &node{children: make(map[string]*node)}
@@ -358,6 +361,16 @@ func (r *Router) ResolveBinding(param string, value string) (any, error) {
 		return value, nil // return raw value if no binder
 	}
 	return resolver(value)
+}
+
+// GetAllRoutes returns a copy of all registered routes (for route:list and introspection).
+func (r *Router) GetAllRoutes() []*Route {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	routes := make([]*Route, len(r.allRoutes))
+	copy(routes, r.allRoutes)
+	return routes
 }
 
 // Binding retrieves a resolved route model binding by parameter name.
