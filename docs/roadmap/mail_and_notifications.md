@@ -1,6 +1,8 @@
+> ✅ Implemented · 🚧 In Progress · 📋 Planned
+
 # Mail & Notifications
 
-> **Status**: ?? Planned (Currently stubbed or not implemented)
+> **Status**: 📋 Planned
 
 
 GoW provides a clean, simple API over the popular `gomail` library for sending emails, as well as a robust notification system for sending short messages across various channels.

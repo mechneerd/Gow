@@ -2,12 +2,9 @@ package queue
 
 import (
 	"bytes"
-	"context"
 	"encoding/gob"
 	"time"
-	
 	"gow/database/orm"
-	"gow/database/query"
 )
 
 // DatabaseDriver is a queue driver backed by a SQL database.
@@ -36,7 +33,7 @@ func (d *DatabaseDriver) Push(job Job) error {
 
 	payload := buf.Bytes()
 	
-	builder := query.NewBuilder(d.db.RawDB(), d.db.Dialect())
+	builder := d.db.Builder.Clone()
 	builder.Table("jobs")
 	
 	_, err = builder.Insert(map[string]any{
@@ -54,7 +51,7 @@ func (d *DatabaseDriver) Push(job Job) error {
 // Pop retrieves and reserves a job from the jobs table.
 func (d *DatabaseDriver) Pop() (Job, error) {
 	// A simple pop mechanism (for production, use SELECT FOR UPDATE)
-	builder := query.NewBuilder(d.db.RawDB(), d.db.Dialect())
+	builder := d.db.Builder.Clone()
 	builder.Table("jobs")
 	builder.Where("queue", "=", d.queue)
 	builder.WhereNull("reserved_at")
@@ -92,7 +89,7 @@ func (d *DatabaseDriver) Pop() (Job, error) {
 	}
 	
 	// Mark as reserved
-	updateBuilder := query.NewBuilder(d.db.RawDB(), d.db.Dialect())
+	updateBuilder := d.db.Builder.Clone()
 	updateBuilder.Table("jobs").Where("id", "=", id)
 	_, err = updateBuilder.Update(map[string]any{
 		"reserved_at": time.Now().Unix(),

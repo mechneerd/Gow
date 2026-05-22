@@ -1,30 +1,36 @@
 # GoW Documentation
 
-Welcome to the official documentation for the **GoW Framework**. 
+> ✅ Implemented · 🚧 In Progress · 📋 Planned
 
-## Table of Contents
+Welcome to the official documentation for the **GoW Framework** — a Laravel-inspired web framework for Go.
 
-### 🚧 Guide (In Progress)
-Core features that have implementations. They may lack tests or edge-case handling, but the foundation is built.
-- [Installation](guide/installation.md)
-- [Routing](guide/routing.md)
-- [Middleware](guide/middleware.md)
-- [Database](guide/database.md)
-- [ORM (Goquent)](guide/orm.md)
-- [Cache & Session](guide/cache_and_session.md)
-- [Views (Goblade)](guide/views.md)
-- [Authentication](guide/authentication.md)
-- [Events](guide/events.md)
-- [Utilities](guide/utilities.md)
+## Guide — ✅ Implemented Features
 
-### 📋 Roadmap (Planned / Stubbed)
-Features that are currently just stubs or haven't been implemented yet.
-- [Authorization](roadmap/authorization.md)
-- [Mail & Notifications](roadmap/mail_and_notifications.md)
-- [Queues](roadmap/queues.md)
-- [Broadcasting](roadmap/broadcasting.md)
-- [Storage](roadmap/storage.md)
-- [Testing](roadmap/testing.md)
+These features are fully implemented and tested.
+
+| Section | Status |
+|---|---|
+| [Installation](guide/installation.md) | ✅ |
+| [Routing](guide/routing.md) | ✅ |
+| [Middleware](guide/middleware.md) | ✅ |
+| [Database & Tooling](guide/database.md) | ✅ |
+| [ORM (Goquent)](guide/orm.md) | ✅ |
+| [Cache & Session](guide/cache_and_session.md) | ✅ |
+| [Views (Goblade)](guide/views.md) | ✅ |
+| [Authentication](guide/authentication.md) | ✅ |
+| [Events](guide/events.md) | ✅ |
+| [Queues](guide/queues.md) | ✅ |
+| [Utilities](guide/utilities.md) | 🚧 |
+
+## Roadmap — In Progress & Planned
+
+| Section | Status |
+|---|---|
+| [Testing](roadmap/testing.md) | 🚧 In Progress |
+| [File Storage](roadmap/storage.md) | 🚧 In Progress |
+| [Authorization](roadmap/authorization.md) | 📋 Planned |
+| [Mail & Notifications](roadmap/mail_and_notifications.md) | 📋 Planned |
+| [Broadcasting](roadmap/broadcasting.md) | 📋 Planned |
 
 ---
 

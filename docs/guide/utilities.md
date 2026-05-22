@@ -1,6 +1,8 @@
+> ✅ Implemented · 🚧 In Progress · 📋 Planned
+
 # Utilities
 
-> **Status**: ?? In Progress (Core working, tests/edge cases pending)
+> **Status**: 🚧 In Progress
 
 
 GoW provides several powerful utilities to simplify your daily development workflow.

@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"gow/database/orm"
-	"gow/database/query"
 	"gow/support/str"
 )
 
@@ -47,7 +46,7 @@ func (tm *TokenManager) CreateToken(tokenableType, tokenableID, name string, abi
 	
 	abilitiesJSON, _ := json.Marshal(abilities)
 
-	builder := query.NewBuilder(tm.db.RawDB(), tm.db.Dialect())
+	builder := tm.db.Builder.Clone()
 	builder.Table("personal_access_tokens")
 	
 	// Insert into DB
@@ -89,7 +88,7 @@ func (tm *TokenManager) Middleware() func(http.Handler) http.Handler {
 			hashedToken := hex.EncodeToString(hash[:])
 
 			// Query DB for token
-			builder := query.NewBuilder(tm.db.RawDB(), tm.db.Dialect())
+			builder := tm.db.Builder.Clone()
 			builder.Table("personal_access_tokens")
 			builder.Where("token", "=", hashedToken)
 			builder.Limit(1)

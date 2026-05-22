@@ -1,6 +1,8 @@
+> ✅ Implemented · 🚧 In Progress · 📋 Planned
+
 # Testing
 
-> **Status**: ?? Planned (Currently stubbed or not implemented)
+> **Status**: 🚧 In Progress (Core suite in place, HTTP test helpers planned)
 
 
 Testing is a first-class citizen in GoW. By integrating deeply with Go's standard `testing` package and popular assertion libraries like `testify/assert`, GoW makes writing feature and unit tests a breeze.

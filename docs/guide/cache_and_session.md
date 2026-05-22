@@ -1,6 +1,8 @@
+> ✅ Implemented · 🚧 In Progress · 📋 Planned
+
 # Cache & Session
 
-> **Status**: ?? In Progress (Core working, tests/edge cases pending)
+> **Status**: ✅ Implemented
 
 
 GoW provides an expressive, unified API for various caching and session backends.

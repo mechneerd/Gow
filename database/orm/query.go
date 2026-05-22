@@ -65,12 +65,10 @@ type ModelQuery[T any] struct {
 	onlyTrashed   bool
 }
 
-// NewQuery creates a new query for a specific model type.
 func NewQuery[T any](db *DB) *ModelQuery[T] {
-	var model T
-	table := getTableName(model)
-
-	builder := db.Builder.Clone().Table(table)
+	meta := getMetadata(reflect.TypeOf((*T)(nil)))
+	
+	builder := db.Builder.Clone().Table(meta.TableName)
 	
 	// Apply global scopes
 	modelName := reflect.TypeOf((*T)(nil)).Elem().Name()
@@ -84,7 +82,7 @@ func NewQuery[T any](db *DB) *ModelQuery[T] {
 		builder:       builder,
 		db:            db,
 		with:          make([]string, 0),
-		softDeleteCol: getSoftDeleteColumn(reflect.TypeOf((*T)(nil))),
+		softDeleteCol: meta.SoftDeleteCol,
 	}
 	return q
 }
@@ -185,44 +183,47 @@ func (q *ModelQuery[T]) Insert(model *T) error {
 	values := make(map[string]any)
 	now := time.Now()
 
-	for i := 0; i < typ.NumField(); i++ {
-		field := typ.Field(i)
-		dbTag := field.Tag.Get("db")
-		if dbTag == "" || dbTag == "-" {
+	meta := getMetadata(typ)
+
+	for _, field := range meta.Fields {
+		if field.Column == "" || field.Column == "-" {
 			continue
 		}
 
-		gowTag := field.Tag.Get("gow")
-		
-		if strings.Contains(gowTag, "autoIncrement") {
+		if field.IsAuto {
 			continue
 		}
 		
 		// Skip primary key if it's zero
-		if strings.Contains(gowTag, "primaryKey") || dbTag == "id" {
-			switch val.Field(i).Kind() {
+		if field.IsPrimary {
+			v := val.Field(field.Index)
+			switch v.Kind() {
 			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-				if val.Field(i).Int() == 0 {
+				if v.Int() == 0 {
 					continue
 				}
 			case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-				if val.Field(i).Uint() == 0 {
+				if v.Uint() == 0 {
 					continue
 				}
 			case reflect.String:
-				if val.Field(i).String() == "" {
+				if v.String() == "" {
 					continue
 				}
 			}
 		}
 
+		// Since we don't store full tags in FieldMeta to save space, we can either
+		// re-fetch the tag or we could have added IsCreateTime to FieldMeta.
+		// For simplicity, we re-fetch the gow tag from reflection here.
+		gowTag := typ.Field(field.Index).Tag.Get("gow")
 		if strings.Contains(gowTag, "autoCreateTime") || strings.Contains(gowTag, "autoUpdateTime") {
-			values[dbTag] = now
-			val.Field(i).Set(reflect.ValueOf(now))
+			values[field.Column] = now
+			val.Field(field.Index).Set(reflect.ValueOf(now))
 			continue
 		}
 
-		values[dbTag] = val.Field(i).Interface()
+		values[field.Column] = val.Field(field.Index).Interface()
 	}
 
 	res, err := q.builder.Insert(values)
@@ -263,35 +264,30 @@ func (q *ModelQuery[T]) Update(model *T) error {
 	values := make(map[string]any)
 	now := time.Now()
 	
+	meta := getMetadata(typ)
+	
 	var pkValue any
-	var pkColumn string = "id" // default
+	pkColumn := meta.PrimaryKey
 
-	for i := 0; i < typ.NumField(); i++ {
-		field := typ.Field(i)
-		dbTag := field.Tag.Get("db")
-		if dbTag == "" || dbTag == "-" {
+	for _, field := range meta.Fields {
+		if field.Column == "" || field.Column == "-" {
 			continue
 		}
 
-		gowTag := field.Tag.Get("gow")
-		
-		if strings.Contains(gowTag, "primaryKey") {
-			pkColumn = dbTag
-			pkValue = val.Field(i).Interface()
+		if field.IsPrimary {
+			pkValue = val.Field(field.Index).Interface()
 			continue
 		}
-		if dbTag == "id" && pkValue == nil {
-			pkValue = val.Field(i).Interface()
-			continue
-		}
+
+		gowTag := typ.Field(field.Index).Tag.Get("gow")
 
 		if strings.Contains(gowTag, "autoUpdateTime") {
-			values[dbTag] = now
-			val.Field(i).Set(reflect.ValueOf(now))
+			values[field.Column] = now
+			val.Field(field.Index).Set(reflect.ValueOf(now))
 			continue
 		}
 
-		values[dbTag] = val.Field(i).Interface()
+		values[field.Column] = val.Field(field.Index).Interface()
 	}
 	
 	if pkValue == nil {
@@ -315,17 +311,13 @@ func (q *ModelQuery[T]) Delete(model *T) error {
 		}
 		val := reflect.ValueOf(model).Elem()
 		typ := val.Type()
+		meta := getMetadata(typ)
 		var pkValue any
-		var pkColumn string = "id"
+		pkColumn := meta.PrimaryKey
 		
-		for i := 0; i < typ.NumField(); i++ {
-			field := typ.Field(i)
-			dbTag := field.Tag.Get("db")
-			gowTag := field.Tag.Get("gow")
-			
-			if strings.Contains(gowTag, "primaryKey") || dbTag == "id" {
-				pkColumn = dbTag
-				pkValue = val.Field(i).Interface()
+		for _, field := range meta.Fields {
+			if field.IsPrimary {
+				pkValue = val.Field(field.Index).Interface()
 				break
 			}
 		}
@@ -349,15 +341,12 @@ func (q *ModelQuery[T]) Delete(model *T) error {
 			DispatchModelEvent(model, "deleted")
 			// Update the model struct's deleted_at field if possible
 			val := reflect.ValueOf(model).Elem()
-			for i := 0; i < val.Type().NumField(); i++ {
-				field := val.Type().Field(i)
-				dbTag := field.Tag.Get("db")
-				if dbTag == "" {
-					dbTag = strings.ToLower(field.Name)
-				}
-				if dbTag == q.softDeleteCol {
+			typ := val.Type()
+			meta := getMetadata(typ)
+			for _, field := range meta.Fields {
+				if field.Column == q.softDeleteCol {
 					// Handle sql.NullTime or time.Time pointer
-					f := val.Field(i)
+					f := val.Field(field.Index)
 					if f.Type() == reflect.TypeOf(time.Time{}) {
 						f.Set(reflect.ValueOf(now))
 					} else if f.Type() == reflect.TypeOf(&time.Time{}) {
@@ -400,15 +389,12 @@ func (q *ModelQuery[T]) Restore(model *T) error {
 	}
 
 	val := reflect.ValueOf(model).Elem()
+	meta := getMetadata(val.Type())
 	var pkValue any
-	var pkColumn string = "id"
-	for i := 0; i < val.Type().NumField(); i++ {
-		field := val.Type().Field(i)
-		dbTag := field.Tag.Get("db")
-		gowTag := field.Tag.Get("gow")
-		if strings.Contains(gowTag, "primaryKey") || dbTag == "id" {
-			pkColumn = dbTag
-			pkValue = val.Field(i).Interface()
+	pkColumn := meta.PrimaryKey
+	for _, field := range meta.Fields {
+		if field.IsPrimary {
+			pkValue = val.Field(field.Index).Interface()
 			break
 		}
 	}
@@ -426,15 +412,10 @@ func (q *ModelQuery[T]) Restore(model *T) error {
 	
 	if err == nil {
 		DispatchModelEvent(model, "restored")
-		// Update the model struct
-		for i := 0; i < val.Type().NumField(); i++ {
-			field := val.Type().Field(i)
-			dbTag := field.Tag.Get("db")
-			if dbTag == "" {
-				dbTag = strings.ToLower(field.Name)
-			}
-			if dbTag == q.softDeleteCol {
-				f := val.Field(i)
+		meta := getMetadata(val.Type())
+		for _, field := range meta.Fields {
+			if field.Column == q.softDeleteCol {
+				f := val.Field(field.Index)
 				if f.Type() == reflect.TypeOf(time.Time{}) {
 					f.Set(reflect.ValueOf(time.Time{}))
 				} else if f.Type() == reflect.TypeOf(&time.Time{}) {
@@ -454,23 +435,19 @@ func (q *ModelQuery[T]) Save(model *T) error {
 	val := reflect.ValueOf(model).Elem()
 	typ := val.Type()
 	
+	meta := getMetadata(typ)
 	var isNew bool = true
 	
-	for i := 0; i < typ.NumField(); i++ {
-		field := typ.Field(i)
-		dbTag := field.Tag.Get("db")
-		gowTag := field.Tag.Get("gow")
-		
-		if strings.Contains(gowTag, "primaryKey") || dbTag == "id" {
-			v := val.Field(i).Interface()
-			// Basic check for empty zero values
-			switch val.Field(i).Kind() {
+	for _, field := range meta.Fields {
+		if field.IsPrimary {
+			v := val.Field(field.Index)
+			switch v.Kind() {
 			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-				if v.(int64) != 0 {
+				if v.Int() != 0 {
 					isNew = false
 				}
 			case reflect.String:
-				if v.(string) != "" {
+				if v.String() != "" {
 					isNew = false
 				}
 			}
@@ -489,23 +466,18 @@ func hydrateModel[T any](rows *sql.Rows) (*T, error) {
 	var model T
 	val := reflect.ValueOf(&model).Elem()
 	typ := val.Type()
+	meta := getMetadata(typ)
 
 	columns, err := rows.Columns()
 	if err != nil {
 		return nil, err
 	}
-
-	// Create pointers for scanning
+	
 	scanArgs := make([]any, len(columns))
 	fieldMap := make(map[string]int)
 
-	for i := 0; i < typ.NumField(); i++ {
-		dbTag := typ.Field(i).Tag.Get("db")
-		if dbTag != "" {
-			fieldMap[dbTag] = i
-		} else {
-			fieldMap[strings.ToLower(typ.Field(i).Name)] = i
-		}
+	for _, field := range meta.Fields {
+		fieldMap[field.Column] = field.Index
 	}
 
 	for i, col := range columns {
@@ -524,14 +496,4 @@ func hydrateModel[T any](rows *sql.Rows) (*T, error) {
 	}
 
 	return &model, nil
-}
-
-// Helper: extract table name from model or default to pluralized struct name.
-func getTableName(model any) string {
-	if m, ok := model.(Model); ok {
-		return m.TableName()
-	}
-	// Fallback to snake_case plural
-	name := reflect.TypeOf(model).Name()
-	return strings.ToLower(name) + "s" // Simplistic pluralization
 }

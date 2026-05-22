@@ -71,7 +71,6 @@ func (m *Manager) ageFlashData() {
 	m.data["_flash"] = flash
 }
 
-// clearOldFlashData removes data that was flashed in previous requests.
 func (m *Manager) clearOldFlashData() {
 	flashRaw, ok := m.data["_flash"]
 	if !ok {
@@ -79,8 +78,15 @@ func (m *Manager) clearOldFlashData() {
 	}
 	
 	if flash, ok := flashRaw.(map[string][]string); ok {
+		newKeys := make(map[string]bool)
+		for _, k := range flash["new"] {
+			newKeys[k] = true
+		}
+		
 		for _, key := range flash["old"] {
-			delete(m.data, key)
+			if !newKeys[key] {
+				delete(m.data, key)
+			}
 		}
 		// old array is cleared before saving to avoid building up
 		flash["old"] = []string{}

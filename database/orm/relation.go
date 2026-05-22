@@ -91,21 +91,14 @@ func loadRelation[T any](db *DB, models []*T, relationName string) error {
 		targetType = field.Type
 	}
 
-	// Create dummy target instance to get table name
-	dummyTarget := reflect.New(targetType).Interface()
-	tableName := getTableName(dummyTarget)
+	// Use metadata to get table name
+	meta := getMetadata(targetType)
+	tableName := meta.TableName
 
 	var foreignKeyName string
 	if isBelongsTo {
-		// Target is the parent, so its primary key is needed. Usually 'id' or we can look for primaryKey tag
-		foreignKeyName = "id"
-		for i := 0; i < targetType.NumField(); i++ {
-			f := targetType.Field(i)
-			if strings.Contains(f.Tag.Get("gow"), "primaryKey") {
-				foreignKeyName = f.Tag.Get("db")
-				break
-			}
-		}
+		// Target is the parent, so its primary key is needed
+		foreignKeyName = meta.PrimaryKey
 	} else {
 		// hasMany -> foreign key on child is usually parent's name + "ID". e.g. targetType has 'UserID'
 		parentTypeName := typ.Name()

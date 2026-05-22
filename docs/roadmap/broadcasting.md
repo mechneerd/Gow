@@ -1,6 +1,8 @@
+> ✅ Implemented · 🚧 In Progress · 📋 Planned
+
 # Broadcasting
 
-> **Status**: ?? Planned (Currently stubbed or not implemented)
+> **Status**: 📋 Planned
 
 
 In many modern web applications, WebSockets are used to implement real-time, live-updating user interfaces. When some data is updated on the server, a message is typically sent over a WebSocket connection to be handled by the client.

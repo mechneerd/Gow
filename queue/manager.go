@@ -2,7 +2,6 @@ package queue
 
 import (
 	"fmt"
-	"log"
 )
 
 // Driver interface abstracts queue interactions.
@@ -19,10 +18,13 @@ type Manager struct {
 
 // NewManager initializes a new Queue Manager.
 func NewManager(defaultQueue string) *Manager {
-	return &Manager{
+	m := &Manager{
 		drivers:      make(map[string]Driver),
 		defaultQueue: defaultQueue,
 	}
+	// Register default internal drivers
+	m.AddDriver("memory", NewMemoryDriver(10000))
+	return m
 }
 
 // AddDriver registers a new queue driver.

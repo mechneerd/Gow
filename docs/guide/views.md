@@ -1,6 +1,8 @@
+> ✅ Implemented · 🚧 In Progress · 📋 Planned
+
 # Views & Goblade
 
-> **Status**: ?? In Progress (Core working, tests/edge cases pending)
+> **Status**: ✅ Implemented
 
 
 GoW uses a powerful server-side rendering engine called **Goblade**, which allows you to seamlessly mix HTML with Go control structures using an expressive, Blade-like syntax.

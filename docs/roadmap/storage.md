@@ -1,6 +1,8 @@
+> ✅ Implemented · 🚧 In Progress · 📋 Planned
+
 # File Storage
 
-> **Status**: ?? Planned (Currently stubbed or not implemented)
+> **Status**: 🚧 In Progress (Local disk implemented, S3 stubbed)
 
 
 GoW provides a powerful filesystem abstraction using a multi-disk `Storage` manager. This allows you to easily swap between local filesystems and cloud storage like Amazon S3 without changing your application code.

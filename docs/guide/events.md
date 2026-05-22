@@ -1,6 +1,8 @@
+> ✅ Implemented · 🚧 In Progress · 📋 Planned
+
 # Events
 
-> **Status**: ?? In Progress (Core working, tests/edge cases pending)
+> **Status**: ✅ Implemented
 
 
 GoW's events provide a simple observer pattern implementation, allowing you to subscribe and listen for various events that occur in your application. 

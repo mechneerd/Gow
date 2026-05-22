@@ -547,15 +547,15 @@ Key differences to handle per dialect:
 | # | Action | Effort | Impact | Status |
 |---|--------|--------|--------|--------|
 | 1 | Fix 6 broken features | 1-2 days | 🔴 Critical — foundation trust | ✅ Done |
-| 2 | Add core tests (container, router, ORM, validator) | 2-3 days | 🔴 Critical — can't ship without | 🚧 Partial |
+| 2 | Add core tests (container, router, ORM, validator) | 2-3 days | 🔴 Critical — can't ship without | ✅ Done |
 | 3 | Implement transactions | 1 day | 🔴 Critical — can't build real apps | ✅ Done |
 | 4 | Build soft deletes into ORM | 1 day | 🔴 High — most models need this | ✅ Done |
 | 5 | Fix `@extends` layout resolution | 1 day | 🔴 High — views are fundamentally broken | ✅ Done |
 | 6 | Add request helpers + error handler pattern | 1-2 days | 🔴 High — core DX | ✅ Done |
-| 7 | Cache struct metadata (performance) | 1 day | 🟡 Medium — big perf win | |
-| 8 | Add goroutine-based queue driver | 1 day | 🟡 Medium — Go-native advantage | |
-| 9 | Reconcile docs with reality | 1 day | 🟡 Medium — user trust | |
-| 10 | Create `gow` CLI binary + `gow new` scaffolding | 2-3 days | 🟡 Medium — DX & onboarding | |
+| 7 | Cache struct metadata (performance) | 1 day | 🟡 Medium — big perf win | ✅ Done |
+| 8 | Add goroutine-based queue driver | 1 day | 🟡 Medium — Go-native advantage | ✅ Done |
+| 9 | Reconcile docs with reality | 1 day | 🟡 Medium — user trust | ✅ Done |
+| 10 | Create `gow` CLI binary + `gow new` scaffolding | 2-3 days | 🟡 Medium — DX & onboarding | ✅ Done |
 
 **Total estimated effort for top 10**: ~2-3 weeks of focused work.
 
