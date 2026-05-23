@@ -47,4 +47,5 @@ Most major features are now **implemented**. The roadmap is kept for future ecos
 ## Latest Release
 
 **May 23, 2026** — Massive feature completion wave  
-See the full release notes: [What's New — 2026-05-23](whats_new/2026-05-23.md)
+See the full release notes: [What's New — 2026-05-23](whats_new/2026-05-23.md)  
+GitHub Releases version: [2026-05-23 GitHub Release Notes](whats_new/2026-05-23-github-release.md)

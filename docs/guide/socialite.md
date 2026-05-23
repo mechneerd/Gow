@@ -74,3 +74,58 @@ The returned `*socialite.User` contains:
 
 - Store the OAuth user ID + provider name in your users table for future logins.
 - Always verify the `state` parameter in production to prevent CSRF.
+
+---
+
+## Complete End-to-End Example
+
+### 1. Register providers in `bootstrap/app.go`
+
+```go
+manager := app.Make((*socialite.Manager)(nil)).(*socialite.Manager)
+
+manager.Extend("google", socialite.NewGoogleProvider(
+    config.Get("services.google.client_id"),
+    config.Get("services.google.client_secret"),
+    "http://localhost:8080/auth/google/callback",
+))
+```
+
+### 2. Routes (`routes/web.go`)
+
+```go
+router.Get("/auth/google", func(w http.ResponseWriter, r *http.Request) {
+    state := uuid.New().String() // store in session for verification
+    url := manager.Driver("google").RedirectURL(state)
+    http.Redirect(w, r, url, http.StatusFound)
+})
+
+router.Get("/auth/google/callback", func(w http.ResponseWriter, r *http.Request) {
+    code := r.URL.Query().Get("code")
+    oauthUser, err := manager.Driver("google").User(r.Context(), code)
+    if err != nil {
+        http.Error(w, "OAuth failed", 500)
+        return
+    }
+
+    // Find or create user in your database
+    user := findOrCreateUserFromOAuth(oauthUser, "google")
+
+    // Log them in
+    auth.Login(user)
+
+    http.Redirect(w, r, "/dashboard", http.StatusFound)
+})
+```
+
+### 3. Storing OAuth users
+
+Recommended table structure:
+
+```sql
+ALTER TABLE users ADD COLUMN provider VARCHAR(50);
+ALTER TABLE users ADD COLUMN provider_id VARCHAR(100);
+ALTER TABLE users ADD UNIQUE KEY provider_unique (provider, provider_id);
+```
+
+This pattern gives you a complete, production-ready OAuth login flow.

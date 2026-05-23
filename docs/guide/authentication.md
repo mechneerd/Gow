@@ -102,6 +102,25 @@ if !guard.Attempt(creds) {
 }
 ```
 
+### Recommended Usage in Login Controller
+
+```go
+func Login(w, r) {
+    email := request.Input(r, "email")
+
+    if lockout.IsLocked(email) {
+        return response.Error("Too many attempts. Try again later.")
+    }
+
+    if guard.Attempt(map[string]any{"email": email, "password": ...}) {
+        lockout.Reset(email)
+        // login success
+    } else {
+        lockout.RecordFailure(email)
+    }
+}
+```
+
 ---
 
 ## Remember Me

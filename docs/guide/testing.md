@@ -59,3 +59,20 @@ With rich assertion helpers (`AssertSent`, `AssertPushed`, etc.).
 ## RefreshDatabase Trait
 
 Use `testing.RefreshDatabase` in your test base class for clean database state between tests.
+
+---
+
+## Full Example Test
+
+```go
+func TestUserCanUploadAvatar(t *testing.T) {
+    tc := testing.NewTestCase(t, appRouter)
+
+    user := factory.User().Create()
+
+    tc.ActingAs(user).
+        Upload("/profile/avatar", "avatar", "photo.jpg", "fake-image-bytes").
+        AssertStatus(200).
+        AssertJson("success", true)
+}
+```

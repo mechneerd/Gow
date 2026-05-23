@@ -195,3 +195,69 @@ All fully supported (see older sections or `Current_Capabilities.md` for details
 - Prefer casting + accessors over manual transformation.
 - Use `Chunk` instead of loading thousands of records at once.
 - Register polymorphic types early in bootstrap.
+
+---
+
+## Deep-Dive Examples
+
+### Polymorphic Comments
+
+```go
+type Comment struct {
+    ID               int    `db:"id"`
+    Body             string `db:"body"`
+    CommentableType  string `db:"commentable_type"`
+    CommentableID    int    `db:"commentable_id"`
+}
+
+type Post struct {
+    ID       int
+    Title    string
+    Comments orm.MorphMany[Comment] `gow:"morphMany,morphType=commentable_type,morphId=commentable_id,type=Post"`
+}
+
+type Video struct {
+    ID       int
+    Title    string
+    Comments orm.MorphMany[Comment] `gow:"morphMany,morphType=commentable_type,morphId=commentable_id,type=Video"`
+}
+```
+
+Register once:
+
+```go
+orm.RegisterMorph("post", models.Post{})
+orm.RegisterMorph("video", models.Video{})
+```
+
+### Attribute Casting + Accessors Together
+
+```go
+type User struct {
+    Settings map[string]any `db:"settings"`
+    Birthday time.Time      `db:"birthday"`
+}
+
+func (u *User) Casts() map[string]string {
+    return map[string]string{
+        "settings": "json",
+        "birthday": "datetime",
+    }
+}
+
+func (u *User) GetAgeAttribute() int {
+    return time.Now().Year() - u.Birthday.Year()
+}
+```
+
+### HasManyThrough Example
+
+```go
+type Country struct {
+    ID    int
+    Name  string
+    Posts orm.HasManyThrough[Post] `gow:"hasManyThrough,through=users,foreignKey=country_id,relatedKey=user_id"`
+}
+```
+
+This lets you do `country.Posts` directly.

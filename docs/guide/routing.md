@@ -87,6 +87,17 @@ Use in controllers:
 errs, ok := request.Validate(req, &LoginRequest{})
 ```
 
+## Signed URL + Protected Route Example
+
+```go
+// Generate
+url, _ := router.TemporarySignedRoute("email.verify", 60*time.Minute, map[string]string{"id": "42"})
+
+// Protect
+router.Get("/email/verify/{id}", handler).
+    Middleware(middleware.ValidateSignature(urlGenerator))
+```
+
 ## Resource Routes
 
 GoW provides automatic resource routing to quickly assign CRUD routes to a controller.
