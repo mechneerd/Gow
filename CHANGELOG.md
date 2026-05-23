@@ -1,8 +1,9 @@
 # CHANGELOG
 ## GoW Framework - Changes Tracking Log
 
-> **Latest Major Release**: May 23, 2026  
-> See detailed release notes: `docs/whats_new/2026-05-23.md`
+> **Latest Major Release**: May 23, 2026 – Feature Parity Release  
+> See detailed release notes: `docs/whats_new/2026-05-23.md`  
+> GitHub Releases version: `docs/whats_new/2026-05-23-github-release.md`
 
 ---
 
@@ -25,6 +26,31 @@
 ---
 
 ## MASTER LOG
+
+### 2026-05-23 - Wave 3 + Wave 4: Feature Parity Release (Major Milestone)
+- **Date**: 2026-05-23
+- **Phase**: Wave 3 + Wave 4 (Feature Completion)
+- **Feature**: Massive Feature Parity Release - Closed nearly all remaining critical gaps
+- **Status**: COMPLETED
+- **Decision**: One continuous high-intensity implementation session delivered the majority of remaining blockers and ecosystem foundations.
+- **Notes**:
+  - **Socialite (OAuth)**: Full provider system with Google + GitHub + extensible Manager.
+  - **Two-Factor Authentication**: Pure-Go TOTP (GenerateSecret, VerifyTOTP, QR codes).
+  - **Account Lockout**: Brute-force protection via `auth.Lockout`.
+  - **Advanced ORM**: Polymorphic relations, Attribute Casting (6 built-ins), Accessors/Mutators, Has*Through, Upsert, Pessimistic Locking, Local Scopes auto-discovery, Chunk, Relation Touching.
+  - **Authentication**: Remember Me tokens, full Socialite integration, improved 2FA + Lockout.
+  - **Routing/HTTP**: Signed URLs + middleware, named rate limiting (`ThrottleNamed`), complete FormRequest with all hooks.
+  - **Testing**: `actingAs()`, file upload testing, advanced JSON assertions.
+  - **Artisan**: Dozens of new commands (`make:mail/event/listener/policy/resource/job/notification/test`, `cache:*`, `config:*`, `view:*`, `queue:retry/failed/flush`, `schedule:list`).
+  - **Notifications**: New SlackChannel + extensible architecture.
+  - **Ecosystem Foundations**: Inertia, Livewire, Scout, Cashier, Telescope/Pulse, Octane, Prometheus metrics.
+  - **Documentation**: New guides (Socialite, Testing), major expansions to ORM/Authentication/Routing, deep-dive examples added.
+  - Full details: `docs/whats_new/2026-05-23.md`
+  - GitHub Releases version: `docs/whats_new/2026-05-23-github-release.md`
+  - Short summary: `docs/whats_new/2026-05-23-release-summary.md`
+  - Result: GoW reached near-complete Laravel feature parity and is now production-viable for most real-world applications.
+
+---
 
 ### 2026-05-20 - Phase 0: Specification & Planning
 - **Date**: 2026-05-20
