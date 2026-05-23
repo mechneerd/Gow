@@ -45,6 +45,26 @@ func main() {
 	kernel.RegisterCommand(artisan.MakeCommandCmd)
 	kernel.RegisterCommand(artisan.MakeAuthCmd)
 
+	// Additional generators (Wave 4 completion)
+	kernel.RegisterCommand(artisan.MakeMailCmd)
+	kernel.RegisterCommand(artisan.MakeEventCmd)
+	kernel.RegisterCommand(artisan.MakeListenerCmd)
+	kernel.RegisterCommand(artisan.MakePolicyCmd)
+	kernel.RegisterCommand(artisan.MakeResourceCmd)
+	kernel.RegisterCommand(artisan.MakeJobCmd)
+	kernel.RegisterCommand(artisan.MakeNotificationCmd)
+	kernel.RegisterCommand(artisan.MakeTestCmd)
+
+	// Cache / Config / View / Queue / Schedule commands
+	kernel.RegisterCommand(artisan.CacheClearCmd)
+	kernel.RegisterCommand(artisan.ConfigCacheCmd)
+	kernel.RegisterCommand(artisan.ConfigClearCmd)
+	kernel.RegisterCommand(artisan.ViewClearCmd)
+	kernel.RegisterCommand(artisan.QueueRetryCmd)
+	kernel.RegisterCommand(artisan.QueueFailedCmd)
+	kernel.RegisterCommand(artisan.QueueFlushCmd)
+	kernel.RegisterCommand(artisan.ScheduleListCmd)
+
 	// Run the console kernel
 	kernel.Run()
 }

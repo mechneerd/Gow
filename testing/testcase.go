@@ -1,7 +1,9 @@
 package testing
 
 import (
+	"bytes"
 	"encoding/json"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -40,9 +42,27 @@ func (tc *TestCase) ActingAs(user any) *TestCase {
 func (tc *TestCase) Get(url string) *TestResponse {
 	req := httptest.NewRequest(http.MethodGet, url, nil)
 	if tc.authUser != nil {
-		// Simple marker for auth middleware in tests
 		req.Header.Set("X-Test-Auth-User", "1")
 	}
+	w := httptest.NewRecorder()
+	tc.handler.ServeHTTP(w, req)
+	return &TestResponse{T: tc.T, Recorder: w}
+}
+
+// Upload simulates a file upload (multipart).
+func (tc *TestCase) Upload(url, fieldName, filename, content string) *TestResponse {
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	part, _ := writer.CreateFormFile(fieldName, filename)
+	part.Write([]byte(content))
+	writer.Close()
+
+	req := httptest.NewRequest(http.MethodPost, url, body)
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	w := httptest.NewRecorder()
+	tc.handler.ServeHTTP(w, req)
+	return &TestResponse{T: tc.T, Recorder: w}
+}
 	w := httptest.NewRecorder()
 	tc.handler.ServeHTTP(w, req)
 	return &TestResponse{T: tc.T, Recorder: w}
@@ -57,6 +77,25 @@ func (tr *TestResponse) AssertStatus(code int) *TestResponse {
 // AssertOk asserts the response status is 200 OK.
 func (tr *TestResponse) AssertOk() *TestResponse {
 	return tr.AssertStatus(http.StatusOK)
+}
+
+// AssertJson asserts the response contains the given JSON key/value.
+func (tr *TestResponse) AssertJson(key string, value any) *TestResponse {
+	var data map[string]any
+	json.Unmarshal(tr.Recorder.Body.Bytes(), &data)
+	assert.Equal(tr.T, value, data[key], "JSON assertion failed for key: "+key)
+	return tr
+}
+
+// AssertJsonStructure asserts top-level keys exist.
+func (tr *TestResponse) AssertJsonStructure(keys ...string) *TestResponse {
+	var data map[string]any
+	json.Unmarshal(tr.Recorder.Body.Bytes(), &data)
+	for _, k := range keys {
+		_, exists := data[k]
+		assert.True(tr.T, exists, "Missing JSON key: "+k)
+	}
+	return tr
 }
 
 // AssertJson asserts the response JSON matches the given map.

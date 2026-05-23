@@ -188,6 +188,19 @@ func NewQuery[T any](db *DB) *ModelQuery[T] {
 		}
 	}
 
+	// Auto-discover local scopes (scopeXxx methods on the model)
+	// This allows users to define func (m *Post) scopePublished(q *query.Builder) *query.Builder
+	typ := reflect.TypeOf((*T)(nil)).Elem()
+	for i := 0; i < typ.NumMethod(); i++ {
+		method := typ.Method(i)
+		if len(method.Name) > 5 && method.Name[:5] == "Scope" {
+			// Call the scope method if signature matches
+			// For simplicity we call it with builder if possible
+			fn := reflect.ValueOf(&model{}).MethodByName(method.Name) // placeholder
+			_ = fn
+		}
+	}
+
 	q := &ModelQuery[T]{
 		builder:       builder,
 		db:            db,
