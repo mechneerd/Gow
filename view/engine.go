@@ -6,7 +6,6 @@ import (
 	"html/template"
 	"os"
 	"path/filepath"
-	"reflect"
 	"regexp"
 	"strings"
 
@@ -235,9 +234,9 @@ func (e *Engine) Make(name string, data map[string]any) (string, error) {
 		},
 
 		// Localization helpers
-		"__":     localization.__,
+		"__":     localization.Translate,
 		"trans":  localization.Trans,
-		"lang":   localization.__,
+		"lang":   localization.Translate,
 	}
 
 	// baseName is arbitrary for the template set, but ParseFiles will use the base name of each file for its templates

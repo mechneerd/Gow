@@ -2,7 +2,8 @@ package main
 
 import (
 	"fmt"
-	"gow/http/router"
+	"gow/http/request"
+	"gow/routing"
 	"log"
 	"net/http"
 )
@@ -11,7 +12,7 @@ import (
 
 func main() {
 	// Initialize Router
-	r := router.New()
+	r := routing.NewRouter()
 
 	// Register Routes
 	RegisterRoutes(r)
@@ -20,7 +21,7 @@ func main() {
 	log.Fatal(http.ListenAndServe(":8080", r))
 }
 
-func RegisterRoutes(r *router.Router) {
+func RegisterRoutes(r *routing.Router) {
 	// API Routes (Content Negotiation Example)
 	api := r.Group("/api")
 	api.Get("/posts", func(w http.ResponseWriter, req *http.Request) {
@@ -51,7 +52,7 @@ func RegisterRoutes(r *router.Router) {
 	})
 
 	r.Get("/posts/{id}", func(w http.ResponseWriter, req *http.Request) {
-		id := router.Param(req, "id")
+		id := request.Param(req, "id")
 		w.Header().Set("Content-Type", "text/html")
 		w.Write([]byte(fmt.Sprintf("<h1>Post %s Details</h1><p>Full post content goes here.</p><a href='/'>&larr; Back</a>", id)))
 	})

@@ -2,15 +2,15 @@ package benchmarks
 
 import (
 	"gow/database/orm"
-	"gow/http/router"
+	"gow/routing"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 )
 
 // BenchmarkRouter evaluates the baseline performance of the GoW router.
-func BenchmarkRouter(b *testing.T) {
-	r := router.New()
+func BenchmarkRouter(b *testing.B) {
+	r := routing.NewRouter()
 	r.Get("/api/health", func(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("OK"))
@@ -28,7 +28,7 @@ func BenchmarkRouter(b *testing.T) {
 }
 
 // BenchmarkQueryBuilder evaluates the performance of the fluent ORM SQL generation.
-func BenchmarkQueryBuilder(b *testing.T) {
+func BenchmarkQueryBuilder(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 

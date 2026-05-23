@@ -1,0 +1,54 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+gow
+gow.exe
+bin/
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool
+*.out
+coverage.html
+coverage.txt
+
+# Go workspace file
+go.work
+go.work.sum
+
+# Dependency directories (optional, uncomment if vendoring)
+# vendor/
+
+# IDE and editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Build and dist
+dist/
+build/
+
+# Logs and temp
+*.log
+tmp/
+temp/
+
+# Local env / secrets
+.env
+.env.local
+*.pem
+*.key
+*.crt
+
+# The accidentally committed binary (explicit)
+gow.exe

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"gow/database/schema"
 	"sort"
-	"time"
 )
 
 // Migration represents a single database migration.

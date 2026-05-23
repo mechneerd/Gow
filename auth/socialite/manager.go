@@ -2,7 +2,6 @@ package socialite
 
 import (
 	"context"
-	"net/http"
 )
 
 // User represents a user returned from an OAuth provider.

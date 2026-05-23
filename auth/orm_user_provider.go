@@ -23,10 +23,7 @@ func NewORMUserProvider(db *orm.DB, model Authenticatable) *ORMUserProvider {
 func (p *ORMUserProvider) RetrieveByID(identifier string) any {
 	// This is a simplified version. In real use, you would use the model's table.
 	// For now we assume the model has a table and we query by primary key "id".
-	user := p.model // copy prototype? In practice we'd use reflection or a factory.
-	// For demo, we expect the user to pass a model instance that can be used with NewQuery.
-	// Better approach: store the model type and use NewQuery[ModelType]
-
+	_ = p.model // prototype for future reflection-based instantiation
 	// Placeholder implementation - users should replace with their actual model query
 	_ = identifier
 	return nil
@@ -54,7 +51,7 @@ func (p *ORMUserProvider) ValidateCredentials(user any, credentials map[string]a
 			return false
 		}
 		hashed := u.GetAuthPassword()
-		return hashing.Check(password, hashed) == nil
+		return hashing.NewBcryptHasher(10).Check(password, hashed)
 	}
 	return false
 }
