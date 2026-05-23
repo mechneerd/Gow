@@ -1,60 +1,131 @@
-# GoW Framework
+# GoW — Laravel for Go
 
-![GoW Banner](https://via.placeholder.com/1200x300?text=GoW+Framework)
+**GoW** is a modern, Laravel-inspired web framework for Go.  
+It delivers the **developer experience** and **productivity** of Laravel while staying 100% native Go.
 
-**GoW** is a modern, full-stack Go web framework that perfectly marries the uncompromised performance of Go with the breathtaking developer experience of Laravel.
+> **Current Target**: Laravel-lite 1.2 — the 80% of Laravel that 80% of developers use every day, done right.
 
-## 🚀 Why GoW?
+---
 
-The Go ecosystem has historically prioritized minimal routing libraries and "bring-your-own-architecture" philosophies. GoW challenges this by providing a cohesive, batteries-included framework that helps you ship faster without sacrificing Go's legendary performance.
+## Features
 
-- **Developer Experience First**: Familiar, expressive APIs inspired by Laravel.
-- **Goquent ORM**: A fluent query builder and Active Record implementation with global scopes and observers.
-- **Goblade Templates**: Server-side rendering made beautiful with structural directives and components.
-- **Artisan CLI**: Generate controllers, models, migrations, and serve your app instantly.
-- **Headless Auth**: Built-in JSON API authentication endpoints (Fortify equivalent).
-- **Broadcasting**: Real-time event broadcasting over Pusher and Redis.
-- **Batteries Included**: Routing, Middleware, Validation, Localization, Queues, Mail, Feature Flags, Health Checks, and more.
+- ✅ Beautiful routing with groups, resources, model binding, signed URLs
+- ✅ Powerful Eloquent-style ORM (relations, scopes, soft deletes, casting, upsert, locking, chunking, etc.)
+- ✅ Blade-like templating engine with components, slots, and directives
+- ✅ Production-ready authentication (Session, Sanctum, Socialite, 2FA, Lockout, Email Verification, Gate)
+- ✅ Form Request validation
+- ✅ Queue, Events, Broadcasting (WebSocket), Cache, Session
+- ✅ Mail + Notifications (with Markdown support)
+- ✅ Full Artisan-style CLI (`gow` command) with dozens of generators
+- ✅ Excellent testing tools (`actingAs`, fakes, database assertions)
 
-## 📦 Quick Start
+---
 
-Ensure you have Go 1.24+ installed.
+## Installation
+
+### Quick Install (Recommended)
+
+**macOS / Linux**
+```bash
+curl -sSfL https://raw.githubusercontent.com/yourusername/gow/main/install.sh | sh
+```
+
+**Windows (PowerShell)**
+```powershell
+iwr -useb https://raw.githubusercontent.com/yourusername/gow/main/install.ps1 | iex
+```
+
+After installation:
+```bash
+gow --version
+```
+
+### Manual Installation
 
 ```bash
-# Initialize a new GoW application
-npx gow new my-app
-cd my-app
-
-# Start the development server
-go run cmd/app/main.go
+go install github.com/yourusername/gow/cmd/gow@latest
 ```
 
-## 📖 Documentation
+---
 
-The full documentation is located in the [/docs](/docs) directory.
+## Quick Start
 
-- [Installation & Setup](/docs/installation.md)
-- [Routing](/docs/routing.md)
-- [Goquent ORM](/docs/orm.md)
+### Create a New Project
 
-## 🧪 Testing
+```bash
+# Full-stack web application (recommended)
+gow new myapp
 
-GoW ships with a fluent testing wrapper integrating `httptest` and `testify/assert`.
+# API-only project
+gow new myapi --api
 
-```go
-func TestHealthCheck(t *testing.T) {
-    tc := testing.NewTestCase(t, app.Router)
-    
-    tc.Get("/api/health").
-       AssertStatus(200).
-       AssertJson(map[string]any{"status": "up"})
-}
+# Minimal website / landing page
+gow new mysite --minimal
 ```
 
-## 🏛️ Project Status
+### Run the Application
 
-**GoW v1.0** is fully complete and production-ready. All architectural phases (A, B, and C) have been implemented, providing a robust ecosystem. See `CHANGELOG.md` for the full history of features.
+```bash
+cd myapp
+go run main.go
+# or
+gow serve
+```
 
-## 📜 License
+---
 
-The GoW framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## Documentation
+
+**Complete documentation is available in one file:**
+
+- [Complete User Guide](docs/COMPLETE_USER_GUIDE.md) — Everything you need in a single document
+
+Individual guides are also available in `docs/guide/`:
+- Getting Started
+- Routing
+- ORM
+- Authentication
+- Artisan CLI
+- Views
+- Validation
+- Testing
+
+---
+
+## Project Types
+
+| Command                        | Best For                     |
+|--------------------------------|------------------------------|
+| `gow new myapp`                | Full web applications        |
+| `gow new myapp --api`          | REST / JSON APIs             |
+| `gow new mysite --minimal`     | Simple websites / landing pages |
+
+---
+
+## Why GoW?
+
+- Excellent generic container + service provider system
+- World-class ORM (one of the most complete in Go)
+- Production-ready Authentication stack
+- Very rich Artisan CLI and developer experience
+- Strong testing utilities
+- Native WebSocket broadcasting
+- Clean, modern Go codebase
+
+---
+
+## Contributing
+
+We welcome contributions! Please read [CONTRIBUTING.md](.github/CONTRIBUTING.md) (will be added before release).
+
+---
+
+## License
+
+MIT License © 2026 GoW Contributors
+
+---
+
+**GoW is now genuinely production-viable** for building real-world applications (SaaS, admin panels, APIs, full-stack apps).
+
+Start building today with `gow new myapp`

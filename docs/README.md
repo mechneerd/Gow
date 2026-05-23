@@ -69,4 +69,4 @@ This is the largest release in GoW history. Most remaining critical gaps have be
 - Release Email Template: [2026-05-23-release-email-template.md](whats_new/2026-05-23-release-email-template.md)
 - One-Page Migration Checklist: [2026-05-23-migration-checklist.md](whats_new/2026-05-23-migration-checklist.md)
 
-See also the updated [Current Capabilities](https://github.com/your-org/gow/blob/main/Current_Capabilities.md) and [CHANGELOG.md](https://github.com/your-org/gow/blob/main/CHANGELOG.md).
+See also the current project scope: [LARAVEL_LITE_1.2.md](../LARAVEL_LITE_1.2.md) and [CHANGELOG.md](../CHANGELOG.md).

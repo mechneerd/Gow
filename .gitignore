@@ -52,3 +52,6 @@ temp/
 
 # The accidentally committed binary (explicit)
 gow.exe
+
+# Deprecated documentation (superseded by LARAVEL_LITE_1.2.md)
+Current_Capabilities.md
