@@ -2,7 +2,7 @@
 
 # Authorization
 
-> **Status**: 📋 Planned
+> **Status**: ✅ Implemented
 
 
 In addition to providing built-in authentication services, GoW also provides a simple way to authorize user actions against a given resource.

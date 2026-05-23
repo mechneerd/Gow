@@ -1,6 +1,11 @@
 # CHANGELOG
 ## GoW Framework - Changes Tracking Log
 
+> **Latest Major Release**: May 23, 2026  
+> See detailed release notes: `docs/whats_new/2026-05-23.md`
+
+---
+
 **Format**: Each entry must include Date, Phase, Feature, Status, Decision, and Notes.
 **Status Options**: `PLANNED` | `IN-PROGRESS` | `COMPLETED` | `BLOCKED` | `DEFERRED` | `REMOVED`
 

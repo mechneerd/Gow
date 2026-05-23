@@ -2,89 +2,196 @@
 
 # Goquent ORM
 
-> **Status**: ✅ Implemented
+> **Status**: ✅ Implemented (Very Mature)
 
-
-The Goquent ORM provides a beautiful, simple Active Record implementation for working with your database. Each database table has a corresponding "Model" struct that is used to interact with that table.
+Goquent is a powerful, Laravel Eloquent-inspired ORM built on top of a fluent query builder. It supports relationships, eager loading, soft deletes, scopes, observers, casting, accessors, mutators, and advanced querying features.
 
 ## Defining Models
 
-Models are standard Go structs heavily enriched by struct tags. By default, Goquent assumes your table name is the plural, lowercase version of your struct name.
-
 ```go
-package models
-
-type Post struct {
+type User struct {
     ID        int    `db:"id"`
-    Title     string `db:"title"`
-    Body      string `db:"body"`
-    AuthorID  int    `db:"author_id"`
-    CreatedAt string `db:"created_at"`
-    UpdatedAt string `db:"updated_at"`
+    Name      string `db:"name"`
+    Email     string `db:"email"`
+    CreatedAt time.Time `db:"created_at"`
+    UpdatedAt time.Time `db:"updated_at"`
 }
 ```
 
-## Fluent Query Builder
-
-Goquent ships with a fluent query builder to construct dynamic SQL safely.
+## Mass Assignment Protection
 
 ```go
-import "gow/database/orm"
+func (u *User) Fillable() []string {
+    return []string{"name", "email"}
+}
 
-// Retrieve all active posts created by author 1
-posts := orm.Table("posts").
-    Where("author_id", "=", 1).
-    Where("status", "=", "active").
-    Get()
+func (u *User) Guarded() []string {
+    return []string{"id"}
+}
 ```
 
 ## Relationships
 
-Goquent makes managing and querying relationships trivial using Eager Loading (`With`).
+Goquent supports all common relationship types including **Polymorphic** and **Through** relations.
+
+### Standard Relations
 
 ```go
-// Retrieve posts and eagerly load their associated authors to prevent N+1 queries
-posts := orm.Table("posts").
-    With("Author").
-    Get()
-```
-
-## Advanced Features
-
-### Scopes
-
-Scopes allow you to easily re-use query logic across your application.
-
-```go
-// Global Scopes are applied automatically to all queries for a model
-orm.AddGlobalScope("Post", &ActiveScope{})
-```
-
-### Observers (Lifecycle Hooks)
-
-Model observers allow you to listen for specific events (`creating`, `updating`, `deleting`) during the model lifecycle.
-
-```go
-orm.Observe("Post", &PostObserver{})
-
-func (o *PostObserver) Creating(model any) bool {
-    // Return false to halt creation
-    return true
+type Post struct {
+    // ...
+    UserID int
+    User   orm.BelongsTo[User] `gow:"belongsTo"`
+    Comments []Comment         `gow:"hasMany"`
 }
 ```
 
-### Attribute Casting
-
-The `Cast` interface allows you to define complex mutations when reading and writing properties to the database (e.g., automatically marshalling structs to JSON strings).
-
-### Strictness
-
-GoW provides settings to enforce strict database performance rules globally.
+### Polymorphic Relations
 
 ```go
-// Disable lazy loading entirely to prevent N+1 queries in production
-orm.PreventLazyLoading = true
+type Comment struct {
+    CommentableType string `db:"commentable_type"`
+    CommentableID   int    `db:"commentable_id"`
 
-// Enforce UUIDs as primary keys
-orm.HasUuids = true
+    // From the owning side
+    Post orm.MorphMany[Post] `gow:"morphMany,morphType=commentable_type,morphId=commentable_id,type=Post"`
+}
+
+// On the inverse side
+type Post struct {
+    Comments orm.MorphMany[Comment] `gow:"morphMany,type=Post"`
+}
 ```
+
+Register morph types at bootstrap:
+
+```go
+orm.RegisterMorph("post", models.Post{})
+```
+
+### HasOneThrough / HasManyThrough
+
+```go
+type Country struct {
+    Posts orm.HasManyThrough[Post] `gow:"hasManyThrough,through=users,foreignKey=country_id,relatedKey=user_id"`
+}
+```
+
+## Attribute Casting
+
+Models can implement `Castable`:
+
+```go
+func (u *User) Casts() map[string]string {
+    return map[string]string{
+        "settings": "json",
+        "birthday": "datetime",
+        "is_active": "bool",
+    }
+}
+```
+
+Built-in casts: `datetime`, `json`, `bool`, `int`, `float`, `string`.
+
+## Accessors & Mutators
+
+```go
+func (u *User) GetFullNameAttribute() string {
+    return u.FirstName + " " + u.LastName
+}
+
+func (u *User) SetPasswordAttribute(value string) {
+    hashed, _ := hashing.Make(value)
+    u.Password = hashed
+}
+```
+
+Usage:
+
+```go
+name := orm.GetModelAttribute(user, "full_name")
+orm.SetModelAttribute(user, "password", "secret123")
+```
+
+## Local & Global Scopes
+
+Global scopes:
+
+```go
+orm.AddGlobalScope("User", &ActiveUsersScope{})
+```
+
+Local scopes (auto-discovered):
+
+```go
+func (u *User) ScopeActive(q *query.Builder) *query.Builder {
+    return q.Where("active", "=", true)
+}
+
+// Usage
+users := orm.NewQuery[User](db).Where("age", ">", 18).Active().Get()
+```
+
+## Pessimistic Locking
+
+```go
+user, _ := orm.NewQuery[User](db).
+    LockForUpdate().
+    Find(1)
+```
+
+Also supports `.SharedLock()`.
+
+## Upsert
+
+```go
+builder.Upsert(map[string]any{
+    "email": "john@example.com",
+    "name":  "John",
+}, []string{"name"})
+```
+
+## Chunking Large Datasets
+
+```go
+orm.NewQuery[User](db).Chunk(100, func(users []User) error {
+    // Process batch
+    return nil
+})
+```
+
+## Relation Touching
+
+```go
+func (p *Post) Touches() []string {
+    return []string{"author"}
+}
+```
+
+When a Post is updated, the related Author's `updated_at` is automatically touched.
+
+## Observers & Lifecycle Events
+
+```go
+orm.Observe("Post", &PostObserver{})
+```
+
+Or use interface hooks (`BeforeCreate`, `AfterSave`, etc.).
+
+## Eager Loading
+
+```go
+posts := orm.NewQuery[Post](db).
+    With("Comments", "Author.Country").
+    Get()
+```
+
+## Soft Deletes, Pagination, Transactions
+
+All fully supported (see older sections or `Current_Capabilities.md` for details).
+
+## Best Practices
+
+- Use `MassAssignable` on all models.
+- Prefer casting + accessors over manual transformation.
+- Use `Chunk` instead of loading thousands of records at once.
+- Register polymorphic types early in bootstrap.

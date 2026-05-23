@@ -35,23 +35,85 @@ Tokens are cryptographically hashed using SHA-256 before being stored in your da
 
 ### Issuing Tokens
 
-You can issue a token using the `sanctum` package:
-
 ```go
 token, plainTextToken, err := sanctum.IssueToken(user.ID, "my-device", []string{"read", "write"})
 ```
 
-The `plainTextToken` should be returned to the client immediately, as it cannot be retrieved again.
-
 ### Protecting Routes
-
-To protect your API routes, assign the `auth:sanctum` middleware to the route group.
 
 ```go
 api := router.Group("/api")
 api.Use(authMiddleware.Guard("sanctum"))
-
-api.Get("/user", func(w http.ResponseWriter, r *http.Request) {
-    // The user is authenticated!
-})
 ```
+
+---
+
+## Socialite (OAuth)
+
+GoW supports third-party login via the `socialite` package.
+
+See the full guide: [Socialite (OAuth)](socialite.md)
+
+Quick example:
+
+```go
+manager.Extend("google", socialite.NewGoogleProvider(clientID, secret, redirectURL))
+url := manager.Driver("google").RedirectURL(state)
+```
+
+---
+
+## Two-Factor Authentication (2FA)
+
+GoW includes a pure-Go TOTP implementation in `auth/fortify/two_factor.go`.
+
+### Generating a Secret
+
+```go
+secret, _ := fortify.GenerateSecret()
+qrURL := fortify.GetQRCodeURL("MyApp", user.Email, secret)
+```
+
+### Verifying Codes
+
+```go
+valid := fortify.VerifyTOTP(secret, userInputCode, 1) // 1 = allow 30s clock skew
+```
+
+Enable 2FA via the Fortify routes (`/api/two-factor/enable`).
+
+---
+
+## Account Lockout
+
+Prevent brute-force attacks:
+
+```go
+lockout := auth.NewLockout(5, 15) // 5 attempts → 15 min lock
+
+if lockout.IsLocked(email) {
+    return errors.New("account locked")
+}
+
+if !guard.Attempt(creds) {
+    lockout.RecordFailure(email)
+} else {
+    lockout.Reset(email)
+}
+```
+
+---
+
+## Remember Me
+
+```go
+guard.Attempt(credentials, true) // second param = remember
+```
+
+The `SessionGuard` will call `UpdateRememberToken` on your user provider.
+
+---
+
+## Email Verification & Password Reset
+
+Fully supported via Fortify + signed URLs (see earlier sections).

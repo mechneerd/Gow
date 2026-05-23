@@ -37,6 +37,56 @@ api.Get("/users", UserController.Index)
 api.Post("/users", UserController.Store)
 ```
 
+## Signed & Temporary Signed URLs
+
+Generate URLs that cannot be tampered with:
+
+```go
+url, _ := router.SignedRoute("user.show", map[string]string{"id": "1"}, time.Now().Add(30*time.Minute))
+```
+
+Protect routes with middleware:
+
+```go
+router.Get("/verify", handler).Middleware(middleware.ValidateSignature(urlGenerator))
+```
+
+## Advanced Rate Limiting
+
+```go
+// Simple
+router.Use(middleware.Throttle(60, 1))
+
+// Named limiter (per user)
+router.Use(middleware.ThrottleNamed("login", 5, 1))
+```
+
+Supports per-user throttling via `X-User-ID` header.
+
+## Form Request Validation (Full Features)
+
+```go
+type LoginRequest struct {
+    request.FormRequest
+}
+
+func (r *LoginRequest) Rules() map[string][]string {
+    return map[string][]string{
+        "email":    {"required", "email"},
+        "password": {"required", "min:8"},
+    }
+}
+
+func (r *LoginRequest) Messages() map[string]string { ... }
+func (r *LoginRequest) PrepareForValidation(data map[string]any) map[string]any { ... }
+```
+
+Use in controllers:
+
+```go
+errs, ok := request.Validate(req, &LoginRequest{})
+```
+
 ## Resource Routes
 
 GoW provides automatic resource routing to quickly assign CRUD routes to a controller.

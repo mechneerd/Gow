@@ -21,17 +21,30 @@ These features are fully implemented and tested.
 | [Events](guide/events.md) | ✅ |
 | [Queues](guide/queues.md) | ✅ |
 | [Utilities](guide/utilities.md) | 🚧 |
+| [Socialite (OAuth)](guide/socialite.md) | ✅ New |
+| [Testing](guide/testing.md) | ✅ New |
 
 ## Roadmap — In Progress & Planned
 
+Most major features are now **implemented**. The roadmap is kept for future ecosystem work.
+
 | Section | Status |
 |---|---|
-| [Testing](roadmap/testing.md) | 🚧 In Progress |
-| [File Storage](roadmap/storage.md) | 🚧 In Progress |
-| [Authorization](roadmap/authorization.md) | 📋 Planned |
-| [Mail & Notifications](roadmap/mail_and_notifications.md) | 📋 Planned |
-| [Broadcasting](roadmap/broadcasting.md) | 📋 Planned |
+| [Testing](roadmap/testing.md) | ✅ Largely Complete |
+| [File Storage](roadmap/storage.md) | ✅ Complete |
+| [Authorization](roadmap/authorization.md) | ✅ Complete (Gates + Policies) |
+| [Mail & Notifications](roadmap/mail_and_notifications.md) | ✅ Good (Markdown + Channels + Slack) |
+| [Broadcasting](roadmap/broadcasting.md) | ✅ Complete (Native WebSocket) |
+| Socialite / OAuth | ✅ New Guide |
+| Advanced ORM Features | ✅ Documented in `guide/orm.md` |
 
 ---
 
 *Note for Contributors: This documentation is maintained in Markdown to ensure minimal dependencies and maximal contribution ease. If you wish to propose edits, feel free to open a PR directly modifying these Markdown files!*
+
+---
+
+## Latest Release
+
+**May 23, 2026** — Massive feature completion wave  
+See the full release notes: [What's New — 2026-05-23](whats_new/2026-05-23.md)
