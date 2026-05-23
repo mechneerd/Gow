@@ -46,6 +46,20 @@ Most major features are now **implemented**. The roadmap is kept for future ecos
 
 ## Latest Release
 
-**May 23, 2026** — Massive feature completion wave  
-See the full release notes: [What's New — 2026-05-23](whats_new/2026-05-23.md)  
-GitHub Releases version: [2026-05-23 GitHub Release Notes](whats_new/2026-05-23-github-release.md)
+**May 23, 2026 — Feature Parity Release**
+
+This is the largest release in GoW history. Most remaining critical gaps have been closed.
+
+**Release Materials** (all new or heavily updated on 2026-05-23):
+
+- Full Release Notes: [2026-05-23.md](whats_new/2026-05-23.md)
+- GitHub Releases Version: [2026-05-23-github-release.md](whats_new/2026-05-23-github-release.md)
+- Short Announcement Summary: [2026-05-23-release-summary.md](whats_new/2026-05-23-release-summary.md)
+- **Upgrade / Migration Guide**: [UPGRADE.md](UPGRADE.md) ← Recommended starting point for existing projects
+- Announcement Templates: [2026-05-23-announcement-template.md](whats_new/2026-05-23-announcement-template.md)
+- Blog Post Draft: [2026-05-23-blog-post-draft.md](whats_new/2026-05-23-blog-post-draft.md)
+- Twitter Thread: [2026-05-23-twitter-thread.md](whats_new/2026-05-23-twitter-thread.md)
+- Release Email Template: [2026-05-23-release-email-template.md](whats_new/2026-05-23-release-email-template.md)
+- One-Page Migration Checklist: [2026-05-23-migration-checklist.md](whats_new/2026-05-23-migration-checklist.md)
+
+See also the updated [Current Capabilities](https://github.com/your-org/gow/blob/main/Current_Capabilities.md) and [CHANGELOG.md](https://github.com/your-org/gow/blob/main/CHANGELOG.md).

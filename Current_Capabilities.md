@@ -1,8 +1,10 @@
 # GoW Framework — Current Capabilities (vs Laravel)
 
-> **Date**: 2026-05-22 (Updated)  
-> **Framework Version**: Post Wave 2 + Major Feature Waves (ORM, Auth, HTTP, Foundation)  
-> **Total Go source files**: ~160+ (includes auth middleware, orm helpers, raw query improvements)
+> **Date**: 2026-05-23 (Major Update - Feature Parity Release)  
+> **Framework Version**: Post Wave 3 + Wave 4 (Feature Parity)  
+> **Total Go source files**: 180+ (massive expansion in ORM, Auth, CLI, and ecosystem foundations)
+
+**May 23, 2026 Feature Parity Release** — This document has been significantly updated after the largest implementation wave in GoW history. Most remaining critical gaps have been closed. See `docs/whats_new/2026-05-23.md` for full release details.
 
 This document provides a clear, honest comparison of what **GoW currently has implemented** versus Laravel equivalents.
 
@@ -182,79 +184,89 @@ This document provides a clear, honest comparison of what **GoW currently has im
 
 ---
 
-## Production Readiness Assessment (May 2026)
+## Production Readiness Assessment (May 23, 2026 - Post Feature Parity Release)
 
-| Area                        | Readiness | Comments |
-|-----------------------------|-----------|----------|
-| **Core HTTP + Routing**     | High      | Very usable with graceful shutdown + rich helpers |
-| **Database / ORM**          | High      | One of the strongest areas (Transactions, BelongsToMany, multi-dialect) |
-| **Queue + Broadcasting**    | Medium-High | Native Go advantages |
-| **Auth**                    | Medium-High | Session Auth + Gate now functional + Sanctum |
-| **Mail / Notifications**    | Low       | Needs real drivers |
-| **Views + Validation**      | Medium    | Usable but incomplete |
-| **Transactions & Advanced ORM** | High   | Now well supported |
-| **CLI & DX**                | Medium    | Good generators, missing some artisan commands |
-| **Overall Production**      | Medium-High | Can be used for APIs, background jobs, and many full-stack features. Mail is the main remaining gap for complete apps. |
+| Area                        | Readiness      | Comments |
+|-----------------------------|----------------|----------|
+| **Core HTTP + Routing**     | High           | Excellent (Signed URLs, advanced rate limiting, full FormRequest, content negotiation) |
+| **Database / ORM**          | Excellent      | One of the strongest Laravel-like ORMs in Go (Polymorphic, Casting, Accessors, Through, Locking, Chunk, Upsert, etc.) |
+| **Queue + Broadcasting**    | High           | Native WebSocket + multiple queue drivers + worker |
+| **Auth**                    | High           | Production-ready (Session + Sanctum + Gate + 2FA + Socialite + Lockout + Remember Me) |
+| **Mail / Notifications**    | Medium         | Markdown + queueing + Slack channel; real SMTP still basic |
+| **Views + Validation**      | Good           | Strong Blade-like experience + many validation rules |
+| **Transactions & Advanced ORM** | Excellent   | Full feature set now present |
+| **CLI & DX**                | High           | Very rich Artisan surface + excellent generators + REPL |
+| **Testing**                 | Good           | Strong utilities (`actingAs`, uploads, assertions, fakes) |
+| **Documentation**           | Good           | Significantly expanded with new guides and deep examples |
+| **Overall Production**      | **High**       | Genuinely usable for real-world full-stack and API applications. Most major gaps closed. |
 
 ---
 
-## Key Strengths (What GoW Does Well Today)
+## Key Strengths (What GoW Does Well Today - May 23, 2026)
 
 - Excellent generic container + service provider system
-- Strong, dialect-aware Query Builder + ORM (Transactions, BelongsToMany + pivot helpers, scopes, observers, soft deletes)
-- Full database transactions with manual + callback API
-- Session-based Authentication + Gate/Policies (production ready)
-- Route Model Binding (implicit + explicit)
-- Rich HTTP layer (Request helpers, Middleware groups/aliases, Content negotiation)
-- Native WebSocket broadcasting (unique Go advantage)
-- Multiple queue drivers + worker
-- Graceful shutdown + connection pooling
-- Clean middleware and routing architecture
-- Good testing foundation
-- Foundation publishing system (`vendor:publish`)
+- **World-class ORM** — Polymorphic, Casting, Accessors/Mutators, Has*Through, Upsert, Pessimistic Locking, Chunk, Relation Touching, full BelongsToMany
+- Full database transactions + advanced querying
+- **Production-ready Authentication** — Session + Sanctum + Gate + 2FA + Socialite + Account Lockout + Remember Me + Email Verification
+- Rich HTTP layer (Signed URLs, advanced rate limiting, full FormRequest, content negotiation)
+- Native WebSocket broadcasting (unique advantage)
+- Very strong CLI (dozens of Artisan commands + generators)
+- Good testing experience (`actingAs`, file uploads, assertions)
+- Foundation publishing + clean architecture
+- Significantly improved documentation with deep examples
 
 ---
 
-## Biggest Gaps Blocking Real-World Use
+## Biggest Gaps Blocking Real-World Use (Post May 23, 2026)
 
-1. Missing **Mail** transport (real SMTP driver + Markdown mails)
-2. Password Reset flow
-3. Email Verification system
-4. (Advanced Pagination now has solid foundation — LengthAware + Simple + Cursor)
-5. Mass Assignment protection enforcement (`$fillable` / `$guarded`)
-6. More complete View system (`{!! !!}` raw output, full `$loop` variable, proper components/slots)
+Most major blockers have been eliminated. Remaining gaps are mostly polish or ecosystem:
 
----
+1. Real production-grade **Mail** drivers (SMTP + better retry/DKIM)
+2. More notification channels (beyond DB, Mail, Slack)
+3. Richer error pages rendered from Blade views (stack traces in templates)
+4. Full Inertia + Livewire experience (foundations exist)
+5. Advanced ecosystem tools (Telescope UI, Horizon dashboard, etc.)
+6. More complete starter kits / scaffolding
 
-## Recommended Next Focus (Post May 2026)
-
-Many high-impact items from the original list have now been completed:
-
-**Completed in recent waves:**
-- Database Transactions (full Begin/Commit/Rollback + callback)
-- Session-based Authentication (SessionGuard + Middleware)
-- Route Model Binding (implicit + explicit with `Model[T]()`)
-- BelongsToMany (pivot) + Attach/Detach/Sync/Toggle
-- Raw Expressions, GROUP BY, HAVING, SelectRaw/WhereRaw
-- Foundation & Architecture (bootstrap + vendor:publish)
-- HTTP Layer improvements (Request helpers, Middleware groups, Content negotiation)
-
-**Remaining high-priority items for next phase:**
-1. Real Mail SMTP driver + full Markdown mail polish
-2. More complete View components (`{!! !!}`, `$loop`, Slots)
-3. CLI improvements (more artisan commands)
+Most "day-to-day" features developers expect from a Laravel-like framework are now present and well documented.
 
 ---
 
-**Bottom Line**
+## Recommended Next Focus (Post May 23, 2026 Feature Parity Release)
 
-GoW has matured significantly. After Top 10 + Wave 2 + multiple focused waves, the framework now includes:
+**Most high-impact items are now complete.** The May 23 wave closed the majority of the critical gaps.
 
-- Full-featured ORM (Transactions, BelongsToMany + helpers, Mass Assignment protection, Pagination)
-- Production-ready Authentication (Session Guard + Middleware, Password Reset, Email Verification, Gate)
-- Solid Mail system (Markdown + basic queueing)
-- Excellent HTTP layer and Foundation
+**Completed in the May 23 Feature Parity wave:**
+- Socialite (OAuth)
+- 2FA + Account Lockout + Remember Me
+- Advanced ORM (Polymorphic, Casting, Accessors, Through relations, Locking, Upsert, Chunk, Touching, etc.)
+- Full Artisan command surface + generators
+- Signed URLs, advanced rate limiting, complete FormRequest
+- Testing improvements (`actingAs`, uploads, assertions)
+- Documentation overhaul + deep examples
 
-The framework is now genuinely usable for building real-world applications.
+**Recommended next focus (polish & ecosystem):**
+1. Production-grade Mail drivers + better retry handling
+2. More notification channels (SMS, etc.)
+3. Richer Blade error pages with stack traces
+4. Full Inertia + Livewire experience
+5. Advanced debugging / monitoring tools (Telescope UI, Horizon)
+6. Official starter kits / scaffolding
 
-This document is kept up to date after each implementation wave.
+---
+
+**Bottom Line (May 23, 2026)**
+
+After the massive Feature Parity release, GoW has reached a new level of maturity.
+
+The framework now includes:
+- One of the most complete ORMs available in Go (near full Eloquent parity)
+- Production-ready Authentication stack (Socialite + 2FA + Lockout + Sanctum + Gate)
+- Very strong CLI and Developer Experience
+- Solid foundations for most ecosystem features
+
+**GoW is now genuinely production-viable** for building real-world applications (SaaS, admin panels, APIs, full-stack apps).
+
+This document is kept up to date after each major implementation wave.
+
+**See also**: `docs/whats_new/2026-05-23.md` for the full release notes.
