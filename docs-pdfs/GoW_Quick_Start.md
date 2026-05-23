@@ -40,12 +40,44 @@ Very fast and performs well.
 
 **Best for**: Fast development with minimal JavaScript
 
+### 5. Livewire-style Components (Now Functional)
+GoW has a working **Livewire equivalent** (`http/livewire`).
+
+**Current Capabilities** (May 23, 2026):
+- `wire:click="method"` → Call component methods
+- `wire:model="property"` → Two-way binding on inputs
+- `wire:submit="method"` → Handle form submissions
+- Reactive updates → Component automatically re-renders when state changes
+- Basic `wire:loading` support
+- Lifecycle hook: `Mount()`
+
+**Quick Example**:
+
+```go
+type Counter struct {
+    livewire.BaseComponent
+    Count int
+}
+
+func (c *Counter) Render() string {
+    return fmt.Sprintf(`<div wire:id="%s">
+        <h2>Count: %d</h2>
+        <button wire:click="Increment">+1</button>
+        <input type="number" wire:model="Count">
+    </div>`, c.GetID(), c.Count)
+}
+
+func (c *Counter) Increment() { c.Count++ }
+```
+
+This gives you a real reactive component experience similar to Laravel Livewire. More directives (wire:ignore, better loading states, etc.) can be added in future updates.
+
 **Quick Recommendation**:
 
 | Goal                          | Recommended Stack                     |
 |-------------------------------|---------------------------------------|
 | Modern web app / SaaS         | GoW + Inertia + React or Vue          |
-| API only (for mobile + web)   | GoW (pure API)                        |
+| API for mobile + web          | GoW (pure API)                        |
 | Simple & fast website         | GoW + Goblade                         |
 | Lightweight with little JS    | GoW + Goblade + HTMX                  |
 

@@ -224,7 +224,7 @@ Most major blockers have been eliminated. Remaining gaps are mostly polish or ec
 1. Real production-grade **Mail** drivers (SMTP + better retry/DKIM)
 2. More notification channels (beyond DB, Mail, Slack)
 3. Richer error pages rendered from Blade views (stack traces in templates)
-4. Full Inertia + Livewire experience (foundations exist)
+4. Full Inertia + Livewire experience — Livewire now implemented and functional (wire:click, wire:model, wire:submit, reactive updates, wire:loading, wire:ignore)
 5. Advanced ecosystem tools (Telescope UI, Horizon dashboard, etc.)
 6. More complete starter kits / scaffolding
 
