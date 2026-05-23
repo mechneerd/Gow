@@ -1,11 +1,53 @@
-# Quick Start Guide — GoW Framework
+# GoW Quick Start Guide (PDF Version)
 
-**Goal**: Get a working GoW application running in **10–20 minutes**, even if you have little experience.
+**Goal**: Get a running GoW application in 10–20 minutes.
 
-This is the **fast-track** version. For full explanations, see the [Getting Started Guide](getting-started.md).
+> This is a clean, PDF-optimized version of the Quick Start guide.  
+> It includes tech stack recommendations (API, React, Vue, Goblade, HTMX, etc.).
 
-> **Need it even shorter?**  
-> See the [One-Page Printable Version](quick-start-one-page.md) — fits on a single printed page.
+For the full detailed version, see `GoW_Getting_Started_Detailed.md`.
+
+---
+
+## What Can You Build With GoW?
+
+GoW is flexible. Here are the main ways people use it:
+
+### 1. API Only (Most Common)
+Build just the backend. Use any frontend you like:
+- React, Vue, Svelte, Angular, Flutter, React Native, etc.
+
+**Best for**: Mobile apps + Web frontends
+
+### 2. Modern Web App (Recommended)
+Use **Inertia.js** + React or Vue.
+
+This gives you a modern frontend experience while using GoW as the backend.
+
+**Best for**: SaaS products, dashboards, full web applications
+
+### 3. Traditional Web App
+Use GoW’s built-in templates (**Goblade**).
+
+Similar to Laravel Blade.
+
+**Best for**: Simple websites and admin panels
+
+### 4. Lightweight Modern (Low JavaScript)
+Use Goblade + **HTMX** + Alpine.js + Tailwind.
+
+Very fast and performs well.
+
+**Best for**: Fast development with minimal JavaScript
+
+**Quick Recommendation**:
+
+| Goal                          | Recommended Stack                     |
+|-------------------------------|---------------------------------------|
+| Modern web app / SaaS         | GoW + Inertia + React or Vue          |
+| API only (for mobile + web)   | GoW (pure API)                        |
+| Simple & fast website         | GoW + Goblade                         |
+| Lightweight with little JS    | GoW + Goblade + HTMX                  |
 
 ---
 

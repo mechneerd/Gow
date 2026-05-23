@@ -35,6 +35,63 @@ It helps you write less code and follow best practices.
 
 ---
 
+## What Can You Build With GoW? (Tech Stack Options)
+
+GoW is very flexible. You can use it in several different ways depending on your project needs.
+
+### 1. API Only (Most Popular Choice)
+- Build only the backend (REST API)
+- Use any frontend you want: **React, Vue, Svelte, Angular, Flutter, React Native**, etc.
+- Best for: Mobile apps, SaaS platforms, public APIs, microservices
+
+**Tech Stack Example**:
+- GoW + PostgreSQL + React (or Vue) + TypeScript
+
+### 2. Traditional Web Application
+- Use GoW’s built-in templating system called **Goblade**
+- Similar to Laravel Blade or Ruby on Rails
+- Best for: Simple websites, admin panels, content-heavy sites
+
+**Tech Stack Example**:
+- GoW + Goblade + Tailwind CSS
+
+### 3. Modern Full-Stack Web App (Recommended for Most New Projects)
+- Use **Inertia.js** with React or Vue
+- Gives you a modern single-page app feel while keeping GoW as the backend
+- Best for: Dashboards, SaaS products, complex web applications
+
+**Tech Stack Example**:
+- GoW + Inertia + React + TypeScript + PostgreSQL
+- or GoW + Inertia + Vue + TypeScript + PostgreSQL
+
+### 4. Lightweight Modern Apps (Low JavaScript)
+- Combine Goblade with **HTMX** + Alpine.js + Tailwind
+- Very little JavaScript needed
+- Best for: Fast development, good performance, simpler projects
+
+**Tech Stack Example**:
+- GoW + Goblade + HTMX + Alpine.js + Tailwind CSS
+
+### Quick Comparison
+
+| Type of Project                    | Frontend Technology          | JavaScript Needed | Development Speed | Best For                          | Recommendation |
+|------------------------------------|------------------------------|-------------------|-------------------|-----------------------------------|----------------|
+| API for mobile + web               | Any (React, Vue, Flutter...) | High              | Fast              | Mobile apps, SaaS, Public APIs    | ★★★★★         |
+| Modern Web App                     | React or Vue + Inertia       | Medium            | Fast              | SaaS, Dashboards, Complex Apps    | ★★★★★         |
+| Traditional Website / Admin Panel  | Goblade                      | Low               | Very Fast         | Simple sites, Internal tools      | ★★★★          |
+| Lightweight Modern App             | Goblade + HTMX + Alpine      | Very Low          | Fast              | Fast & Performant Apps            | ★★★★          |
+
+---
+
+**Recommendation for Beginners**:
+- If you're building an **API** → Go with **GoW + React** or **Vue**
+- If you want a **full modern web app** → Go with **GoW + Inertia + React** (or Vue)
+- If you want something **simple and fast** → Start with **GoW + Goblade**
+
+You can always change your frontend approach later.
+
+---
+
 ## Step 1: Install Go (The Programming Language)
 
 GoW is written in Go, so you must install Go first.

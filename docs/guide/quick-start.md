@@ -9,6 +9,44 @@ This is the **fast-track** version. For full explanations, see the [Getting Star
 
 ---
 
+## What Can You Build With GoW?
+
+GoW is flexible. Here are the main ways people use it:
+
+### 1. API Only (Most Common)
+Build just the backend. Use any frontend you like:
+- React, Vue, Svelte, Angular, Flutter, React Native, etc.
+
+**Best for**: Mobile apps + Web frontends
+
+### 2. Modern Web App (Recommended)
+Use **Inertia.js** + React or Vue.
+
+This gives you a modern frontend experience while using GoW as the backend.
+
+**Best for**: SaaS products, dashboards, full web applications
+
+### 3. Traditional Web App
+Use GoW’s built-in templates (**Goblade**).
+
+Similar to Laravel Blade.
+
+**Best for**: Simple websites and admin panels
+
+### 4. Lightweight Modern (Low JavaScript)
+Use Goblade + **HTMX** + Alpine.js + Tailwind.
+
+Very fast and performs well.
+
+**Best for**: Fast development with minimal JavaScript
+
+**Quick Recommendation**:
+- Want a **modern app**? → Go with **GoW + Inertia + React** or **Vue**
+- Just need an **API**? → Use **GoW only** (pure API)
+- Want something **simple & fast**? → Start with **GoW + Goblade**
+
+---
+
 ## Step 1: Install Go
 
 Download and install Go from: https://go.dev/dl

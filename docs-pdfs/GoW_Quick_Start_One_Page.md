@@ -136,6 +136,19 @@ return inertia.Render(w, "Home", map[string]any{"message": "Hi"})
 
 ---
 
+## What Can You Build With GoW?
+
+GoW is flexible. Main options:
+
+- **API Only** → Use any frontend (React, Vue, Flutter, etc.)
+- **Modern Web App (Recommended)** → GoW + Inertia + React or Vue
+- **Traditional Web App** → GoW + Goblade (like Laravel Blade)
+- **Lightweight Modern** → GoW + Goblade + HTMX + Alpine.js
+
+**Quick Tip**: For most new projects, **GoW + Inertia + React/Vue** is the best balance.
+
+---
+
 **Need more details?**  
 Full guides:  
 - [Getting Started (Detailed)](getting-started.md)  

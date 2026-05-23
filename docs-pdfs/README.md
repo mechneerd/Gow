@@ -1,14 +1,16 @@
 # GoW Documentation - PDF Versions
 
-This folder contains PDF-friendly versions of the most important getting-started guides.
+This folder contains clean, PDF-friendly Markdown versions of the most important beginner guides for the GoW Framework.
 
-## Available PDFs (Source Markdown)
+> **Note**: These files now include the **"What Can You Build With GoW?"** section, which explains all supported tech stacks (API only, React + Inertia, Vue + Inertia, Goblade, HTMX, etc.).
 
-| File | Description | Recommended Use |
-|------|-------------|-----------------|
-| `GoW_Getting_Started_Detailed.md` | Complete beginner guide (zero to advanced, including React/Vue) | Full learning path |
-| `GoW_Quick_Start.md` | Fast track version (10-20 minutes) | Quick onboarding |
-| `GoW_Quick_Start_One_Page.md` | Ultra-short printable version | Print and follow |
+## Available PDF Sources
+
+| File | Description | Best For |
+|------|-------------|----------|
+| `GoW_Getting_Started_Detailed.md` | Very detailed step-by-step guide (zero experience → React/Vue apps) | New users who want everything explained |
+| `GoW_Quick_Start.md` | Fast 10-20 minute guide with tech stack options | People who want to get running quickly |
+| `GoW_Quick_Start_One_Page.md` | Ultra-short printable version (fits on 1 page) | Quick reference / printing while coding |
 
 ---
 
