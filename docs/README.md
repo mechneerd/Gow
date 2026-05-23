@@ -6,10 +6,17 @@ Welcome to the official documentation for the **GoW Framework** — a Laravel-in
 
 ## Guide — ✅ Implemented Features
 
+**Start Here if you're new**:
+
+- **[Quick Start](guide/quick-start.md)** — Fastest way to get a running app (10–20 minutes)
+- **[Quick Start - One Page Printable](guide/quick-start-one-page.md)** — Ultra-short version (fits on one printed page)
+- **[Getting Started (Zero to Advanced)](guide/getting-started.md)** — Very detailed, step-by-step guide from zero experience to React/Vue apps
+
 These features are fully implemented and tested.
 
 | Section | Status |
 |---|---|
+| [Getting Started (Beginner → Advanced)](guide/getting-started.md) | ✅ New |
 | [Installation](guide/installation.md) | ✅ |
 | [Routing](guide/routing.md) | ✅ |
 | [Middleware](guide/middleware.md) | ✅ |
