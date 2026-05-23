@@ -68,3 +68,54 @@ func (t *Translator) Translate(key string, replace map[string]string) string {
 
 	return line
 }
+
+// ==================== Global Localization Helpers (complete i18n) ====================
+
+var defaultTranslator *Translator
+
+// SetDefaultTranslator sets the app-wide translator instance (usually done in bootstrap).
+func SetDefaultTranslator(t *Translator) {
+	defaultTranslator = t
+}
+
+// __ is the global translation helper (Laravel-like).
+// Usage: __("welcome.message", map[string]string{"name": "John"})
+func __(key string, replaces ...map[string]string) string {
+	if defaultTranslator == nil {
+		return key
+	}
+	var replace map[string]string
+	if len(replaces) > 0 {
+		replace = replaces[0]
+	}
+	return defaultTranslator.Translate(key, replace)
+}
+
+// Trans is alias for __ .
+func Trans(key string, replaces ...map[string]string) string {
+	return __(key, replaces...)
+}
+
+// SetLocale changes the current locale globally.
+func SetLocale(locale string) {
+	if defaultTranslator != nil {
+		defaultTranslator.SetLocale(locale)
+	}
+}
+
+// GetLocale returns current locale.
+func GetLocale() string {
+	if defaultTranslator != nil {
+		return defaultTranslator.locale
+	}
+	return "en"
+}
+
+// LoadLocale preloads a locale.
+func LoadLocale(locale string) error {
+	if defaultTranslator != nil {
+		return defaultTranslator.Load(locale)
+	}
+	return nil
+}
+

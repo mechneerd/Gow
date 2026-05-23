@@ -4,6 +4,7 @@ import (
 	"gow/broadcasting"
 	"gow/config"
 	"gow/foundation"
+	"gow/localization"
 	"gow/logging"
 	"gow/mail"
 	"gow/notifications"
@@ -19,6 +20,7 @@ func NewApplication(basePath string) *foundation.Application {
 	app.RegisterProvider(&broadcasting.ServiceProvider{})
 	app.RegisterProvider(&mail.ServiceProvider{})
 	app.RegisterProvider(&notifications.ServiceProvider{})
+	app.RegisterProvider(&localization.ServiceProvider{})
 
 	// Boot the application (freezes container)
 	app.Boot()

@@ -34,6 +34,7 @@ type SelectQuery struct {
 	Offset    *int
 	GroupBys  []string
 	Havings   []WhereClause
+	Lock      string // e.g. "FOR UPDATE", "FOR SHARE" for pessimistic locking
 }
 
 // JoinClause represents a table JOIN condition.

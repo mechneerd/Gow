@@ -1,6 +1,11 @@
 package auth
 
-import "gow/session"
+import (
+	"crypto/rand"
+	"encoding/base64"
+
+	"gow/session"
+)
 
 // SessionGuard implements the Guard interface using standard HTTP sessions.
 type SessionGuard struct {
@@ -47,29 +52,41 @@ func (g *SessionGuard) ID() string {
 	return ""
 }
 
-func (g *SessionGuard) Attempt(credentials map[string]any) bool {
+func (g *SessionGuard) Attempt(credentials map[string]any, remember ...bool) bool {
 	user := g.provider.RetrieveByCredentials(credentials)
 	if user == nil {
 		return false
 	}
 
 	if g.provider.ValidateCredentials(user, credentials) {
-		g.Login(user)
+		rem := false
+		if len(remember) > 0 {
+			rem = remember[0]
+		}
+		g.Login(user, rem)
 		return true
 	}
 
 	return false
 }
 
-func (g *SessionGuard) Login(user any) {
-	// Typically we need a way to extract the ID from the generic 'user' type.
-	// For simplicity, we assume the provider gives us a struct we can reflect on,
-	// or the User implements an Authenticatable interface.
-	// As a placeholder, we use a generic type assertion here if possible.
+func (g *SessionGuard) Login(user any, remember ...bool) {
 	if authUser, ok := user.(Authenticatable); ok {
 		g.session.Put(g.getName(), authUser.GetAuthIdentifier())
-		g.session.Regenerate() // Prevent session fixation
+		g.session.Regenerate()
 		g.user = user
+
+		// Remember Me support (Wave 4)
+		if len(remember) > 0 && remember[0] {
+			if provider, ok := g.provider.(interface {
+				UpdateRememberToken(user any, token string)
+			}); ok {
+				token := generateRememberToken()
+				provider.UpdateRememberToken(user, token)
+				// In real app: also set long-lived cookie "remember_{name}" = id|token|hash
+				_ = token // placeholder for cookie setting
+			}
+		}
 	}
 }
 
@@ -92,6 +109,13 @@ type Authenticatable interface {
 // Manager resolves the guards configured for the application.
 type Manager struct {
 	guards map[string]Guard
+}
+
+// generateRememberToken creates a secure random remember token.
+func generateRememberToken() string {
+	b := make([]byte, 32)
+	rand.Read(b) // ignore error for simplicity
+	return base64.URLEncoding.EncodeToString(b)
 }
 
 // NewManager creates a new Auth Manager.

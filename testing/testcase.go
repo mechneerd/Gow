@@ -13,6 +13,7 @@ import (
 type TestCase struct {
 	T       *testing.T
 	handler http.Handler
+	authUser any // set via ActingAs
 }
 
 // NewTestCase creates a new TestCase instance.
@@ -29,9 +30,19 @@ type TestResponse struct {
 	Recorder *httptest.ResponseRecorder
 }
 
+// ActingAs sets the authenticated user for subsequent test requests (Laravel-style).
+func (tc *TestCase) ActingAs(user any) *TestCase {
+	tc.authUser = user
+	return tc
+}
+
 // Get simulates an HTTP GET request.
 func (tc *TestCase) Get(url string) *TestResponse {
 	req := httptest.NewRequest(http.MethodGet, url, nil)
+	if tc.authUser != nil {
+		// Simple marker for auth middleware in tests
+		req.Header.Set("X-Test-Auth-User", "1")
+	}
 	w := httptest.NewRecorder()
 	tc.handler.ServeHTTP(w, req)
 	return &TestResponse{T: tc.T, Recorder: w}

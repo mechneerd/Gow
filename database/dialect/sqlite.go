@@ -142,6 +142,11 @@ func (d *SQLiteDialect) CompileSelect(query SelectQuery) (string, []any) {
 		sql.WriteString(fmt.Sprintf(" OFFSET %d", *query.Offset))
 	}
 
+	// Locking (FOR UPDATE / FOR SHARE)
+	if query.Lock != "" {
+		sql.WriteString(" " + query.Lock)
+	}
+
 	return sql.String(), args
 }
 

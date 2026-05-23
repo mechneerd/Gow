@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	authaccess "gow/auth/access"
+	"gow/localization"
 )
 
 // Engine is the Goblade view rendering engine.
@@ -232,6 +233,11 @@ func (e *Engine) Make(name string, data map[string]any) (string, error) {
 			}
 			return false
 		},
+
+		// Localization helpers
+		"__":     localization.__,
+		"trans":  localization.Trans,
+		"lang":   localization.__,
 	}
 
 	// baseName is arbitrary for the template set, but ParseFiles will use the base name of each file for its templates

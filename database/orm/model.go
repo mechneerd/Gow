@@ -3,6 +3,7 @@ package orm
 import (
 	"gow/database/query"
 	"reflect"
+	"strings"
 )
 
 // MassAssignable allows models to control mass assignment protection,
@@ -53,6 +54,25 @@ var observers = make(map[string][]Observer)
 // Observe registers an observer for a model.
 func Observe(model string, observer Observer) {
 	observers[model] = append(observers[model], observer)
+}
+
+// MorphMap allows registering polymorphic type names to concrete model types.
+// Example: RegisterMorph("post", Post{})
+var morphMap = make(map[string]reflect.Type)
+
+// RegisterMorph registers a name (used in *_type columns) to a model struct type.
+// Call this in init() or bootstrap for each polymorphic model.
+func RegisterMorph(name string, model any) {
+	typ := reflect.TypeOf(model)
+	if typ.Kind() == reflect.Ptr {
+		typ = typ.Elem()
+	}
+	morphMap[name] = typ
+}
+
+// GetMorphType returns the registered reflect.Type for a morph name, or nil.
+func GetMorphType(name string) reflect.Type {
+	return morphMap[name]
 }
 
 // Cast represents an attribute casting strategy.
@@ -201,3 +221,108 @@ var (
 	PreventLazyLoading bool
 	HasUuids           bool
 )
+
+// ==================== Accessors & Mutators (Wave 3) ====================
+
+// toCamel converts snake_case or lowercase to CamelCase for method lookup.
+func toCamel(s string) string {
+	parts := strings.Split(s, "_")
+	for i := range parts {
+		if len(parts[i]) > 0 {
+			parts[i] = strings.ToUpper(parts[i][:1]) + parts[i][1:]
+		}
+	}
+	return strings.Join(parts, "")
+}
+
+// GetModelAttribute retrieves the value of an attribute on a model.
+// It first looks for a method Get<Name>Attribute() (e.g. GetTitleAttribute).
+// Falls back to direct struct field access (case-insensitive).
+// This enables Laravel-style accessors without magic.
+func GetModelAttribute(model any, name string) any {
+	if model == nil {
+		return nil
+	}
+	v := reflect.ValueOf(model)
+	if v.Kind() == reflect.Ptr {
+		v = v.Elem()
+	}
+	if !v.IsValid() {
+		return nil
+	}
+
+	// Try accessor method: GetTitleAttribute, GetCreatedAtAttribute, etc.
+	methodName := "Get" + toCamel(name) + "Attribute"
+	if method := v.MethodByName(methodName); method.IsValid() {
+		// Must have no input params and at least one return
+		if method.Type().NumIn() == 0 && method.Type().NumOut() > 0 {
+			results := method.Call(nil)
+			return results[0].Interface()
+		}
+	}
+
+	// Fallback: direct field by name (case-insensitive match)
+	field := v.FieldByNameFunc(func(n string) bool {
+		return strings.EqualFold(n, name) || strings.EqualFold(n, toCamel(name))
+	})
+	if field.IsValid() {
+		return field.Interface()
+	}
+
+	return nil
+}
+
+// SetModelAttribute sets an attribute value on a model.
+// Looks for Set<Name>Attribute(value) method first (mutator).
+// Falls back to setting the struct field directly if exported.
+func SetModelAttribute(model any, name string, value any) {
+	if model == nil {
+		return
+	}
+	v := reflect.ValueOf(model)
+	if v.Kind() == reflect.Ptr {
+		if v.IsNil() {
+			return
+		}
+		v = v.Elem()
+	}
+	if !v.IsValid() || !v.CanAddr() {
+		return
+	}
+
+	// Try mutator: SetTitleAttribute(value)
+	methodName := "Set" + toCamel(name) + "Attribute"
+	if method := v.MethodByName(methodName); method.IsValid() {
+		if method.Type().NumIn() == 1 {
+			arg := reflect.ValueOf(value)
+			if arg.Type().ConvertibleTo(method.Type().In(0)) {
+				method.Call([]reflect.Value{arg.Convert(method.Type().In(0))})
+				return
+			}
+		}
+	}
+
+	// Fallback: set field directly
+	field := v.FieldByNameFunc(func(n string) bool {
+		return strings.EqualFold(n, name) || strings.EqualFold(n, toCamel(name))
+	})
+	if field.IsValid() && field.CanSet() {
+		val := reflect.ValueOf(value)
+		if val.Type().ConvertibleTo(field.Type()) {
+			field.Set(val.Convert(field.Type()))
+		} else if field.Kind() == reflect.Interface {
+			field.Set(val)
+		}
+	}
+}
+
+// SerializesAttributes optional interface for controlling JSON/API output.
+type SerializesAttributes interface {
+	Hidden() []string   // fields to hide in serialization
+	Appends() []string  // virtual attributes to always include (must have getters)
+}
+
+// Touches allows a model to declare relations that should have their timestamps updated when this model is saved/updated.
+type Touches interface {
+	Touches() []string // relation names (e.g. ["post", "author"])
+}

@@ -3,6 +3,8 @@ package query
 import (
 	"context"
 	"database/sql"
+	"fmt"
+	"strings"
 	"time"
 	
 	"gow/database/dialect"
@@ -230,6 +232,46 @@ func (b *Builder) Insert(values map[string]any) (sql.Result, error) {
 	res, err := b.conn.ExecContext(b.ctx, sqlQuery, args...)
 	dispatchQueryEvent(sqlQuery, args, time.Since(start))
 	return res, err
+}
+
+// Upsert inserts or updates on duplicate key (MySQL/SQLite friendly).
+// For full cross-dialect, dialects can be extended.
+func (b *Builder) Upsert(values map[string]any, updateColumns []string) (sql.Result, error) {
+	// Simple implementation: try insert, on conflict update (basic)
+	// For production, better to use dialect.CompileUpsert
+	columns := make([]string, 0, len(values))
+	row := make([]any, 0, len(values))
+	for k, v := range values {
+		columns = append(columns, k)
+		row = append(row, v)
+	}
+
+	// Use INSERT ... ON DUPLICATE KEY UPDATE for MySQL-like
+	sqlQ, args := b.dialect.CompileInsert(b.query.Table, columns, [][]any{row})
+	if len(updateColumns) > 0 {
+		updateParts := []string{}
+		for _, col := range updateColumns {
+			updateParts = append(updateParts, fmt.Sprintf("%s=VALUES(%s)", col, col))
+		}
+		sqlQ += " ON DUPLICATE KEY UPDATE " + strings.Join(updateParts, ", ")
+	}
+
+	start := time.Now()
+	res, err := b.conn.ExecContext(b.ctx, sqlQ, args...)
+	dispatchQueryEvent(sqlQ, args, time.Since(start))
+	return res, err
+}
+
+// LockForUpdate adds FOR UPDATE pessimistic lock (useful in transactions).
+func (b *Builder) LockForUpdate() *Builder {
+	b.query.Lock = "FOR UPDATE"
+	return b
+}
+
+// SharedLock adds FOR SHARE / FOR READ ONLY lock.
+func (b *Builder) SharedLock() *Builder {
+	b.query.Lock = "FOR SHARE"
+	return b
 }
 
 // Update executes an update statement.

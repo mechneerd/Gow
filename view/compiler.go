@@ -103,6 +103,10 @@ func (c *Compiler) CompileString(raw string) string {
 	// 5. CSRF
 	compiled = strings.ReplaceAll(compiled, "@csrf", `<input type="hidden" name="_token" value="{{ ._csrf_token }}">`)
 
+	// @lang('welcome.message') -> {{ __ "welcome.message" }}
+	langRe := regexp.MustCompile(`@lang\s*\(\s*['"](.+?)['"]\s*\)`)
+	compiled = langRe.ReplaceAllString(compiled, `{{ __ "$1" }}`)
+
 	// 6. Authorization Directives (Full Implementation)
 
 	// @auth -> {{ if auth }}

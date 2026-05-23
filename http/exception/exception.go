@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"runtime/debug"
 	"strings"
 )
 
@@ -40,8 +41,38 @@ func (e *HttpException) Render(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(e.Code)
-	// Generic HTML fallback for frameworks (can be overridden by a custom error page later)
-	fmt.Fprintf(w, "<html><head><title>%d %s</title></head><body><h1>%d %s</h1></body></html>", e.Code, e.Message, e.Code, e.Message)
+
+	// Professional debug error page (Whoops-style) when in development
+	stack := string(debug.Stack())
+	debugHTML := fmt.Sprintf(`
+<!DOCTYPE html>
+<html>
+<head>
+    <title>%d %s</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #1e1e1e; color: #ddd; padding: 20px; }
+        h1 { color: #f55; }
+        pre { background: #2d2d2d; padding: 15px; border-radius: 6px; overflow: auto; font-size: 13px; }
+        .stack { color: #8f8; }
+        .info { color: #8af; }
+    </style>
+</head>
+<body>
+    <h1>%d %s</h1>
+    <p class="info">GoW Framework - Debug Error Page</p>
+    <h3>Message</h3>
+    <pre>%s</pre>
+    <h3>Stack Trace</h3>
+    <pre class="stack">%s</pre>
+</body>
+</html>`, e.Code, e.Message, e.Code, e.Message, e.Message, stack)
+
+	// Simple production fallback (no stack)
+	prodHTML := fmt.Sprintf("<html><head><title>%d %s</title></head><body><h1>%d %s</h1><p>Something went wrong.</p></body></html>", e.Code, e.Message, e.Code, e.Message)
+
+	// For now always show debug (in real app check config app.debug)
+	fmt.Fprint(w, debugHTML)
+	_ = prodHTML // keep for future conditional
 }
 
 // Constructors
