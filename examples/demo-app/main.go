@@ -23,14 +23,16 @@ func main() {
 
 func RegisterRoutes(r *routing.Router) {
 	// API Routes (Content Negotiation Example)
-	api := r.Group("/api")
-	api.Get("/posts", func(w http.ResponseWriter, req *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`[{"id": 1, "title": "Welcome to GoW", "author": "Kimi"}]`))
+	r.Group("/api", func(api *routing.Router) {
+		api.Get("/posts", func(w http.ResponseWriter, req *http.Request) error {
+			w.Header().Set("Content-Type", "application/json")
+			w.Write([]byte(`[{"id": 1, "title": "Welcome to GoW", "author": "Kimi"}]`))
+			return nil
+		})
 	})
 
 	// Web Routes
-	r.Get("/", func(w http.ResponseWriter, req *http.Request) {
+	r.Get("/", func(w http.ResponseWriter, req *http.Request) error {
 		w.Header().Set("Content-Type", "text/html")
 		html := `
 		<html>
@@ -49,11 +51,13 @@ func RegisterRoutes(r *routing.Router) {
 		</html>
 		`
 		w.Write([]byte(html))
+		return nil
 	})
 
-	r.Get("/posts/{id}", func(w http.ResponseWriter, req *http.Request) {
+	r.Get("/posts/{id}", func(w http.ResponseWriter, req *http.Request) error {
 		id := request.Param(req, "id")
 		w.Header().Set("Content-Type", "text/html")
 		w.Write([]byte(fmt.Sprintf("<h1>Post %s Details</h1><p>Full post content goes here.</p><a href='/'>&larr; Back</a>", id)))
+		return nil
 	})
 }

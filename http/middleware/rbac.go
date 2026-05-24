@@ -10,7 +10,7 @@ import (
 func RoleMiddleware(role string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			user := auth.User() // Assumes auth.User() is available in context or session
+			user := auth.User(r) // Assumes auth.User() is available in context or session
 
 			if user == nil {
 				http.Error(w, "Unauthorized", http.StatusUnauthorized)
@@ -38,7 +38,7 @@ func RoleMiddleware(role string) func(http.Handler) http.Handler {
 func PermissionMiddleware(permission string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			user := auth.User()
+			user := auth.User(r)
 			if user == nil {
 				http.Error(w, "Unauthorized", http.StatusUnauthorized)
 				return

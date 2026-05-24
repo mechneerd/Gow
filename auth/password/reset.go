@@ -53,7 +53,7 @@ func Find(db *orm.DB, email, token string) (*PasswordReset, error) {
 
 // Delete token after successful reset.
 func Delete(db *orm.DB, email, token string) error {
-	_, err := orm.NewQuery[PasswordReset](db).
+	err := orm.NewQuery[PasswordReset](db).
 		Where("email", "=", email).
 		Where("token", "=", token).
 		Delete(&PasswordReset{})

@@ -16,8 +16,9 @@ func main() {
 	router := routing.NewRouter()
 	
 	// 3. Register Routes
-	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
+	router.Get("/", func(w http.ResponseWriter, r *http.Request) error {
 		w.Write([]byte("Welcome to GoW Framework!"))
+		return nil
 	})
 
 	router.Group("/api", func(r *routing.Router) {
@@ -28,8 +29,9 @@ func main() {
 			})
 		})
 		
-		r.Get("/status", func(w http.ResponseWriter, req *http.Request) {
+		r.Get("/status", func(w http.ResponseWriter, req *http.Request) error {
 			w.Write([]byte(`{"status": "ok"}`))
+			return nil
 		})
 	})
 

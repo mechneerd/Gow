@@ -184,7 +184,7 @@ func (c *Compiler) CompileString(raw string) string {
 	})
 
 	// With content (slots)
-	withSlot := regexp.MustCompile(`<x-([a-zA-Z0-9_-]+)([^>]*?)>([\s\S]*?)</x-\1>`)
+	withSlot := regexp.MustCompile(`<x-([a-zA-Z0-9_-]+)([^>]*?)>([\s\S]*?)</x-[a-zA-Z0-9_-]+>`)
 	compiled = withSlot.ReplaceAllStringFunc(compiled, func(m string) string {
 		matches := withSlot.FindStringSubmatch(m)
 		name := matches[1]

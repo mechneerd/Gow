@@ -91,3 +91,22 @@ func (u *URLGenerator) HasValidSignature(r *http.Request) bool {
 
 	return hmac.Equal([]byte(originalSignature), []byte(expectedSignature))
 }
+
+// TemporarySignedRoute is a convenience helper that generates a signed URL
+// that expires after the given duration. It requires a global router to be set
+// via SetGlobalRouterForSignedURLs (or similar) in real apps.
+var globalURLGenerator *URLGenerator
+
+// SetGlobalURLGenerator allows setting a global URL generator for convenience helpers.
+func SetGlobalURLGenerator(gen *URLGenerator) {
+	globalURLGenerator = gen
+}
+
+// TemporarySignedRoute generates a temporary signed URL (convenience wrapper).
+func TemporarySignedRoute(name string, expiresIn time.Duration, params map[string]string) (string, error) {
+	if globalURLGenerator == nil {
+		return "", fmt.Errorf("no global URL generator set. Use routing.SetGlobalURLGenerator")
+	}
+	expiresAt := time.Now().Add(expiresIn)
+	return globalURLGenerator.SignedRoute(name, params, expiresAt)
+}

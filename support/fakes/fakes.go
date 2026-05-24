@@ -1,11 +1,11 @@
 package fakes
 
 import (
-	"gow/events"
-	"gow/mail"
-	"gow/queue"
 	"reflect"
 	"testing"
+
+	"gow/mail"
+	"gow/queue"
 
 	"github.com/stretchr/testify/assert"
 )

@@ -5,7 +5,6 @@ import (
 	gowhttp "gow/http"
 	"net/http"
 	"strconv"
-	"strings"
 )
 
 // ThrottleRequests limits requests. Supports named limiters via key prefix.
@@ -51,10 +50,10 @@ func ThrottleRequests(limiter *cache.RateLimiter, maxAttempts int, decayMinutes 
 
 // Throttle is a convenience wrapper for simple "throttle:60,1" style (max, decayMinutes).
 func Throttle(maxAttempts, decayMinutes int) func(http.Handler) http.Handler {
-	return ThrottleRequests(cache.NewRateLimiter(), maxAttempts, decayMinutes)
+	return ThrottleRequests(cache.NewRateLimiter(cache.NewMemoryDriver()), maxAttempts, decayMinutes)
 }
 
 // ThrottleNamed allows "throttle:login:5,1" style named limiters.
 func ThrottleNamed(name string, maxAttempts, decayMinutes int) func(http.Handler) http.Handler {
-	return ThrottleRequests(cache.NewRateLimiter(), maxAttempts, decayMinutes, name)
+	return ThrottleRequests(cache.NewRateLimiter(cache.NewMemoryDriver()), maxAttempts, decayMinutes, name)
 }

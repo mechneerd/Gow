@@ -3,13 +3,15 @@ package rbac
 import (
 	"database/sql"
 	"fmt"
-	"gow/database/orm"
 )
 
 // HasRoles provides RBAC methods for User models.
 // Embed this in your User model for role/permission support.
+//
+// Note: The embedding model should call SetID(user.ID) after loading
+// so that HasRole / HasPermission / AssignRole work correctly.
 type HasRoles struct {
-	orm.Model
+	ID int
 	db *sql.DB // Can be set per instance or via global SetDefaultDB
 }
 
@@ -87,4 +89,10 @@ func (h *HasRoles) AssignRole(roleName string) error {
 // Can is an alias for HasPermission (Laravel-style).
 func (h *HasRoles) Can(permission string) bool {
 	return h.HasPermission(permission)
+}
+
+// SetID sets the user ID for RBAC operations.
+// Call this after loading the model (e.g. user.HasRoles.SetID(user.ID)).
+func (h *HasRoles) SetID(id int) {
+	h.ID = id
 }

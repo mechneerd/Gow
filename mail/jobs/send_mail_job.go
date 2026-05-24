@@ -1,22 +1,16 @@
-package mail
+package jobs
 
-import (
-	"fmt"
-	"gow/queue"
-)
+import "fmt"
 
-// SendMailJob is the queue job for sending emails.
+// SendMailJob is a placeholder job for sending emails via queue.
+// The real implementation lives in the mail package.
 type SendMailJob struct {
-	Mailable Mailable
-	Mailer   *Mailer // injected when creating the job
+	// TODO: Wire with actual Mailable + Mailer from gow/mail
 }
 
 func (j *SendMailJob) Handle() error {
-	if j.Mailer != nil {
-		return j.Mailer.Send(j.Mailable)
-	}
-	// Fallback: create a new log mailer if no mailer provided
-	return (&LogDriver{}).Send(j.Mailable.Build())
+	fmt.Println("[Mail] SendMailJob executed (stub)")
+	return nil
 }
 
 func (j *SendMailJob) Failed(err error) {

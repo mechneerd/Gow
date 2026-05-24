@@ -1,15 +1,15 @@
 package testing
 
 import (
-	"context"
-	"fmt"
+	"bytes"
+	"encoding/json"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 
-	"gow/auth/sanctum"
+	"github.com/stretchr/testify/assert"
 	"gow/database/orm"
 	"gow/database/query"
 	"gow/foundation"
@@ -19,10 +19,11 @@ import (
 // TestCase provides a fluent testing API similar to Laravel.
 type TestCase struct {
 	*testing.T
-	App    *foundation.Application
-	DB     *orm.DB
-	Router *routing.Router
-	client *http.Client
+	App      *foundation.Application
+	DB       *orm.DB
+	Router   *routing.Router
+	client   *http.Client
+	authUser any
 }
 
 // NewTestCase initializes a test environment.
@@ -34,6 +35,111 @@ func NewTestCase(t *testing.T, app *foundation.Application, db *orm.DB, router *
 		Router: router,
 		client: &http.Client{},
 	}
+}
+
+// TestResponse wraps the httptest.ResponseRecorder for fluent assertions.
+type TestResponse struct {
+	T        *testing.T
+	Recorder *httptest.ResponseRecorder
+}
+
+// ActingAs sets the authenticated user for subsequent test requests.
+func (tc *TestCase) ActingAs(user any) *TestCase {
+	tc.authUser = user
+	return tc
+}
+
+// Get dispatch a GET request to the application.
+func (tc *TestCase) Get(uri string) *TestResponse {
+	req := httptest.NewRequest(http.MethodGet, uri, nil)
+	if tc.authUser != nil {
+		req.Header.Set("X-Test-Auth-User", "1")
+	}
+	w := httptest.NewRecorder()
+	
+	tc.Router.ServeHTTP(w, req)
+	return &TestResponse{T: tc.T, Recorder: w}
+}
+
+// Post dispatch a POST request to the application.
+func (tc *TestCase) Post(uri string, body io.Reader) *TestResponse {
+	req := httptest.NewRequest(http.MethodPost, uri, body)
+	if tc.authUser != nil {
+		req.Header.Set("X-Test-Auth-User", "1")
+	}
+	w := httptest.NewRecorder()
+	
+	tc.Router.ServeHTTP(w, req)
+	return &TestResponse{T: tc.T, Recorder: w}
+}
+
+// Upload simulates a file upload (multipart).
+func (tc *TestCase) Upload(url, fieldName, filename, content string) *TestResponse {
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	part, _ := writer.CreateFormFile(fieldName, filename)
+	part.Write([]byte(content))
+	writer.Close()
+
+	req := httptest.NewRequest(http.MethodPost, url, body)
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	if tc.authUser != nil {
+		req.Header.Set("X-Test-Auth-User", "1")
+	}
+	w := httptest.NewRecorder()
+	tc.Router.ServeHTTP(w, req)
+	return &TestResponse{T: tc.T, Recorder: w}
+}
+
+// AssertStatus asserts the response HTTP status code.
+func (tr *TestResponse) AssertStatus(code int) *TestResponse {
+	assert.Equal(tr.T, code, tr.Recorder.Code, "Expected status code to match")
+	return tr
+}
+
+// AssertOk asserts the response status is 200 OK.
+func (tr *TestResponse) AssertOk() *TestResponse {
+	return tr.AssertStatus(http.StatusOK)
+}
+
+// AssertJson asserts the response contains the given JSON key/value.
+func (tr *TestResponse) AssertJson(key string, value any) *TestResponse {
+	var data map[string]any
+	json.Unmarshal(tr.Recorder.Body.Bytes(), &data)
+	assert.Equal(tr.T, value, data[key], "JSON assertion failed for key: "+key)
+	return tr
+}
+
+// AssertJsonStructure asserts top-level keys exist.
+func (tr *TestResponse) AssertJsonStructure(keys ...string) *TestResponse {
+	var data map[string]any
+	json.Unmarshal(tr.Recorder.Body.Bytes(), &data)
+	for _, k := range keys {
+		_, exists := data[k]
+		assert.True(tr.T, exists, "Missing JSON key: "+k)
+	}
+	return tr
+}
+
+// AssertJsonMap asserts the response JSON matches the given map.
+func (tr *TestResponse) AssertJsonMap(expected map[string]any) *TestResponse {
+	var actual map[string]any
+	err := json.Unmarshal(tr.Recorder.Body.Bytes(), &actual)
+	assert.NoError(tr.T, err, "Failed to parse JSON response")
+	assert.Equal(tr.T, expected, actual, "JSON response did not match expected map")
+	return tr
+}
+
+// AssertSee asserts the response body contains the given text.
+func (tr *TestResponse) AssertSee(text string) *TestResponse {
+	assert.Contains(tr.T, tr.Recorder.Body.String(), text, "Response did not contain expected text")
+	return tr
+}
+
+// AssertHeader asserts the response contains a specific header value.
+func (tr *TestResponse) AssertHeader(key, value string) *TestResponse {
+	assert.Equal(tr.T, value, tr.Recorder.Header().Get(key), "Header did not match")
+	return tr
 }
 
 // AssertDatabaseHas asserts that a database table contains a row matching the given constraints.
@@ -110,46 +216,5 @@ func (tc *TestCase) AssertDatabaseHasExactly(table string, conditions map[string
 	}
 	if count != 1 {
 		tc.Errorf("Failed asserting that table [%s] has exactly 1 row matching %v. Found %d", table, conditions, count)
-	}
-}
-
-// ActingAs authenticates the current test request using the Sanctum middleware logic.
-func (tc *TestCase) ActingAs(token string) *TestCase {
-	// In a real framework we might set a context value globally for the test
-	// or attach it to subsequent requests made by a test HTTP client.
-	return tc
-}
-
-// Get dispatch a GET request to the application.
-func (tc *TestCase) Get(uri string) *httptest.ResponseRecorder {
-	req := httptest.NewRequest(http.MethodGet, uri, nil)
-	w := httptest.NewRecorder()
-	
-	tc.Router.ServeHTTP(w, req)
-	return w
-}
-
-// Post dispatch a POST request to the application.
-func (tc *TestCase) Post(uri string, body io.Reader) *httptest.ResponseRecorder {
-	req := httptest.NewRequest(http.MethodPost, uri, body)
-	w := httptest.NewRecorder()
-	
-	tc.Router.ServeHTTP(w, req)
-	return w
-}
-
-// AssertStatus asserts the response has the given HTTP status code.
-func (tc *TestCase) AssertStatus(w *httptest.ResponseRecorder, status int) {
-	tc.Helper()
-	if w.Code != status {
-		tc.Errorf("Expected status %d but got %d", status, w.Code)
-	}
-}
-
-// AssertSee asserts the response body contains the given string.
-func (tc *TestCase) AssertSee(w *httptest.ResponseRecorder, text string) {
-	tc.Helper()
-	if !strings.Contains(w.Body.String(), text) {
-		tc.Errorf("Expected to see %q in response", text)
 	}
 }

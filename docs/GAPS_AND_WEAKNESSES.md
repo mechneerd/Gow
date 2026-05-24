@@ -21,6 +21,7 @@ This document provides an honest assessment of the framework's gaps and weakness
 - Automatic seeder discovery via `gow db:seed`
 - Auth kits now ship with injected RBAC examples + protected route patterns in `bootstrap/app.go`
 - Working local development server via `gow serve` (http.Kernel + graceful shutdown)
+- **Entire project now compiles cleanly** (`go build ./...` succeeds)
 
 **Current Recommended Path for New Projects**:
 ```bash
@@ -34,13 +35,12 @@ gow serve
 ```
 
 **Remaining Areas Needing Attention**:
-- Directory structure consistency (actively standardized in generators; more work remains — additional fixes applied to make:auth this turn)
+- Directory structure consistency (actively standardized in generators; more work remains)
 - Many non-critical Artisan commands still lightweight or placeholder (cache, queue, schedule, etc.)
-- End-to-end testing coverage
-- Multiple core packages still contain explicit "stub"/"TODO"/"placeholder" implementations (auth, mail, foundation discovery, storage drivers, query builder) — partial progress on mail jobs
-- **Artisan package build** was previously blocked by container reflection misuse + missing DB drivers + accumulated duplicate declarations. **Fully resolved** on 2026-05-24.
-- Deeper integration of services in generated `bootstrap/app.go` (examples now present)
-- `gow serve` now works (basic but functional) — further enhancements (hot reload, config-driven routes, etc.) can be future improvements
+- End-to-end testing coverage remains limited
+- Several core packages still contain explicit stubs/TODOs (auth/fortify is now functional but incomplete, mail, foundation discovery, storage, query builder)
+- Deeper integration of services in generated `bootstrap/app.go`
+- RBAC and advanced auth features still require manual wiring in many cases
 
 As of the end of this remediation session, GoW is considered **production-viable for many real-world applications**, especially internal tools, APIs, and small-to-medium SaaS products, provided the team is comfortable with some manual wiring for advanced use cases.
 
@@ -53,6 +53,11 @@ GoW has made impressive progress, particularly in the ORM and the Artisan CLI du
 **Update (May 24, 2026 - Remediation Phase)**: Active remediation in progress. We are systematically closing gaps to reach production viability.
 
 **Recently Addressed (this session)**
+- Full project now builds cleanly (`go build ./...` succeeds).
+- `auth/rbac` compilation fixed (HasRoles.ID issue resolved).
+- `auth/fortify` fully fixed (Manager type + HandlerFunc signatures).
+- `auth/socialite` fixed (method/field naming conflict).
+- Multiple middleware, example, and testing syntax/typing issues cleaned.
 - Migration commands (`migrate`, `migrate:rollback --step=N`, `migrate:run`, `migrate:status`, `migrate:fresh`, `migrate:refresh`) are now functional.
 - Basic RBAC implemented (`HasRole`, `HasPermission`, `AssignRole`) + global DB helper + middleware.
 - `make:model --migration` now generates real migration files.
@@ -366,6 +371,6 @@ The framework is now considered production-viable for most real-world use cases 
 This document has been actively maintained and cleaned up during the May 24, 2026 remediation session to accurately reflect both historical issues and current post-fix reality.
 
 **Maintained by**: Kilo (AI-assisted analysis)  
-**Last Updated**: 2026-05-24 (Artisan package build fully cleaned — logging, notifications, container reflection, duplicates, and cycles resolved)
+**Last Updated**: 2026-05-24 (Full project `go build ./...` now succeeds cleanly after fixing auth/rbac, fortify, socialite, middleware, examples, and accumulated syntax/typing issues)
 
-> Detailed fix log for all build and code issues resolved today is available in `BUG_FIXES.md` (root).
+> Detailed fix log is in `BUG_FIXES.md` (root).

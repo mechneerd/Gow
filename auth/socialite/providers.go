@@ -34,7 +34,7 @@ func NewGoogleProvider(clientID, clientSecret, redirectURL string) *GoogleProvid
 	}
 }
 
-func (p *GoogleProvider) RedirectURL(state string) string {
+func (p *GoogleProvider) Redirect(state string) string {
 	u, _ := url.Parse("https://accounts.google.com/o/oauth2/v2/auth")
 	q := u.Query()
 	q.Set("client_id", p.ClientID)
@@ -68,7 +68,10 @@ func (p *GoogleProvider) User(ctx context.Context, code string) (*User, error) {
 
 	// Get user info
 	userInfoURL := "https://www.googleapis.com/oauth2/v2/userinfo?access_token=" + token.AccessToken
-	resp2, _ := http.Get(userInfoURL)
+	resp2, err := http.Get(userInfoURL)
+	if err != nil {
+		return nil, err
+	}
 	defer resp2.Body.Close()
 	body, _ := io.ReadAll(resp2.Body)
 
@@ -105,7 +108,7 @@ func NewGitHubProvider(clientID, clientSecret, redirectURL string) *GitHubProvid
 	}
 }
 
-func (p *GitHubProvider) RedirectURL(state string) string {
+func (p *GitHubProvider) Redirect(state string) string {
 	u, _ := url.Parse("https://github.com/login/oauth/authorize")
 	q := u.Query()
 	q.Set("client_id", p.ClientID)
@@ -138,7 +141,10 @@ func (p *GitHubProvider) User(ctx context.Context, code string) (*User, error) {
 	req.Header.Set("Accept", "application/json")
 
 	client := &http.Client{}
-	resp2, _ := client.Do(req)
+	resp2, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
 	defer resp2.Body.Close()
 
 	var info struct {
