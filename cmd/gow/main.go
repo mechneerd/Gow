@@ -12,8 +12,10 @@ import (
 	gowhttp "github.com/mechneerd/gow/http"
 	"github.com/mechneerd/gow/routing"
 
+	"github.com/mechneerd/gow/cmd/artisan"
 	scaffoldpkg "github.com/mechneerd/gow/cmd/gow/scaffold"
 )
+
 
 var rootCmd = &cobra.Command{
 	Use:   "gow",
@@ -146,6 +148,28 @@ func init() {
 	rootCmd.AddCommand(newCmd)
 	rootCmd.AddCommand(serveCmd)
 	rootCmd.AddCommand(versionCmd)
+
+	// Wire important Artisan commands into the main gow CLI
+	rootCmd.AddCommand(artisan.MigrateCmd)
+	rootCmd.AddCommand(artisan.MigrateRollbackCmd)
+	rootCmd.AddCommand(artisan.MigrateStatusCmd)
+	rootCmd.AddCommand(artisan.MigrateRunCmd)
+	rootCmd.AddCommand(artisan.MigrateFreshCmd)
+	rootCmd.AddCommand(artisan.MigrateRefreshCmd)
+
+	rootCmd.AddCommand(artisan.DbSeedCmd)
+	rootCmd.AddCommand(artisan.KeyGenerateCmd)
+	rootCmd.AddCommand(artisan.AboutCmd)
+	rootCmd.AddCommand(artisan.ListCmd)
+
+	// Make commands (most commonly used)
+	rootCmd.AddCommand(artisan.MakeControllerCmd)
+	rootCmd.AddCommand(artisan.MakeModelCmd)
+	rootCmd.AddCommand(artisan.MakeMigrationCmd)
+	rootCmd.AddCommand(artisan.MakeMiddlewareCmd)
+	rootCmd.AddCommand(artisan.MakeRequestCmd)
+	rootCmd.AddCommand(artisan.MakeSeederCmd)
+	rootCmd.AddCommand(artisan.MakeCommandCmd)
 }
 
 func main() {
