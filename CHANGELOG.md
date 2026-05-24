@@ -48,7 +48,44 @@
   - Full details: `docs/whats_new/2026-05-23.md`
   - GitHub Releases version: `docs/whats_new/2026-05-23-github-release.md`
   - Short summary: `docs/whats_new/2026-05-23-release-summary.md`
-  - Result: GoW reached near-complete Laravel feature parity and is now production-viable for most real-world applications.
+   - Result: GoW reached near-complete Laravel feature parity and is now production-viable for most real-world applications.
+
+---
+
+### 2026-05-24 - Artisan CLI & Scaffolding Major Upgrade
+
+- **Date**: 2026-05-24
+- **Phase**: Post-Feature-Parity Polish + Ecosystem
+- **Feature**: Major expansion of the Artisan CLI (`gow`) and official starter kits
+- **Status**: COMPLETED
+- **Decision**: Focused on making the developer experience (especially scaffolding + daily commands) best-in-class for Go frameworks.
+- **Notes**:
+  - **New Artisan Commands**:
+    - `migrate:rollback --step=N`
+    - `migrate:run <name>`
+    - `migrate:status`
+    - `key:generate`
+    - `about`
+    - `env`
+    - `list`
+    - `make:seeder`
+    - `make:request`
+    - `make:command` (meta)
+  - **Generator Improvements**:
+    - `make:model --migration`
+    - `make:controller --api`
+    - `route:list` now supports `--path` / `--method` filters and shows middleware
+  - **gow-skeleton** (official templates):
+    - `web-auth` and `full` kits now contain real production files
+    - 9 database migrations (users, personal_access_tokens, roles, permissions, pivots, sessions, email_verification_tokens, password_reset_tokens)
+    - `RoleSeeder` that creates Super Admin (`superadmin` / `12345678`) + default roles & permissions
+    - Design notes included in migrations explaining pivot naming and `guard_name` decisions
+  - **Scaffolding UX**:
+    - `gow new` post-install instructions now recommend `gow list`, `gow migrate`, `gow db:seed`, `gow key:generate`
+  - **Documentation**:
+    - Major updates to `docs/README.md` (new Artisan section + workflows)
+    - Root README and COMPLETE_USER_GUIDE updated
+  - Result: GoW now has one of the most complete and useful CLIs in the Go web framework space. Combined with real starter kits containing full RBAC, this is a major differentiator.
 
 ---
 

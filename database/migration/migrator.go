@@ -217,3 +217,157 @@ func (m *Migrator) Rollback() error {
 
 	return nil
 }
+
+// RollbackSteps rolls back the last N migrations (regardless of batch).
+// This matches Laravel's `migrate:rollback --step=N` behavior.
+func (m *Migrator) RollbackSteps(steps int) error {
+	if steps <= 0 {
+		steps = 1
+	}
+
+	rows, err := m.db.Query(`
+		SELECT id, migration 
+		FROM migrations 
+		ORDER BY id DESC 
+		LIMIT ?`, steps)
+	if err != nil {
+		fmt.Println("Nothing to rollback.")
+		return nil
+	}
+	defer rows.Close()
+
+	var ids []int
+	var migrations []string
+
+	for rows.Next() {
+		var id int
+		var name string
+		if err := rows.Scan(&id, &name); err != nil {
+			return err
+		}
+		ids = append(ids, id)
+		migrations = append(migrations, name)
+	}
+
+	if len(migrations) == 0 {
+		fmt.Println("Nothing to rollback.")
+		return nil
+	}
+
+	for i, name := range migrations {
+		fmt.Printf("Rolling back: %s\n", name)
+		mig, ok := m.registry.migrations[name]
+		if !ok {
+			return fmt.Errorf("migration %s not found in registry", name)
+		}
+
+		if err := mig.Down(m.builder); err != nil {
+			return fmt.Errorf("rollback %s failed: %w", name, err)
+		}
+
+		_, err := m.db.Exec("DELETE FROM migrations WHERE id = ?", ids[i])
+		if err != nil {
+			return err
+		}
+		fmt.Printf("Rolled back:  %s\n", name)
+	}
+
+	return nil
+}
+
+// RollbackMigration rolls back one specific migration by name.
+func (m *Migrator) RollbackMigration(name string) error {
+	// Check if it was even run
+	var id int
+	err := m.db.QueryRow("SELECT id FROM migrations WHERE migration = ?", name).Scan(&id)
+	if err != nil {
+		fmt.Printf("Migration %s has not been run.\n", name)
+		return nil
+	}
+
+	mig, ok := m.registry.migrations[name]
+	if !ok {
+		return fmt.Errorf("migration %s not found in registry", name)
+	}
+
+	fmt.Printf("Rolling back: %s\n", name)
+	if err := mig.Down(m.builder); err != nil {
+		return fmt.Errorf("rollback %s failed: %w", name, err)
+	}
+
+	_, err = m.db.Exec("DELETE FROM migrations WHERE id = ?", id)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Rolled back:  %s\n", name)
+	return nil
+}
+
+// MigrateOne runs a single specific migration (by name) if it is pending.
+func (m *Migrator) MigrateOne(name string) error {
+	// Check if already run
+	var count int
+	err := m.db.QueryRow("SELECT COUNT(*) FROM migrations WHERE migration = ?", name).Scan(&count)
+	if err == nil && count > 0 {
+		fmt.Printf("Migration %s has already been run.\n", name)
+		return nil
+	}
+
+	mig, ok := m.registry.migrations[name]
+	if !ok {
+		return fmt.Errorf("migration %s not found in registry", name)
+	}
+
+	// Ensure migrations table exists
+	if err := m.Setup(); err != nil {
+		return err
+	}
+
+	batch := m.getNextBatchNumber()
+
+	fmt.Printf("Migrating: %s\n", name)
+	if err := mig.Up(m.builder); err != nil {
+		return fmt.Errorf("migration %s failed: %w", name, err)
+	}
+
+	if err := m.logMigration(name, batch); err != nil {
+		return err
+	}
+	fmt.Printf("Migrated:  %s\n", name)
+	return nil
+}
+
+// Status shows all registered migrations and whether they have been run.
+func (m *Migrator) Status() error {
+	ran, err := m.getRanMigrations()
+	if err != nil {
+		// migrations table may not exist yet
+		ran = []string{}
+	}
+
+	ranMap := make(map[string]bool)
+	for _, name := range ran {
+		ranMap[name] = true
+	}
+
+	// Get all registered migrations sorted
+	var all []string
+	for name := range m.registry.migrations {
+		all = append(all, name)
+	}
+	sort.Strings(all)
+
+	fmt.Println("Migration status:")
+	fmt.Println("  Ran? | Migration")
+	fmt.Println("  -----|-------------------------------------------")
+
+	for _, name := range all {
+		status := "  No  "
+		if ranMap[name] {
+			status = "  Yes "
+		}
+		fmt.Printf("%s | %s\n", status, name)
+	}
+
+	return nil
+}

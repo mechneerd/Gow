@@ -108,17 +108,23 @@ Individual guides are also available in `docs/guide/`:
 
 ## Project Types
 
-| Command                              | Best For                          | Status     |
-|--------------------------------------|-----------------------------------|------------|
-| `gow new myapp --yes`                | Full web app (with auth)          | Ready      |
-| `gow new myapp --api --yes`          | REST / JSON APIs                  | Ready      |
-| `gow new mysite --minimal --yes`     | Simple websites / landing pages   | Ready      |
-| `minimal-api` kit                    | Ultra-light API only              | Ready      |
-| `full`, `admin-panel`, etc.          | More advanced starters            | Planned    |
+| Command                              | Best For                                              | Status     |
+|--------------------------------------|-------------------------------------------------------|------------|
+| `gow new myapp --yes`                | Full web app + Auth + RBAC                            | Ready      |
+| `gow new myapp --api --yes`          | REST / JSON APIs                                      | Ready      |
+| `gow new mysite --minimal --yes`     | Simple websites / landing pages                       | Ready      |
+| `minimal-api` kit (via --skeleton)   | Ultra-light API only (with basic auth + user table)   | Ready      |
+| `web-auth` / `full` (via --skeleton) | Complete Auth + RBAC + Superadmin seeder              | Ready      |
+| `admin-panel`, `inertia-*`, etc.     | More advanced starters                                | Planned    |
 
 You can also run `gow new myapp` without flags to use the **interactive wizard**.
 
-Use `--skeleton` to load custom or local templates (including the new planned kits).
+Use `--skeleton` to load custom or local templates. The official `gow-skeleton` repo now ships **production-ready kits** (`web-auth`, `full`) with:
+- 9 database migrations (users, roles, permissions, pivots, sessions, verification tokens, etc.)
+- Full RBAC + Super Admin seeder (`superadmin` / `12345678`)
+- Real bootstrap, config, routes, and models
+
+The Artisan CLI (`gow`) has received major upgrades and is now one of GoW’s strongest features.
 
 ---
 
@@ -127,7 +133,7 @@ Use `--skeleton` to load custom or local templates (including the new planned ki
 - Excellent generic container + service provider system
 - World-class ORM (one of the most complete in Go)
 - Production-ready Authentication stack (Session + Sanctum + Socialite + 2FA)
-- Very powerful `gow new` scaffolding + rich Artisan CLI
+- Extremely powerful `gow new` scaffolding + one of the richest Artisan CLIs in Go (dozens of make:* and migrate:* commands)
 - Strong testing utilities
 - Native WebSocket broadcasting
 - Clean, modern Go codebase

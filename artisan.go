@@ -23,6 +23,10 @@ func main() {
 	kernel.RegisterCommand(artisan.MigrateCmd)
 	kernel.RegisterCommand(artisan.MigrateFreshCmd)
 	kernel.RegisterCommand(artisan.MigrateRefreshCmd)
+	kernel.RegisterCommand(artisan.MigrateRollbackCmd)
+	kernel.RegisterCommand(artisan.MigrateRunCmd)
+	kernel.RegisterCommand(artisan.MigrateStatusCmd)
+	kernel.RegisterCommand(artisan.DbSeedCmd)
 
 	// Artisan core
 	kernel.RegisterCommand(artisan.CacheClearCmd)
@@ -44,6 +48,12 @@ func main() {
 	kernel.RegisterCommand(artisan.MakeJobCmd)
 	kernel.RegisterCommand(artisan.MakeCommandCmd)
 	kernel.RegisterCommand(artisan.MakeAuthCmd)
+	kernel.RegisterCommand(artisan.KeyGenerateCmd)
+	kernel.RegisterCommand(artisan.AboutCmd)
+	kernel.RegisterCommand(artisan.MakeSeederCmd)
+	kernel.RegisterCommand(artisan.MakeRequestCmd)
+	kernel.RegisterCommand(artisan.EnvCmd)
+	kernel.RegisterCommand(artisan.ListCmd)
 
 	// Additional generators (Wave 4 completion)
 	kernel.RegisterCommand(artisan.MakeMailCmd)

@@ -64,7 +64,19 @@ Next steps:
   gow serve                 # Start the development server
 
   # Optional:
-  gow migrate               # Run database migrations (if any in template)
+  gow migrate               # Run all pending migrations
+  gow migrate:rollback      # Rollback last migration (or --step=N)
+  gow migrate:run <name>    # Run one specific migration file
+  gow migrate:status        # Show migration status
+  gow db:seed               # Seed roles + create superadmin (auth kits)
+  gow key:generate          # Generate secure APP_KEY
+  gow about                 # Framework & environment info
+  gow make:seeder           # Create database seeders
+  gow make:request          # Create FormRequest validation classes
+  gow make:controller       # Create controllers (--resource or --api)
+  gow make:command          # Create your own custom gow commands
+  gow env                   # Show current environment
+  gow list                  # List all available commands
 
 ────────────────────────────────────────
 🎉  Happy coding with GoW!

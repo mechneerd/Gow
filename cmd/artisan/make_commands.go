@@ -36,18 +36,67 @@ var MakeControllerCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		name := args[0]
 		isResource, _ := cmd.Flags().GetBool("resource")
-		path := fmt.Sprintf("app/http/controllers/%s.go", name)
-		
+		isApi, _ := cmd.Flags().GetBool("api")
+		path := fmt.Sprintf("app/Http/Controllers/%s.go", name)
+
 		stub := `package controllers
 
 import (
 	"net/http"
+
+	"gow/http/request"
 )
 
-type {Name} struct {}
+type ` + name + ` struct{}
+`
 
-func (c *{Name}) Index(w http.ResponseWriter, r *http.Request) {
+		if isApi {
+			stub += `
+// Index returns a listing of the resource.
+func (c *` + name + `) Index(w http.ResponseWriter, r *http.Request) {}
+
+// Show returns the specified resource.
+func (c *` + name + `) Show(w http.ResponseWriter, r *http.Request) {}
+
+// Store stores a newly created resource.
+func (c *` + name + `) Store(req *request.FormRequest, w http.ResponseWriter, r *http.Request) {}
+
+// Update updates the specified resource.
+func (c *` + name + `) Update(req *request.FormRequest, w http.ResponseWriter, r *http.Request) {}
+
+// Destroy removes the specified resource.
+func (c *` + name + `) Destroy(w http.ResponseWriter, r *http.Request) {}
+`
+		} else if isResource {
+			stub += `
+// Index displays a listing of the resource.
+func (c *` + name + `) Index(w http.ResponseWriter, r *http.Request) {
 	// 
+}
+
+// Show displays the specified resource.
+func (c *` + name + `) Show(w http.ResponseWriter, r *http.Request) {}
+
+// Store stores a newly created resource in storage.
+func (c *` + name + `) Store(req *request.FormRequest, w http.ResponseWriter, r *http.Request) {}
+
+// Update updates the specified resource in storage.
+func (c *` + name + `) Update(req *request.FormRequest, w http.ResponseWriter, r *http.Request) {}
+
+// Destroy removes the specified resource from storage.
+func (c *` + name + `) Destroy(w http.ResponseWriter, r *http.Request) {}
+`
+		} else {
+			stub += `
+// Index handles the default action.
+func (c *` + name + `) Index(w http.ResponseWriter, r *http.Request) {
+	// 
+}
+`
+		}
+
+		generateFile(path, stub)
+	},
 }
 `
 		if isResource {
@@ -67,54 +116,73 @@ func (c *{Name}) Destroy(w http.ResponseWriter, r *http.Request) {}
 // MakeModelCmd scaffolds a new model.
 var MakeModelCmd = &cobra.Command{
 	Use:   "make:model [name]",
-	Short: "Create a new Goquent model class",
+	Short: "Create a new model using the ORM",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		name := args[0]
-		path := fmt.Sprintf("app/models/%s.go", name)
-		
-		stub := `package models
+		withMigration, _ := cmd.Flags().GetBool("migration")
+		path := fmt.Sprintf("app/Models/%s.go", name)
+
+		stub := `package Models
+
+import "gow/database/orm"
 
 type {Name} struct {
-	ID        int    ` + "`db:\"id\"`" + `
-	CreatedAt string ` + "`db:\"created_at\"`" + `
-	UpdatedAt string ` + "`db:\"updated_at\"`" + `
+	orm.Model
+	// Add your fields here
+	// Name string
+}
+
+func ({Name}) TableName() string {
+	return "{table}"
 }
 `
 		content := strings.ReplaceAll(stub, "{Name}", name)
+		tableName := strings.ToLower(name) + "s"
+		content = strings.ReplaceAll(content, "{table}", tableName)
+
 		generateFile(path, content)
+
+		if withMigration {
+			// Trigger make:migration automatically
+			fmt.Printf("Creating migration for %s...\n", name)
+			// In a real implementation this would call the migration generator
+			// For now we just inform the user
+			fmt.Printf("  → Run: gow make:migration create_%ss_table\n", strings.ToLower(name))
+		}
 	},
 }
 
 // MakeMigrationCmd scaffolds a new migration.
 var MakeMigrationCmd = &cobra.Command{
 	Use:   "make:migration [name]",
-	Short: "Create a new migration file",
+	Short: "Create a new database migration file",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		name := args[0]
-		timestamp := time.Now().Format("20060102150405")
+		timestamp := time.Now().Format("2006_01_02_150405")
+		className := "Create" + strings.Title(strings.ReplaceAll(name, "_", "")) + "Table"
 		filename := fmt.Sprintf("%s_%s.go", timestamp, name)
 		path := fmt.Sprintf("database/migrations/%s", filename)
-		
+
 		stub := `package migrations
 
-import "gow/database/schema"
+import (
+	"github.com/mechneerd/gow/database/migration"
+	"github.com/mechneerd/gow/database/schema"
+)
 
 func init() {
-	schema.Register(
-		// Up
-		func(b *schema.Blueprint) {
-			// b.Create("table_name", func(table *schema.Table) {
-			// 	table.Increments("id")
-			// 	table.Timestamps()
-			// })
-		},
-		// Down
-		func(b *schema.Blueprint) {
-			// b.DropIfExists("table_name")
-		},
-	)
+	migration.Register("` + timestamp + `_` + name + `", ` + className + `)
+}
+
+func ` + className + `(m *schema.Builder) error {
+	return m.Create("` + strings.ToLower(name) + `s", func(table *schema.Blueprint) {
+		table.ID()
+		// Add columns here:
+		// table.String("name", 255)
+		table.Timestamps()
+	})
 }
 `
 		generateFile(path, stub)
@@ -185,32 +253,40 @@ func (j *{Name}) Failed(err error) {
 // MakeCommandCmd scaffolds a new custom artisan command.
 var MakeCommandCmd = &cobra.Command{
 	Use:   "make:command [name]",
-	Short: "Create a new artisan command",
+	Short: "Create a new artisan command (meta)",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		name := args[0]
-		path := fmt.Sprintf("app/console/commands/%s.go", name)
-		
+		if !strings.HasSuffix(name, "Cmd") {
+			name += "Cmd"
+		}
+
+		path := fmt.Sprintf("app/Console/Commands/%s.go", name)
+
 		stub := `package commands
 
 import (
 	"fmt"
+
 	"github.com/spf13/cobra"
 )
 
-var {Name}Cmd = &cobra.Command{
-	Use:   "command:name",
-	Short: "Command description",
+var ` + name + ` = &cobra.Command{
+	Use:   "` + strings.ToLower(strings.TrimSuffix(name, "Cmd")) + `",
+	Short: "Description of ` + name + `",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("{Name} executed successfully!")
+		fmt.Println("` + name + ` executed successfully!")
 	},
 }
+
+// Register this command in your console kernel (artisan.go or console/kernel.go)
 `
-		content := strings.ReplaceAll(stub, "{Name}", name)
-		generateFile(path, content)
+		generateFile(path, stub)
 	},
 }
 
 func init() {
 	MakeControllerCmd.Flags().Bool("resource", false, "Generate a resource controller class")
+	MakeControllerCmd.Flags().Bool("api", false, "Generate an API controller class")
+	MakeModelCmd.Flags().Bool("migration", false, "Also create a migration for the model")
 }

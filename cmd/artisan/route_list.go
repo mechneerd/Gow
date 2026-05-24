@@ -3,6 +3,7 @@ package artisan
 import (
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"gow/routing"
@@ -18,6 +19,9 @@ var RouteListCmd = &cobra.Command{
 			return
 		}
 
+		pathFilter, _ := cmd.Flags().GetString("path")
+		methodFilter, _ := cmd.Flags().GetString("method")
+
 		routes := globalRouter.GetAllRoutes()
 
 		sort.Slice(routes, func(i, j int) bool {
@@ -27,15 +31,26 @@ var RouteListCmd = &cobra.Command{
 			return routes[i].Path < routes[j].Path
 		})
 
-		fmt.Printf("%-8s %-45s %-20s\n", "Method", "URI", "Name")
-		fmt.Println("--------------------------------------------------------------------------------")
+		fmt.Printf("%-8s %-50s %-25s %-30s\n", "Method", "URI", "Name", "Middleware")
+		fmt.Println("-----------------------------------------------------------------------------------------------------------")
 
 		for _, route := range routes {
+			if pathFilter != "" && !strings.Contains(route.Path, pathFilter) {
+				continue
+			}
+			if methodFilter != "" && !strings.EqualFold(route.Method, methodFilter) {
+				continue
+			}
+
 			name := route.Name
 			if name == "" {
 				name = "-"
 			}
-			fmt.Printf("%-8s %-45s %-20s\n", route.Method, route.Path, name)
+			middleware := "-"
+			if len(route.Middlewares) > 0 {
+				middleware = strings.Join(route.Middlewares, ",")
+			}
+			fmt.Printf("%-8s %-50s %-25s %-30s\n", route.Method, route.Path, name, middleware)
 		}
 	},
 }
@@ -48,6 +63,6 @@ func SetRouterForListing(r *routing.Router) {
 }
 
 func init() {
-	// This command will be properly wired once the console kernel has the router.
-	// For now we keep the placeholder.
+	RouteListCmd.Flags().StringP("path", "p", "", "Filter routes by path")
+	RouteListCmd.Flags().StringP("method", "m", "", "Filter routes by HTTP method")
 }
