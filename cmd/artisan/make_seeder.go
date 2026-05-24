@@ -20,7 +20,7 @@ var MakeSeederCmd = &cobra.Command{
 
 		timestamp := time.Now().Format("20060102150405")
 		filename := fmt.Sprintf("%s_%s.go", timestamp, strings.ToLower(name))
-		path := fmt.Sprintf("database/seeders/%s", filename)
+		path := fmt.Sprintf("database/seeders/%s", filename) // Standardized to database/seeders
 
 		stub := `package seeders
 

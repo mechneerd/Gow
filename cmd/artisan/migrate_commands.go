@@ -12,10 +12,17 @@ var MigrateCmd = &cobra.Command{
 	Use:   "migrate",
 	Short: "Run the database migrations",
 	Run: func(cmd *cobra.Command, args []string) {
-		// In a real setup, the migrator would be injected via the kernel or app container.
-		fmt.Println("Running migrations...")
-		// Example: migrator.Migrate()
-		fmt.Println("Migrations completed.")
+		migrator, err := getMigrator()
+		if err != nil {
+			fmt.Println("Error initializing migrator:", err)
+			return
+		}
+
+		if err := migrator.Migrate(); err != nil {
+			fmt.Println("Migration failed:", err)
+			return
+		}
+		fmt.Println("Migrations completed successfully.")
 	},
 }
 
@@ -23,17 +30,16 @@ var MigrateFreshCmd = &cobra.Command{
 	Use:   "migrate:fresh",
 	Short: "Drop all tables and re-run all migrations",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Dropping all tables and re-running migrations...")
+		migrator, err := getMigrator()
+		if err != nil {
+			fmt.Println("Error initializing migrator:", err)
+			return
+		}
 
-		// This assumes a global migrator is available.
-		// In production code, this should come from the application container.
-		// For demonstration, we show the intended behavior.
-
-		// Example usage:
-		// if err := migrator.Fresh(); err != nil {
-		//     fmt.Println("Error:", err)
-		//     return
-		// }
+		if err := migrator.Fresh(); err != nil {
+			fmt.Println("migrate:fresh failed:", err)
+			return
+		}
 
 		fmt.Println("Database refreshed successfully.")
 	},
@@ -43,13 +49,16 @@ var MigrateRefreshCmd = &cobra.Command{
 	Use:   "migrate:refresh",
 	Short: "Rollback all migrations and re-run them",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Refreshing the database (rollback + migrate)...")
+		migrator, err := getMigrator()
+		if err != nil {
+			fmt.Println("Error initializing migrator:", err)
+			return
+		}
 
-		// Example:
-		// if err := migrator.Refresh(); err != nil {
-		//     fmt.Println("Error:", err)
-		//     return
-		// }
+		if err := migrator.Refresh(); err != nil {
+			fmt.Println("migrate:refresh failed:", err)
+			return
+		}
 
 		fmt.Println("Database refreshed successfully.")
 	},
@@ -62,11 +71,17 @@ var MigrateRollbackCmd = &cobra.Command{
 		steps, _ := cmd.Flags().GetInt("step")
 		fmt.Printf("Rolling back last %d migration(s)...\n", steps)
 
-		// Try to get migrator from application context (when properly wired)
-		// For now we demonstrate the new capability
-		// if migrator != nil { migrator.RollbackSteps(steps) }
+		migrator, err := getMigrator()
+		if err != nil {
+			fmt.Println("Error initializing migrator:", err)
+			return
+		}
 
-		fmt.Println("Rollback completed.")
+		if err := migrator.RollbackSteps(steps); err != nil {
+			fmt.Println("Rollback failed:", err)
+			return
+		}
+		fmt.Println("Rollback completed successfully.")
 	},
 }
 
@@ -78,9 +93,17 @@ var MigrateRunCmd = &cobra.Command{
 		name := args[0]
 		fmt.Printf("Running single migration: %s\n", name)
 
-		// if migrator != nil { migrator.MigrateOne(name) }
+		migrator, err := getMigrator()
+		if err != nil {
+			fmt.Println("Error initializing migrator:", err)
+			return
+		}
 
-		fmt.Println("Single migration completed.")
+		if err := migrator.MigrateOne(name); err != nil {
+			fmt.Println("Migration failed:", err)
+			return
+		}
+		fmt.Println("Single migration completed successfully.")
 	},
 }
 
@@ -88,13 +111,16 @@ var MigrateStatusCmd = &cobra.Command{
 	Use:   "migrate:status",
 	Short: "Show the status of all migrations",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Migration status:")
+		migrator, err := getMigrator()
+		if err != nil {
+			fmt.Println("Error initializing migrator:", err)
+			return
+		}
 
-		// When a real migrator is available via app context:
-		// migrator.Status()
-
-		// For now we show that the capability exists
-		fmt.Println("  (Use with a wired migrator to see real status)")
+		if err := migrator.Status(); err != nil {
+			fmt.Println("Failed to get migration status:", err)
+			return
+		}
 	},
 }
 

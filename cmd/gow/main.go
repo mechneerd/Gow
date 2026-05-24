@@ -190,6 +190,12 @@ func scaffoldWithOptions(name string, result scaffoldpkg.PromptResult, force boo
 		return err
 	}
 
+	// Inject RBAC middleware examples + DB wiring guidance into bootstrap/app.go
+	// for auth-enabled kits (addresses high-priority gap in generated projects).
+	if flags["auth"] {
+		_ = scaffoldpkg.InjectRBACBootstrapExamples(targetDir)
+	}
+
 	err = scaffoldpkg.RunPostInstall(targetDir, scaffoldpkg.PostInstallOptions{
 		RunGoModTidy: true,
 		CopyEnv:      true,

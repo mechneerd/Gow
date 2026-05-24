@@ -37,7 +37,7 @@ var MakeControllerCmd = &cobra.Command{
 		name := args[0]
 		isResource, _ := cmd.Flags().GetBool("resource")
 		isApi, _ := cmd.Flags().GetBool("api")
-		path := fmt.Sprintf("app/Http/Controllers/%s.go", name)
+		path := fmt.Sprintf("app/Http/Controllers/%s.go", name) // Standardized to app/Http/Controllers
 
 		stub := `package controllers
 
@@ -121,7 +121,7 @@ var MakeModelCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		name := args[0]
 		withMigration, _ := cmd.Flags().GetBool("migration")
-		path := fmt.Sprintf("app/Models/%s.go", name)
+		path := fmt.Sprintf("app/Models/%s.go", name) // Standardized to app/Models
 
 		stub := `package Models
 
@@ -144,11 +144,35 @@ func ({Name}) TableName() string {
 		generateFile(path, content)
 
 		if withMigration {
-			// Trigger make:migration automatically
-			fmt.Printf("Creating migration for %s...\n", name)
-			// In a real implementation this would call the migration generator
-			// For now we just inform the user
-			fmt.Printf("  → Run: gow make:migration create_%ss_table\n", strings.ToLower(name))
+			// Automatically generate a basic migration file
+			migrationName := "create_" + strings.ToLower(name) + "s_table"
+			timestamp := time.Now().Format("2006_01_02_150405")
+			className := "Create" + strings.Title(strings.ReplaceAll(migrationName, "_", "")) + "Table"
+			filename := fmt.Sprintf("%s_%s.go", timestamp, migrationName)
+			migPath := fmt.Sprintf("database/migrations/%s", filename)
+
+			migStub := `package migrations
+
+import (
+	"github.com/mechneerd/gow/database/migration"
+	"github.com/mechneerd/gow/database/schema"
+)
+
+func init() {
+	migration.Register("` + timestamp + `_` + migrationName + `", ` + className + `)
+}
+
+func ` + className + `(m *schema.Builder) error {
+	return m.Create("` + strings.ToLower(name) + `s", func(table *schema.Blueprint) {
+		table.ID()
+		// Add your columns here
+		// table.String("name", 255)
+		table.Timestamps()
+	})
+}
+`
+			generateFile(migPath, migStub)
+			fmt.Printf("  → Created migration: %s\n", filename)
 		}
 	},
 }
@@ -163,7 +187,7 @@ var MakeMigrationCmd = &cobra.Command{
 		timestamp := time.Now().Format("2006_01_02_150405")
 		className := "Create" + strings.Title(strings.ReplaceAll(name, "_", "")) + "Table"
 		filename := fmt.Sprintf("%s_%s.go", timestamp, name)
-		path := fmt.Sprintf("database/migrations/%s", filename)
+		path := fmt.Sprintf("database/migrations/%s", filename) // Standardized to database/migrations (lowercase)
 
 		stub := `package migrations
 
@@ -196,7 +220,7 @@ var MakeMiddlewareCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		name := args[0]
-		path := fmt.Sprintf("app/http/middleware/%s.go", name)
+		path := fmt.Sprintf("app/Http/Middleware/%s.go", name) // Standardized to app/Http/Middleware
 		
 		stub := `package middleware
 

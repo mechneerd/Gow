@@ -28,13 +28,19 @@ var CacheClearCmd = &cobra.Command{
 	},
 }
 
-// CacheForgetCmd forgets a specific cache key.
+// CacheForgetCmd forgets a specific cache key (file driver supported).
 var CacheForgetCmd = &cobra.Command{
 	Use:   "cache:forget [key]",
 	Short: "Remove an item from the cache",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		key := args[0]
-		fmt.Printf("Forgot cache key: %s (implement store-specific logic)\n", key)
+		cacheDir := "storage/cache"
+		filePath := filepath.Join(cacheDir, key+".cache")
+		if err := os.Remove(filePath); err == nil {
+			fmt.Printf("Cache key '%s' removed.\n", key)
+		} else {
+			fmt.Printf("Could not remove cache key '%s' (may not exist or different driver).\n", key)
+		}
 	},
 }
