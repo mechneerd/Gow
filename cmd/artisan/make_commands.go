@@ -295,6 +295,28 @@ var ` + name + ` = &cobra.Command{
 	},
 }
 
+// MakeViewCmd scaffolds a new view file using the preferred .goblade extension.
+var MakeViewCmd = &cobra.Command{
+	Use:   "make:view [name]",
+	Short: "Create a new view (uses .goblade by default for Go-native feel)",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		name := args[0]
+		// Convert dot notation to path, e.g. auth.login → auth/login.goblade
+		relPath := strings.ReplaceAll(name, ".", "/")
+		path := fmt.Sprintf("resources/views/%s.goblade", relPath)
+
+		stub := `{{/* resources/views/` + relPath + `.goblade */}}
+
+<div>
+    <h1>{{ .Title }}</h1>
+    {{-- Add your GoBlade content here --}}
+</div>
+`
+		generateFile(path, stub)
+	},
+}
+
 func init() {
 	MakeControllerCmd.Flags().Bool("resource", false, "Generate a resource controller class")
 	MakeControllerCmd.Flags().Bool("api", false, "Generate an API controller class")

@@ -1095,7 +1095,7 @@ msg := m.Build()
 
 ### Engine (view/engine.go)
 - `Engine.Make(name, data)` → resolves file path → compile → parse → execute
-- Looks for `.blade.php`, `.goblade`, `.html` extensions
+- Looks for `.goblade` (preferred), `.blade.php` (compat), `.html` extensions
 - Detects `@extends` from compiled output via regex, resolves layout file
 - Parses BOTH child + layout files via `template.ParseFiles(child, layout)`
 - **Layout resolution IS implemented** — the engine regex-matches `{{/* extends "..." */}}` and loads the layout

@@ -1,0 +1,100 @@
+{{/* extends "layouts.app" */}}
+
+@section('content')
+<div class="max-w-5xl mx-auto px-6 pt-20 pb-24">
+    <div class="flex flex-col items-center text-center">
+        <!-- Badge -->
+        <div class="inline-flex items-center gap-x-2 px-4 py-1.5 rounded-full bg-zinc-900 border border-zinc-800 mb-8">
+            <div class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+            <span class="text-sm font-medium text-emerald-400">v1.0 — Production Ready</span>
+        </div>
+
+        <h1 class="text-7xl font-semibold tracking-tighter mb-6">
+            The <span class="gradient-text">Laravel</span><br>
+            experience.<br>
+            <span class="text-zinc-400">In pure Go.</span>
+        </h1>
+
+        <p class="max-w-xl text-xl text-zinc-400 mb-10">
+            GoW gives you beautiful routing, Eloquent-style ORM, GoBlade templates, 
+            authentication, and a powerful Artisan CLI — without leaving Go.
+        </p>
+
+        <div class="flex items-center gap-x-4">
+            <a href="https://github.com/mechneerd/gow" 
+               class="px-8 py-3.5 bg-white text-zinc-950 font-semibold rounded-2xl hover:bg-zinc-100 transition flex items-center gap-x-2">
+                Get Started
+            </a>
+            <a href="https://github.com/mechneerd/gow/docs" 
+               class="px-8 py-3.5 border border-zinc-700 hover:bg-zinc-900 rounded-2xl transition">
+                Read the Docs
+            </a>
+        </div>
+
+        <!-- Features -->
+        <div class="mt-20 grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-4xl">
+            <div class="bg-zinc-900 border border-zinc-800 rounded-3xl p-6 text-left">
+                <div class="text-3xl mb-4">⚡</div>
+                <div class="font-semibold text-lg mb-2">Blazing Fast</div>
+                <div class="text-zinc-400 text-sm">Native Go performance with Laravel-like developer experience.</div>
+            </div>
+            <div class="bg-zinc-900 border border-zinc-800 rounded-3xl p-6 text-left">
+                <div class="text-3xl mb-4">🛠️</div>
+                <div class="font-semibold text-lg mb-2">Full Artisan CLI</div>
+                <div class="text-zinc-400 text-sm">`gow new`, `make:model`, `migrate`, `db:seed`, `serve` — everything you expect.</div>
+            </div>
+            <div class="bg-zinc-900 border border-zinc-800 rounded-3xl p-6 text-left">
+                <div class="text-3xl mb-4">🔐</div>
+                <div class="font-semibold text-lg mb-2">Auth + RBAC Built-in</div>
+                <div class="text-zinc-400 text-sm">Session, Fortify, Socialite, roles & permissions out of the box.</div>
+            </div>
+        </div>
+
+        <!-- GoW Livewire Demo -->
+        <div class="mt-20 w-full max-w-2xl">
+            <div class="text-center mb-8">
+                <div class="inline-block px-3 py-1 text-xs font-medium tracking-widest bg-zinc-900 border border-zinc-700 rounded-full mb-4">NEW</div>
+                <h2 class="text-3xl font-semibold tracking-tight">Reactive UI • No Page Reload</h2>
+                <p class="text-zinc-400 mt-2">GoW Livewire — pure Go components that update in place</p>
+            </div>
+
+            <div id="livewire-counter-placeholder" 
+                 class="p-6 bg-zinc-900 border border-zinc-700 rounded-3xl">
+                <div class="text-center text-sm text-zinc-500 py-8">
+                    Loading interactive counter...
+                </div>
+            </div>
+
+            <p class="text-xs text-center text-zinc-500 mt-3">
+                Built with GoW Livewire + GoBlade. Only the counter updates — zero full page reload.
+            </p>
+        </div>
+    </div>
+</div>
+
+<script src="/js/livewire.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    fetch('/livewire/counter')
+        .then(res => res.json())
+        .then(data => {
+            const placeholder = document.getElementById('livewire-counter-placeholder');
+            if (placeholder && data.html) {
+                placeholder.outerHTML = data.html;
+                if (window.Livewire) window.Livewire.scan();
+            }
+        })
+        .catch(() => {
+            const placeholder = document.getElementById('livewire-counter-placeholder');
+            if (placeholder) {
+                placeholder.innerHTML = `
+                    <div class="text-center p-4 text-sm text-amber-400">
+                        Livewire route not registered yet.<br>
+                        <span class="text-zinc-500">See docs for wiring</span>
+                    </div>
+                `;
+            }
+        });
+});
+</script>
+@endsection

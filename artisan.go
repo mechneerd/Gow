@@ -44,6 +44,7 @@ func main() {
 	kernel.RegisterCommand(artisan.MakeControllerCmd)
 	kernel.RegisterCommand(artisan.MakeModelCmd)
 	kernel.RegisterCommand(artisan.MakeMigrationCmd)
+	kernel.RegisterCommand(artisan.MakeViewCmd)
 	kernel.RegisterCommand(artisan.MakeMiddlewareCmd)
 	kernel.RegisterCommand(artisan.MakeJobCmd)
 	kernel.RegisterCommand(artisan.MakeCommandCmd)

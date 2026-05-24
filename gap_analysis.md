@@ -825,7 +825,7 @@ These 16 feature areas are **fully specified** in [GoW_SPEC.md](file:///d:/Go%20
 | Feature | Status |
 |---|---|
 | File-system route resolution | ❌ Missing |
-| Dynamic segments via filenames (`[id].blade.php`) | ❌ Missing |
+| Dynamic segments via filenames (`[id].goblade`) | ❌ Missing |
 | Route middleware in page files | ❌ Missing |
 | Wildcard pages | ❌ Missing |
 

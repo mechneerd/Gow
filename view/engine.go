@@ -29,15 +29,15 @@ func NewEngine(viewPaths []string, cachePath string) *Engine {
 
 // Make compiles and renders a view by name (e.g., "auth.login")
 func (e *Engine) Make(name string, data map[string]any) (string, error) {
-	// Convert "auth.login" to "auth/login.blade.php" or "auth/login.html"
+	// Convert "auth.login" to "auth/login.goblade" (preferred), .blade.php (compat), or .html
 	relPath := strings.ReplaceAll(name, ".", "/")
 	var absPath string
 
 	for _, vp := range e.ViewPaths {
-		// Look for .blade.php or .goblade or .html
+		// Prefer .goblade (Go-native), fall back to .blade.php for compatibility, then .html
 		possiblePaths := []string{
-			filepath.Join(vp, relPath+".blade.php"),
 			filepath.Join(vp, relPath+".goblade"),
+			filepath.Join(vp, relPath+".blade.php"),
 			filepath.Join(vp, relPath+".html"),
 		}
 
@@ -90,9 +90,10 @@ func (e *Engine) Make(name string, data map[string]any) (string, error) {
 			layoutRelPath := strings.ReplaceAll(layoutName, ".", "/")
 			var layoutAbsPath string
 			for _, vp := range e.ViewPaths {
+				// Prefer .goblade for layouts too
 				possiblePaths := []string{
-					filepath.Join(vp, layoutRelPath+".blade.php"),
 					filepath.Join(vp, layoutRelPath+".goblade"),
+					filepath.Join(vp, layoutRelPath+".blade.php"),
 					filepath.Join(vp, layoutRelPath+".html"),
 				}
 				for _, p := range possiblePaths {

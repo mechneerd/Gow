@@ -12,6 +12,11 @@ type BaseComponent struct {
 	mu    sync.RWMutex
 }
 
+// Lifecycle methods (no-op defaults so embedding structs satisfy the interface)
+func (b *BaseComponent) Mount()                  {}
+func (b *BaseComponent) Updated(property string) {}
+func (b *BaseComponent) Rendering()              {}
+
 // GetID returns the component's unique ID.
 func (b *BaseComponent) GetID() string {
 	return b.ID

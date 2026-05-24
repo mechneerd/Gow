@@ -25,8 +25,8 @@ var MakeAuthCmd = &cobra.Command{
 		createFile("app/Models/User.go", userModelStub)
 
 		// Generate Views
-		createFile("resources/views/auth/login.gohtml", loginViewStub)
-		createFile("resources/views/auth/register.gohtml", registerViewStub)
+		createFile("resources/views/auth/login.goblade", loginViewStub)
+		createFile("resources/views/auth/register.goblade", registerViewStub)
 
 		fmt.Println("Auth scaffolding complete. Please manually register your routes in routes/web.go.")
 	},
@@ -58,7 +58,7 @@ import (
 type AuthController struct {}
 
 func (c *AuthController) ShowLogin(w http.ResponseWriter, r *http.Request) {
-	// Render resources/views/auth/login.gohtml
+	// Render resources/views/auth/login.goblade
 }
 
 func (c *AuthController) Login(w http.ResponseWriter, r *http.Request) {
@@ -66,7 +66,7 @@ func (c *AuthController) Login(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *AuthController) ShowRegister(w http.ResponseWriter, r *http.Request) {
-	// Render resources/views/auth/register.gohtml
+	// Render resources/views/auth/register.goblade
 }
 
 func (c *AuthController) Register(w http.ResponseWriter, r *http.Request) {
@@ -133,7 +133,7 @@ func (u *User) GetAuthPassword() string {
 }
 `
 
-const loginViewStub = `<!-- resources/views/auth/login.gohtml -->
+	const loginViewStub = `<!-- resources/views/auth/login.goblade -->
 <!DOCTYPE html>
 <html>
 <head><title>Login</title></head>
@@ -155,7 +155,7 @@ const loginViewStub = `<!-- resources/views/auth/login.gohtml -->
 </html>
 `
 
-const registerViewStub = `<!-- resources/views/auth/register.gohtml -->
+	const registerViewStub = `<!-- resources/views/auth/register.goblade -->
 <!DOCTYPE html>
 <html>
 <head><title>Register</title></head>

@@ -27,7 +27,7 @@ func TestEngineExtends(t *testing.T) {
 @yield('content')
 </body>
 </html>`
-	os.WriteFile(filepath.Join(viewsDir, "master.blade.php"), []byte(masterContent), 0644)
+	os.WriteFile(filepath.Join(viewsDir, "master.goblade"), []byte(masterContent), 0644)
 
 	// Create parent layout that extends master
 	parentContent := `@extends('master')
@@ -39,14 +39,14 @@ My App
 @yield('main')
 </div>
 @endsection`
-	os.WriteFile(filepath.Join(viewsDir, "parent.blade.php"), []byte(parentContent), 0644)
+	os.WriteFile(filepath.Join(viewsDir, "parent.goblade"), []byte(parentContent), 0644)
 
 	// Create child view that extends parent
 	childContent := `@extends('parent')
 @section('main')
 <h1>Hello, {{ .Name }}</h1>
 @endsection`
-	os.WriteFile(filepath.Join(viewsDir, "child.blade.php"), []byte(childContent), 0644)
+	os.WriteFile(filepath.Join(viewsDir, "child.goblade"), []byte(childContent), 0644)
 
 	engine := NewEngine([]string{viewsDir}, cacheDir)
 	
@@ -85,8 +85,8 @@ func TestEngineCycleDetection(t *testing.T) {
 	os.MkdirAll(cacheDir, 0755)
 
 	// Create a cycle: a -> b -> a
-	os.WriteFile(filepath.Join(viewsDir, "a.blade.php"), []byte(`@extends('b')`), 0644)
-	os.WriteFile(filepath.Join(viewsDir, "b.blade.php"), []byte(`@extends('a')`), 0644)
+	os.WriteFile(filepath.Join(viewsDir, "a.goblade"), []byte(`@extends('b')`), 0644)
+	os.WriteFile(filepath.Join(viewsDir, "b.goblade"), []byte(`@extends('a')`), 0644)
 
 	engine := NewEngine([]string{viewsDir}, cacheDir)
 	
