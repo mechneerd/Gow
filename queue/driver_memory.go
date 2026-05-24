@@ -45,3 +45,4 @@ func (d *MemoryDriver) TryPop() Job {
 func (d *MemoryDriver) Len() int {
 	return len(d.jobs)
 }
+

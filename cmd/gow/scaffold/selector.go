@@ -16,3 +16,4 @@ func SelectTemplate(flags map[string]bool) string {
 		return cfg.Templates[""] // web
 	}
 }
+

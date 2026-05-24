@@ -1,9 +1,9 @@
 package logging
 
 import (
-	"gow/config"
-	"gow/container"
-	"gow/foundation"
+	"github.com/mechneerd/gow/config"
+	"github.com/mechneerd/gow/container"
+	"github.com/mechneerd/gow/foundation"
 	"log/slog"
 )
 
@@ -31,3 +31,4 @@ func (p *ServiceProvider) Register(app *foundation.Application) {
 	// Bind as instance
 	app.Instance((*slog.Logger)(nil), logger)
 }
+

@@ -6,7 +6,7 @@ import (
 	"net/smtp"
 	"strings"
 
-	"gow/queue"
+	"github.com/mechneerd/gow/queue"
 )
 
 var queueManager *queue.Manager
@@ -149,3 +149,4 @@ func (m *Mailer) QueueNow(mailable Mailable) error {
 	// Fallback to immediate send if no queue manager
 	return m.Send(mailable)
 }
+

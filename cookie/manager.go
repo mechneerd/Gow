@@ -125,3 +125,4 @@ func (m *Manager) Decrypt(value string) (string, error) {
 
 	return string(plaintext), nil
 }
+

@@ -97,3 +97,4 @@ func Reduce[T, U any](c *Collection[T], fn func(U, T) U, initial U) U {
 	}
 	return result
 }
+

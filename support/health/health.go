@@ -74,3 +74,4 @@ func getAppVersion() string {
 	}
 	return "dev"
 }
+

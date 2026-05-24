@@ -1,8 +1,8 @@
 package auth
 
 import (
-	"gow/database/orm"
-	"gow/hashing"
+	"github.com/mechneerd/gow/database/orm"
+	"github.com/mechneerd/gow/hashing"
 )
 
 // ORMUserProvider is a UserProvider implementation that retrieves users from the ORM.
@@ -56,3 +56,4 @@ func (p *ORMUserProvider) ValidateCredentials(user any, credentials map[string]a
 	}
 	return false
 }
+

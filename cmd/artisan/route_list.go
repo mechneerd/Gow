@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"gow/routing"
+	"github.com/mechneerd/gow/routing"
 )
 
 // RouteListCmd lists all registered routes.
@@ -70,3 +70,4 @@ func init() {
 	RouteListCmd.Flags().StringP("path", "p", "", "Filter routes by path")
 	RouteListCmd.Flags().StringP("method", "m", "", "Filter routes by HTTP method")
 }
+

@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 	
-	"gow/database/dialect"
+	"github.com/mechneerd/gow/database/dialect"
 )
 
 // QueryEvent represents an executed database query.
@@ -414,3 +414,4 @@ func (b *Builder) When(condition bool, callback func(*Builder)) *Builder {
 	}
 	return b
 }
+

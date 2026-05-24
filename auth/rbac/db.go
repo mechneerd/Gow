@@ -14,3 +14,4 @@ func SetDefaultDB(db *sql.DB) {
 func getDefaultDB() *sql.DB {
 	return defaultDB
 }
+

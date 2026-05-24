@@ -1,6 +1,6 @@
 package rbac
 
-import "gow/database/orm"
+import "github.com/mechneerd/gow/database/orm"
 
 type Permission struct {
 	orm.Model
@@ -9,3 +9,4 @@ type Permission struct {
 }
 
 func (Permission) TableName() string { return "permissions" }
+

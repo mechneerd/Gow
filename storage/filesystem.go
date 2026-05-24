@@ -52,3 +52,4 @@ func (l *LocalFilesystem) Delete(path string) error {
 func (l *LocalFilesystem) ReadStream(path string) (io.ReadCloser, error) {
 	return os.Open(l.getAbsPath(path))
 }
+

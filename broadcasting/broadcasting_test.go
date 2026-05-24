@@ -130,3 +130,4 @@ func TestWebSocketDriver(t *testing.T) {
 		t.Fatalf("Driver Broadcast returned error: %v", err)
 	}
 }
+

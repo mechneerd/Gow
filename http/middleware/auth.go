@@ -2,8 +2,8 @@ package middleware
 
 import (
 	"context"
-	"gow/auth"
-	gowhttp "gow/http"
+	"github.com/mechneerd/gow/auth"
+	gowhttp "github.com/mechneerd/gow/http"
 	"net/http"
 )
 
@@ -46,3 +46,4 @@ func RedirectIfAuthenticated(authManager *auth.Manager, guardName string, redire
 		})
 	}
 }
+

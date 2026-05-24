@@ -92,3 +92,4 @@ func (m *BaseMailable) Markdown(md string) *BaseMailable {
 func (m *BaseMailable) Build() *Message {
 	return m.message
 }
+

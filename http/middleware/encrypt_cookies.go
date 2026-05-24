@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"gow/cookie"
+	"github.com/mechneerd/gow/cookie"
 	"net/http"
 )
 
@@ -39,3 +39,4 @@ func EncryptCookies(manager *cookie.Manager, except []string) func(http.Handler)
 		})
 	}
 }
+

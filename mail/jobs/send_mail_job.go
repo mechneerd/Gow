@@ -16,3 +16,4 @@ func (j *SendMailJob) Handle() error {
 func (j *SendMailJob) Failed(err error) {
 	fmt.Printf("[Mail] SendMailJob failed: %v\n", err)
 }
+

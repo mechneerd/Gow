@@ -14,3 +14,4 @@ type BaseFactory struct {
 func NewBaseFactory() *BaseFactory {
 	return &BaseFactory{}
 }
+

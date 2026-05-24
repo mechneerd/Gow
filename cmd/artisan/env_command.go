@@ -26,3 +26,4 @@ var EnvCmd = &cobra.Command{
 		fmt.Printf("  GOARCH: %s\n", os.Getenv("GOARCH"))
 	},
 }
+

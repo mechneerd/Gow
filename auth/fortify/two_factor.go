@@ -82,3 +82,4 @@ func GetQRCodeURL(issuer, accountName, secret string) string {
 	return fmt.Sprintf("otpauth://totp/%s:%s?secret=%s&issuer=%s&algorithm=SHA1&digits=%d&period=%d",
 		issuer, accountName, secret, issuer, totpDigits, totpPeriod)
 }
+

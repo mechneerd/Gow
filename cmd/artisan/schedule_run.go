@@ -2,7 +2,7 @@ package artisan
 
 import (
 	"fmt"
-	"gow/console"
+	"github.com/mechneerd/gow/console"
 
 	"github.com/spf13/cobra"
 )
@@ -32,3 +32,4 @@ var ScheduleRunCmd = &cobra.Command{
 		fmt.Println("✅ Schedule run completed.")
 	},
 }
+

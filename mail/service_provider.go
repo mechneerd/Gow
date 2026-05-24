@@ -1,9 +1,9 @@
 package mail
 
 import (
-	"gow/config"
-	"gow/container"
-	"gow/foundation"
+	"github.com/mechneerd/gow/config"
+	"github.com/mechneerd/gow/container"
+	"github.com/mechneerd/gow/foundation"
 )
 
 // ServiceProvider registers the mail system with the application.
@@ -41,3 +41,4 @@ func (p *ServiceProvider) Register(app *foundation.Application) {
 
 	app.Instance((*Mailer)(nil), mailerInstance)
 }
+

@@ -96,3 +96,4 @@ func (m *Manager) QueueListen(event Event, listener Listener) {
 		listener(e)
 	})
 }
+

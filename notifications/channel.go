@@ -10,3 +10,4 @@ type Notification interface {
 	// Via determines which channels the notification should be sent through.
 	Via(notifiable Notifiable) []string
 }
+

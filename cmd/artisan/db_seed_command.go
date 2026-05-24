@@ -58,3 +58,4 @@ var DbSeedCmd = &cobra.Command{
 		fmt.Println("   Expected after RoleSeeder: superadmin / 12345678")
 	},
 }
+

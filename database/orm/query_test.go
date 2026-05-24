@@ -2,8 +2,8 @@ package orm
 
 import (
 	"database/sql"
-	"gow/database/dialect"
-	"gow/database/query"
+	"github.com/mechneerd/gow/database/dialect"
+	"github.com/mechneerd/gow/database/query"
 	"testing"
 	"time"
 
@@ -125,3 +125,4 @@ func TestORMCrudLifecycle(t *testing.T) {
 		}
 	})
 }
+

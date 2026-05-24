@@ -3,7 +3,7 @@ package artisan
 import (
 	"fmt"
 	"github.com/spf13/cobra"
-	"gow/queue"
+	"github.com/mechneerd/gow/queue"
 	"time"
 )
 
@@ -71,3 +71,4 @@ var QueueRetryCmd = &cobra.Command{
 		fmt.Println("Job retry requested (implementation depends on queue driver).")
 	},
 }
+

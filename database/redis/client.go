@@ -58,3 +58,4 @@ func (c *Client) Ping(ctx context.Context) error {
 func (c *Client) RawClient() redis.UniversalClient {
 	return c.client
 }
+

@@ -3,7 +3,7 @@ package artisan
 import (
 	"fmt"
 
-	"gow/foundation"
+	"github.com/mechneerd/gow/foundation"
 
 	"github.com/spf13/cobra"
 )
@@ -57,3 +57,4 @@ var VendorPublishCmd = &cobra.Command{
 func init() {
 	VendorPublishCmd.Flags().StringP("provider", "p", "", "Publish assets from a specific provider only")
 }
+

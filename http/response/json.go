@@ -30,3 +30,4 @@ func Created(w http.ResponseWriter, data any) {
 func Error(w http.ResponseWriter, status int, message string) {
 	JSON(w, status, map[string]string{"error": message})
 }
+

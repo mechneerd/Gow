@@ -2,7 +2,7 @@ package database
 
 import (
 	"database/sql"
-	"gow/database/dialect"
+	"github.com/mechneerd/gow/database/dialect"
 )
 
 // Connection represents a database connection along with its dialect.
@@ -18,3 +18,4 @@ func NewConnection(db *sql.DB, d dialect.Dialect) *Connection {
 		Dialect: d,
 	}
 }
+

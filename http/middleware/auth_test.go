@@ -1,8 +1,8 @@
 package middleware
 
 import (
-	"gow/auth"
-	"gow/auth/access"
+	"github.com/mechneerd/gow/auth"
+	"github.com/mechneerd/gow/auth/access"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -122,3 +122,4 @@ func TestAuthorizeMiddleware(t *testing.T) {
 		t.Errorf("Expected 200 OK, got %d", wAuth.Code)
 	}
 }
+

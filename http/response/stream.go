@@ -41,3 +41,4 @@ func Download(w http.ResponseWriter, r *http.Request, filePath string, fileName 
 	}
 	http.ServeFile(w, r, filePath)
 }
+

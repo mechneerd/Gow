@@ -22,3 +22,4 @@ func CheckForMaintenanceMode(basePath string) func(http.Handler) http.Handler {
 		})
 	}
 }
+

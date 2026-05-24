@@ -5,8 +5,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"gow/routing"
-	"gow/support/collection"
+	"github.com/mechneerd/gow/routing"
+	"github.com/mechneerd/gow/support/collection"
 	"io"
 	"net/http"
 	"strconv"
@@ -205,3 +205,4 @@ func Old(r *http.Request, key string, defaultValue ...string) string {
 	}
 	return ""
 }
+

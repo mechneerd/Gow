@@ -9,8 +9,8 @@ import (
 	_ "github.com/lib/pq"              // postgres driver
 	_ "github.com/mattn/go-sqlite3"    // sqlite driver
 
-	"gow/database/migration"
-	"gow/database/schema"
+	"github.com/mechneerd/gow/database/migration"
+	"github.com/mechneerd/gow/database/schema"
 )
 
 // getMigrator creates a working Migrator instance from environment variables.
@@ -71,3 +71,4 @@ func getEnv(key, fallback string) string {
 	}
 	return fallback
 }
+

@@ -221,3 +221,4 @@ func (d *PostgresDialect) CompileDelete(table string, wheres []WhereClause) (str
 
 	return sql.String(), args
 }
+

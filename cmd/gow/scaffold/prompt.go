@@ -76,3 +76,4 @@ func RunInteractiveWizard(defaultAppName string) (PromptResult, error) {
 
 	return result, nil
 }
+

@@ -1,13 +1,13 @@
 package bootstrap
 
 import (
-	"gow/broadcasting"
-	"gow/config"
-	"gow/foundation"
-	"gow/localization"
-	"gow/logging"
-	"gow/mail"
-	"gow/notifications"
+	"github.com/mechneerd/gow/broadcasting"
+	"github.com/mechneerd/gow/config"
+	"github.com/mechneerd/gow/foundation"
+	"github.com/mechneerd/gow/localization"
+	"github.com/mechneerd/gow/logging"
+	"github.com/mechneerd/gow/mail"
+	"github.com/mechneerd/gow/notifications"
 )
 
 // NewApplication creates and boots a standard GoW Application with core providers.
@@ -27,3 +27,4 @@ func NewApplication(basePath string) *foundation.Application {
 
 	return app
 }
+

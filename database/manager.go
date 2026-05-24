@@ -2,7 +2,7 @@ package database
 
 import (
 	"errors"
-	"gow/config"
+	"github.com/mechneerd/gow/config"
 	"sync"
 )
 
@@ -77,3 +77,4 @@ func (m *Manager) Close() error {
 	}
 	return nil
 }
+

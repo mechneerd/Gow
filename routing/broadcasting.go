@@ -5,9 +5,9 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
-	"gow/auth"
-	"gow/broadcasting"
-	"gow/http/exception"
+	"github.com/mechneerd/gow/auth"
+	"github.com/mechneerd/gow/broadcasting"
+	"github.com/mechneerd/gow/http/exception"
 	"net/http"
 	"strings"
 )
@@ -70,3 +70,4 @@ func (r *Router) BroadcastRoutes(channelManager *broadcasting.ChannelManager, ap
 		return nil
 	})
 }
+

@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"gow/http/request"
-	"gow/routing"
+	"github.com/mechneerd/gow/http/request"
+	"github.com/mechneerd/gow/routing"
 	"log"
 	"net/http"
 )
@@ -61,3 +61,4 @@ func RegisterRoutes(r *routing.Router) {
 		return nil
 	})
 }
+

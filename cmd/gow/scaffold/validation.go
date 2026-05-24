@@ -27,3 +27,4 @@ func NormalizeDatabase(driver string) (string, error) {
 	}
 	return "", fmt.Errorf("invalid database driver '%s'. Valid options: %s", driver, strings.Join(ValidDatabases, ", "))
 }
+

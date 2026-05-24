@@ -39,3 +39,4 @@ var UpCmd = &cobra.Command{
 		fmt.Println("Application is now live.")
 	},
 }
+

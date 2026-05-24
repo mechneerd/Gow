@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"gow/auth"
-	"gow/routing"
+	"github.com/mechneerd/gow/auth"
+	"github.com/mechneerd/gow/routing"
 )
 
 // GenerateVerificationURL creates a signed URL for email verification.
@@ -33,3 +33,4 @@ func MarkAsVerified(user auth.Authenticatable) {
 	// Example: user.EmailVerifiedAt = time.Now()
 	// Then save via your UserProvider or ORM
 }
+

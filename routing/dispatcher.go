@@ -1,7 +1,7 @@
 package routing
 
 import (
-	"gow/database/orm"
+	"github.com/mechneerd/gow/database/orm"
 	"net/http"
 	"reflect"
 	"strings"
@@ -124,3 +124,4 @@ func (d *Dispatcher) Wrap(handler any) HandlerFunc {
 		return nil
 	}
 }
+

@@ -81,3 +81,4 @@ func (c *DBTestContext) UseInMemorySQLite(t *testing.T, testFunc func(db *sql.DB
 	// Execute the test function, providing the fresh DB
 	// testFunc(memoryDB)
 }
+

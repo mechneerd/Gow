@@ -54,3 +54,4 @@ func copyFile(src, dst string) error {
 	srcInfo, _ := os.Stat(src)
 	return os.Chmod(dst, srcInfo.Mode())
 }
+

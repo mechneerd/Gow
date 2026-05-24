@@ -37,3 +37,4 @@ func (p *Pipeline[T]) Then(ctx context.Context, payload T, destination func(cont
 
 	return next(ctx, payload)
 }
+

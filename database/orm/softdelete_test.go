@@ -2,8 +2,8 @@ package orm
 
 import (
 	"database/sql"
-	"gow/database/dialect"
-	"gow/database/query"
+	"github.com/mechneerd/gow/database/dialect"
+	"github.com/mechneerd/gow/database/query"
 	"os"
 	"testing"
 	"time"
@@ -110,3 +110,4 @@ func TestSoftDeletes(t *testing.T) {
 		t.Errorf("Expected only Alice after force delete, got %d users", len(allWithTrashed))
 	}
 }
+

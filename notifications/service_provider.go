@@ -1,9 +1,9 @@
 package notifications
 
 import (
-	"gow/container"
-	"gow/foundation"
-	"gow/mail"
+	"github.com/mechneerd/gow/container"
+	"github.com/mechneerd/gow/foundation"
+	"github.com/mechneerd/gow/mail"
 )
 
 // ServiceProvider registers the notification system with the application.
@@ -31,3 +31,4 @@ func (p *ServiceProvider) Register(app *foundation.Application) {
 func (p *ServiceProvider) Boot(app *foundation.Application) {
 	// Future: auto-register DatabaseChannel if orm.DB is present
 }
+

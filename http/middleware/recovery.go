@@ -1,8 +1,8 @@
 package middleware
 
 import (
-	gowhttp "gow/http"
-	"gow/http/response"
+	gowhttp "github.com/mechneerd/gow/http"
+	"github.com/mechneerd/gow/http/response"
 	"log"
 	"net/http"
 	"runtime/debug"
@@ -32,3 +32,4 @@ func Recovery() func(http.Handler) http.Handler {
 		})
 	}
 }
+

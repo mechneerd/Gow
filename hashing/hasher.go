@@ -9,3 +9,4 @@ type Hasher interface {
 	// NeedsRehash determines if the given hash has been hashed using the configured options.
 	NeedsRehash(hashed string) bool
 }
+

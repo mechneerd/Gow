@@ -70,3 +70,4 @@ func SetDefaultManager(m *Manager) {
 		defaultManager = m
 	})
 }
+

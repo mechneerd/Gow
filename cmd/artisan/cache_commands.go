@@ -44,3 +44,4 @@ var CacheForgetCmd = &cobra.Command{
 		}
 	},
 }
+

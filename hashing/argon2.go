@@ -105,3 +105,4 @@ func (a *Argon2Hasher) NeedsRehash(hashed string) bool {
 
 	return memory != a.memory || iterations != a.iterations || parallelism != a.parallelism
 }
+

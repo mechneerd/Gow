@@ -20,3 +20,4 @@ func NewCashier() *Cashier {
 func (c *Cashier) NewSubscription(userID, plan string) *Subscription {
 	return &Subscription{UserID: userID, Plan: plan, Status: "active"}
 }
+

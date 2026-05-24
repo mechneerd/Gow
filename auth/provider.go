@@ -13,3 +13,4 @@ type UserProvider interface {
 	// ValidateCredentials validates a user against the given credentials.
 	ValidateCredentials(user any, credentials map[string]any) bool
 }
+

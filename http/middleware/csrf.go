@@ -3,7 +3,7 @@ package middleware
 import (
 	"crypto/rand"
 	"encoding/hex"
-	gowhttp "gow/http"
+	gowhttp "github.com/mechneerd/gow/http"
 	"net/http"
 )
 
@@ -51,3 +51,4 @@ func generateToken() string {
 	rand.Read(b)
 	return hex.EncodeToString(b)
 }
+

@@ -142,3 +142,4 @@ func Mount(component Component) (id string, html string, state map[string]any) {
 	state = component.GetState()
 	return
 }
+

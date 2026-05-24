@@ -1,7 +1,7 @@
 package config
 
 import (
-	"gow/foundation"
+	"github.com/mechneerd/gow/foundation"
 )
 
 // ServiceProvider registers the configuration repository with the application.
@@ -16,3 +16,4 @@ func (p *ServiceProvider) Register(app *foundation.Application) {
 	// Bind as instance
 	app.Instance((*Repository)(nil), repo)
 }
+

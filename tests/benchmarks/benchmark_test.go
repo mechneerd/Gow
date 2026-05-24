@@ -1,8 +1,8 @@
 package benchmarks
 
 import (
-	"gow/database/query"
-	"gow/routing"
+	"github.com/mechneerd/gow/database/query"
+	"github.com/mechneerd/gow/routing"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -42,3 +42,4 @@ func BenchmarkQueryBuilder(b *testing.B) {
 			ToSQL()
 	}
 }
+

@@ -221,3 +221,4 @@ func (d *MySQLDialect) CompileDelete(table string, wheres []WhereClause) (string
 
 	return sql.String(), args
 }
+

@@ -114,3 +114,4 @@ func WithContext(ctx context.Context, logger *slog.Logger) *slog.Logger {
 	}
 	return logger
 }
+

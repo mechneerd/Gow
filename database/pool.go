@@ -2,7 +2,7 @@ package database
 
 import (
 	"database/sql"
-	"gow/config"
+	"github.com/mechneerd/gow/config"
 	"time"
 )
 
@@ -64,3 +64,4 @@ func ConfigurePool(db *sql.DB, cfg PoolConfig) {
 	db.SetConnMaxLifetime(cfg.ConnMaxLifetime)
 	db.SetConnMaxIdleTime(cfg.ConnMaxIdleTime)
 }
+

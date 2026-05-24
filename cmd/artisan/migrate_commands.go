@@ -5,7 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"gow/database/migration"
+	"github.com/mechneerd/gow/database/migration"
 )
 
 var MigrateCmd = &cobra.Command{
@@ -131,3 +131,4 @@ func init() {
 
 	MigrateRollbackCmd.Flags().IntP("step", "s", 1, "Number of migrations to rollback")
 }
+

@@ -37,3 +37,4 @@ func StripForText(htmlContent string) string {
 	// Consumers can override with richer stripping if needed.
 	return htmlContent
 }
+

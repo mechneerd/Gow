@@ -223,3 +223,4 @@ func (c *Compiler) CompileFile(path string) (string, error) {
 
 	return cachedPath, nil
 }
+

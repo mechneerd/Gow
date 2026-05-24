@@ -85,3 +85,4 @@ func (e *Encrypter) Decrypt(payload string) (string, error) {
 
 	return string(plaintext), nil
 }
+

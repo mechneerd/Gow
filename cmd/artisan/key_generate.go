@@ -59,3 +59,4 @@ func generateAppKey(length int) string {
 	_, _ = rand.Read(b)
 	return "base64:" + base64.StdEncoding.EncodeToString(b)
 }
+

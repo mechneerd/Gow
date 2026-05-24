@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/gob"
 	"time"
-	"gow/database/orm"
+	"github.com/mechneerd/gow/database/orm"
 )
 
 // DatabaseDriver is a queue driver backed by a SQL database.
@@ -111,3 +111,4 @@ func (d *DatabaseDriver) Pop() (Job, error) {
 	
 	return job, nil
 }
+

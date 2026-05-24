@@ -3,7 +3,7 @@ package notifications
 import (
 	"fmt"
 
-	"gow/mail"
+	"github.com/mechneerd/gow/mail"
 )
 
 // MailNotification is implemented by notifications that can be sent via email.
@@ -49,3 +49,4 @@ func (c *MailChannel) Send(notifiable Notifiable, notification Notification) err
 
 	return c.mailer.Send(mailable)
 }
+

@@ -82,3 +82,4 @@ Next steps:
 🎉  Happy coding with GoW!
 `, projectName, projectName, projectName)
 }
+

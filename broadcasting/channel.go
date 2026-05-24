@@ -50,3 +50,4 @@ type Event interface {
 	BroadcastAs() string
 	BroadcastWith() map[string]any
 }
+

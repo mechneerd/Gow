@@ -22,3 +22,4 @@ var AboutCmd = &cobra.Command{
 		fmt.Println("Tip: Use 'gow list' or 'artisan' to see all available commands.")
 	},
 }
+

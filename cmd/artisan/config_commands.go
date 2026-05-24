@@ -65,3 +65,4 @@ var ConfigClearCmd = &cobra.Command{
 		}
 	},
 }
+

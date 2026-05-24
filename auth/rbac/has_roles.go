@@ -96,3 +96,4 @@ func (h *HasRoles) Can(permission string) bool {
 func (h *HasRoles) SetID(id int) {
 	h.ID = id
 }
+

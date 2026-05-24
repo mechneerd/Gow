@@ -13,7 +13,7 @@ var MakeMailCmd = &cobra.Command{
 		name := args[0]
 		stub := `package mail
 
-import "gow/mail"
+import "github.com/mechneerd/gow/mail"
 
 type ` + name + ` struct {
 	mail.Mailable
@@ -100,7 +100,7 @@ var MakeResourceCmd = &cobra.Command{
 		name := args[0]
 		stub := `package resources
 
-import "gow/http/resources"
+import "github.com/mechneerd/gow/http/resources"
 
 type ` + name + ` struct {
 	resources.Resource
@@ -128,7 +128,7 @@ var MakeNotificationCmd = &cobra.Command{
 		name := args[0]
 		stub := `package notifications
 
-import "gow/notifications"
+import "github.com/mechneerd/gow/notifications"
 
 type ` + name + ` struct {
 	notifications.Notification
@@ -161,3 +161,4 @@ func Test` + name + `(t *testing.T) {
 		generateFile(path, stub)
 	},
 }
+

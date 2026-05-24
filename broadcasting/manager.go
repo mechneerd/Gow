@@ -64,3 +64,4 @@ func (m *Manager) Broadcast(channels []string, eventName string, payload map[str
 
 	return driver.Broadcast(channels, eventName, payload)
 }
+

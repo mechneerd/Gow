@@ -3,7 +3,7 @@ package broadcasting
 import (
 	"reflect"
 
-	"gow/foundation"
+	"github.com/mechneerd/gow/foundation"
 	"log"
 )
 
@@ -50,3 +50,4 @@ func (p *ServiceProvider) Boot(app *foundation.Application) {
 	// kernelIface, _ := app.Resolve((*http.Kernel)(nil))
 	// if k, ok := ... ; ok { k.OnShutdown(hub.Stop) }
 }
+

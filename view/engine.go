@@ -9,8 +9,8 @@ import (
 	"regexp"
 	"strings"
 
-	authaccess "gow/auth/access"
-	"gow/localization"
+	authaccess "github.com/mechneerd/gow/auth/access"
+	"github.com/mechneerd/gow/localization"
 )
 
 // Engine is the Goblade view rendering engine.
@@ -254,3 +254,4 @@ func (e *Engine) Make(name string, data map[string]any) (string, error) {
 
 	return buf.String(), nil
 }
+

@@ -8,11 +8,11 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"gow/bootstrap"
-	gowhttp "gow/http"
-	"gow/routing"
+	"github.com/mechneerd/gow/bootstrap"
+	gowhttp "github.com/mechneerd/gow/http"
+	"github.com/mechneerd/gow/routing"
 
-	scaffoldpkg "gow/cmd/gow/scaffold"
+	scaffoldpkg "github.com/mechneerd/gow/cmd/gow/scaffold"
 )
 
 var rootCmd = &cobra.Command{
@@ -255,4 +255,5 @@ func scaffoldWithOptions(name string, result scaffoldpkg.PromptResult, force boo
 
 	return nil
 }
+
 

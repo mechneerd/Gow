@@ -73,3 +73,4 @@ func Cors(config CorsConfig) func(http.Handler) http.Handler {
 		})
 	}
 }
+

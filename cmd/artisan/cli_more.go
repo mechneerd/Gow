@@ -28,3 +28,4 @@ var ScheduleListCmd = &cobra.Command{
 		// In real app, read from console.Schedule
 	},
 }
+

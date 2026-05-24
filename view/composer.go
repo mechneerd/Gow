@@ -36,3 +36,4 @@ func (r *ComposerRegistry) Compose(view string, data map[string]any) {
 		}
 	}
 }
+

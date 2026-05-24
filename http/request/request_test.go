@@ -3,7 +3,7 @@ package request
 import (
 	"bytes"
 	"context"
-	"gow/routing"
+	"github.com/mechneerd/gow/routing"
 	"io"
 	"net/http/httptest"
 	"testing"
@@ -86,3 +86,4 @@ func TestRequestHelpers(t *testing.T) {
 		}
 	})
 }
+

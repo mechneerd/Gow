@@ -3,7 +3,7 @@ package examples
 import (
 	"fmt"
 
-	"gow/http/livewire"
+	"github.com/mechneerd/gow/http/livewire"
 )
 
 // Counter is a ready-to-use Livewire-style component example.
@@ -56,3 +56,4 @@ func (c *Counter) Render() string {
     </div>
 </div>`, c.GetID(), c.Count)
 }
+

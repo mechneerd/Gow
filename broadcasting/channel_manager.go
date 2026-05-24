@@ -57,3 +57,4 @@ func (m *ChannelManager) Authorize(user any, channelName string) (bool, map[stri
 
 	return false, nil
 }
+

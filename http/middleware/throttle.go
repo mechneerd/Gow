@@ -1,8 +1,8 @@
 package middleware
 
 import (
-	"gow/cache"
-	gowhttp "gow/http"
+	"github.com/mechneerd/gow/cache"
+	gowhttp "github.com/mechneerd/gow/http"
 	"net/http"
 	"strconv"
 )
@@ -57,3 +57,4 @@ func Throttle(maxAttempts, decayMinutes int) func(http.Handler) http.Handler {
 func ThrottleNamed(name string, maxAttempts, decayMinutes int) func(http.Handler) http.Handler {
 	return ThrottleRequests(cache.NewRateLimiter(cache.NewMemoryDriver()), maxAttempts, decayMinutes, name)
 }
+

@@ -22,7 +22,7 @@ var MakeRequestCmd = &cobra.Command{
 		stub := `package requests
 
 import (
-	"gow/http/request"
+	"github.com/mechneerd/gow/http/request"
 )
 
 type ` + name + ` struct {
@@ -53,3 +53,4 @@ func (r *` + name + `) Authorize() bool {
 		fmt.Printf("Form Request created: %s\n", path)
 	},
 }
+

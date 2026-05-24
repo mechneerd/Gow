@@ -93,3 +93,4 @@ func getMetadata(typ reflect.Type) *ModelMetadata {
 	metaCache.Store(typ, meta)
 	return meta
 }
+

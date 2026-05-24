@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
-	"gow/foundation"
-	gowhttp "gow/http"
-	"gow/routing"
+	"github.com/mechneerd/gow/foundation"
+	gowhttp "github.com/mechneerd/gow/http"
+	"github.com/mechneerd/gow/routing"
 	"net/http"
 )
 
@@ -55,3 +55,4 @@ func main() {
 		panic(err)
 	}
 }
+

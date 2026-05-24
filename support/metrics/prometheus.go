@@ -25,3 +25,4 @@ func (p *PrometheusExporter) Handler() http.HandlerFunc {
 		}
 	}
 }
+

@@ -267,3 +267,4 @@ func TestSignedRoutes(t *testing.T) {
 		t.Error("Expected valid signature for freshly generated URL")
 	}
 }
+

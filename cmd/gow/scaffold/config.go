@@ -32,3 +32,4 @@ func GetSkeletonConfig() SkeletonConfig {
 		},
 	}
 }
+

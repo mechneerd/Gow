@@ -23,3 +23,4 @@ func (i *Inertia) Render(w http.ResponseWriter, component string, props map[stri
 		"url":       "",
 	})
 }
+

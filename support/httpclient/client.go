@@ -246,3 +246,4 @@ func (c *Client) request(method, path string, body io.Reader) (*Response, error)
 
 	return &Response{Response: resp}, nil
 }
+

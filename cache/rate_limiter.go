@@ -67,3 +67,4 @@ func (rl *RateLimiter) Reset(key string) error {
 	rl.cache.Forget(key + ":timer")
 	return nil
 }
+

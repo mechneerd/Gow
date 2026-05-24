@@ -80,7 +80,7 @@ func (c *AuthController) Logout(w http.ResponseWriter, r *http.Request) {
 
 const loginRequestStub = `package requests
 
-import "gow/http/request"
+import "github.com/mechneerd/gow/http/request"
 
 type LoginRequest struct {}
 
@@ -98,7 +98,7 @@ func (r *LoginRequest) Rules() map[string][]string {
 
 const registerRequestStub = `package requests
 
-import "gow/http/request"
+import "github.com/mechneerd/gow/http/request"
 
 type RegisterRequest struct {}
 
@@ -180,3 +180,4 @@ func (u *User) GetAuthPassword() string {
 </body>
 </html>
 `
+

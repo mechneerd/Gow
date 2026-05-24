@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"context"
-	"gow/session"
+	"github.com/mechneerd/gow/session"
 	"net/http"
 	"time"
 )
@@ -54,3 +54,4 @@ func GetSession(r *http.Request) *session.Manager {
 	}
 	return nil
 }
+

@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"time"
 
-	"gow/cache"
+	"github.com/mechneerd/gow/cache"
 )
 
 // DatabaseChecker pings a *sql.DB connection to verify database health.
@@ -61,3 +61,4 @@ func (c *CacheChecker) Check(ctx context.Context) error {
 	_ = c.store.Forget(key)
 	return nil
 }
+

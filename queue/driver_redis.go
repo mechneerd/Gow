@@ -6,7 +6,7 @@ import (
 	"encoding/gob"
 	"errors"
 
-	"gow/database/redis"
+	"github.com/mechneerd/gow/database/redis"
 )
 
 // RedisDriver is a queue driver backed by Redis.
@@ -63,3 +63,4 @@ func (d *RedisDriver) Pop() (Job, error) {
 
 	return job, nil
 }
+

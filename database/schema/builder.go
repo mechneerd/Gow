@@ -3,7 +3,7 @@ package schema
 import (
 	"database/sql"
 	"fmt"
-	"gow/database/dialect"
+	"github.com/mechneerd/gow/database/dialect"
 	"strings"
 )
 
@@ -75,3 +75,4 @@ func (s *Builder) DropIfExists(table string) error {
 	_, err := s.conn.Exec(query)
 	return err
 }
+

@@ -165,3 +165,4 @@ func (p *GitHubProvider) User(ctx context.Context, code string) (*User, error) {
 		Token:  accessToken,
 	}, nil
 }
+

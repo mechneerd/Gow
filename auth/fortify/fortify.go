@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"gow/auth"
-	"gow/auth/password"
-	"gow/routing"
+	"github.com/mechneerd/gow/auth"
+	"github.com/mechneerd/gow/auth/password"
+	"github.com/mechneerd/gow/routing"
 )
 
 // Fortify provides a headless authentication backend for SPAs and APIs.
@@ -169,3 +169,4 @@ func (f *Fortify) handleEnableTwoFactor(w http.ResponseWriter, r *http.Request) 
 	})
 	return nil
 }
+

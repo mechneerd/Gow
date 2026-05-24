@@ -129,3 +129,4 @@ func TestValidatorRegex(t *testing.T) {
 		t.Errorf("Expected bad to fail regex")
 	}
 }
+

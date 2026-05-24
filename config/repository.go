@@ -96,3 +96,4 @@ func (r *Repository) Set(key string, value string) {
 	defer r.mu.Unlock()
 	r.values[key] = value
 }
+

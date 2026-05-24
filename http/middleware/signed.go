@@ -3,7 +3,7 @@ package middleware
 import (
 	"net/http"
 
-	"gow/routing"
+	"github.com/mechneerd/gow/routing"
 )
 
 // ValidateSignature is a middleware that requires the request to have a valid signed URL signature.
@@ -20,3 +20,4 @@ func ValidateSignature(generator *routing.URLGenerator) func(http.Handler) http.
 		})
 	}
 }
+

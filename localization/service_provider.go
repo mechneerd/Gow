@@ -1,7 +1,7 @@
 package localization
 
 import (
-	"gow/foundation"
+	"github.com/mechneerd/gow/foundation"
 	"path/filepath"
 )
 
@@ -34,3 +34,4 @@ func (p *ServiceProvider) Boot(app *foundation.Application) {
 	// Bind to container (use pointer type)
 	app.Singleton((*Translator)(nil), t)
 }
+

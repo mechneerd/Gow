@@ -29,3 +29,4 @@ func RequireVerified(guard Guard, redirectTo string) func(http.Handler) http.Han
 		})
 	}
 }
+

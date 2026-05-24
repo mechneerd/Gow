@@ -72,3 +72,4 @@ func TestMemoryDriverTryPop(t *testing.T) {
 		t.Errorf("Expected queue length 0, got %d", driver.Len())
 	}
 }
+

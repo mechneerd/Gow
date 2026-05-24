@@ -110,3 +110,4 @@ func Wrap(code int, msg string, cause error) *HttpException {
 		cause:   cause,
 	}
 }
+

@@ -11,11 +11,11 @@ import (
 	"github.com/traefik/yaegi/interp"
 	"github.com/traefik/yaegi/stdlib"
 
-	"gow/bootstrap"
-	"gow/cmd/tinker"
-	"gow/config"
-	"gow/container"
-	"gow/database/orm"
+	"github.com/mechneerd/gow/bootstrap"
+	"github.com/mechneerd/gow/cmd/tinker"
+	"github.com/mechneerd/gow/config"
+	"github.com/mechneerd/gow/container"
+	"github.com/mechneerd/gow/database/orm"
 )
 
 var TinkerCmd = &cobra.Command{
@@ -77,3 +77,4 @@ func init() {
 	// This will be picked up when make_commands.go runs
 	_ = reflect.TypeOf(TinkerCmd)
 }
+

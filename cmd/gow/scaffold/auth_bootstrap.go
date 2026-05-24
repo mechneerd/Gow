@@ -81,3 +81,4 @@ func InjectRBACBootstrapExamples(projectDir string) error {
 	fmt.Println("   ✓ Added RBAC middleware examples to bootstrap/app.go")
 	return nil
 }
+

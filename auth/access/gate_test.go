@@ -93,3 +93,4 @@ func TestGateBeforeAfterHooks(t *testing.T) {
 		t.Error("Normal user should hit closure and be denied")
 	}
 }
+

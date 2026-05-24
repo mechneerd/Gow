@@ -16,3 +16,4 @@ func (j *SendMailJob) Handle() error {
 func (j *SendMailJob) Failed(err error) {
 	// Consumers can override or log via their preferred logger.
 }
+

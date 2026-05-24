@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"gow/database/orm"
-	"gow/database/query"
+	"github.com/mechneerd/gow/database/orm"
+	"github.com/mechneerd/gow/database/query"
 )
 
 // DatabaseNotification defines the interface for notifications that can be stored in the database.
@@ -65,3 +65,4 @@ func getNotifiableKey(notifiable Notifiable) (string, string) {
 	typeName := fmt.Sprintf("%T", notifiable)
 	return typeName, id
 }
+

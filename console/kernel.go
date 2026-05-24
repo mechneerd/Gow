@@ -2,7 +2,7 @@ package console
 
 import (
 	"context"
-	"gow/foundation"
+	"github.com/mechneerd/gow/foundation"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -43,3 +43,4 @@ func (k *Kernel) Run() {
 		os.Exit(1)
 	}
 }
+

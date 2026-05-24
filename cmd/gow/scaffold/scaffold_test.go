@@ -186,3 +186,4 @@ func main() { }
 		t.Error("Expected RBAC examples to be injected into bootstrap/app.go")
 	}
 }
+

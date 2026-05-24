@@ -1,7 +1,7 @@
 package foundation
 
 import (
-	"gow/container"
+	"github.com/mechneerd/gow/container"
 )
 
 // Application represents the GoW framework application.
@@ -81,3 +81,4 @@ func (app *Application) DiscoverProviders() {
 func (app *Application) PublishProvider(p PublishableProvider) error {
 	return PublishAssets(p, app.basePath)
 }
+

@@ -95,3 +95,4 @@ func (r *Response) JSON(target any) error {
 func (r *Response) StatusCode() int {
 	return r.Raw.StatusCode
 }
+

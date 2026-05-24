@@ -3,8 +3,8 @@ package orm
 import (
 	"database/sql"
 	"errors"
-	"gow/database/dialect"
-	"gow/database/query"
+	"github.com/mechneerd/gow/database/dialect"
+	"github.com/mechneerd/gow/database/query"
 	"testing"
 )
 
@@ -70,3 +70,4 @@ func TestORMEvents(t *testing.T) {
 		t.Errorf("Expected ErrCancelled, got %v", err)
 	}
 }
+

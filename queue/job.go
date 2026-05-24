@@ -7,3 +7,4 @@ type Job interface {
 	// Failed handles job failure after all retries are exhausted.
 	Failed(err error)
 }
+

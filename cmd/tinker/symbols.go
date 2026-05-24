@@ -5,9 +5,9 @@ import (
 
 	"github.com/traefik/yaegi/interp"
 
-	"gow/config"
-	"gow/database/orm"
-	"gow/foundation"
+	"github.com/mechneerd/gow/config"
+	"github.com/mechneerd/gow/database/orm"
+	"github.com/mechneerd/gow/foundation"
 )
 
 // Symbols returns a map of preloaded GoW objects for the Tinker REPL.
@@ -20,3 +20,4 @@ func Symbols(app *foundation.Application, db *orm.DB, cfg *config.Repository) in
 		},
 	}
 }
+

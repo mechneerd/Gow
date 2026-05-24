@@ -118,3 +118,4 @@ func TestRespondWithMeta(t *testing.T) {
 		t.Errorf("Expected next link, got %v", payload.Links["next"])
 	}
 }
+

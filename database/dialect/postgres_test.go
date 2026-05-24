@@ -53,3 +53,4 @@ func TestPostgresDialect_CompileInsert(t *testing.T) {
 		t.Errorf("expected 2 args, got %d", len(args))
 	}
 }
+

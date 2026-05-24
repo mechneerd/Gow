@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"time"
 
-	"gow/database/redis"
+	"github.com/mechneerd/gow/database/redis"
 )
 
 // RedisStore is a session driver backed by Redis.
@@ -58,3 +58,4 @@ func (s *RedisStore) Write(id string, data map[string]any) error {
 func (s *RedisStore) Destroy(id string) error {
 	return s.client.Del(s.ctx, s.sessionKey(id))
 }
+

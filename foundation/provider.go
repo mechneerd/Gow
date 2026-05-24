@@ -21,3 +21,4 @@ type PublishableProvider interface {
 	ServiceProvider
 	Publishes() map[string]string
 }
+

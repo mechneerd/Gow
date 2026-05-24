@@ -25,3 +25,4 @@ func (t *Telescope) Record(entry Entry) {
 func (t *Telescope) All() []Entry {
 	return t.entries
 }
+

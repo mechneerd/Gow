@@ -1,9 +1,9 @@
 package middleware
 
 import (
-	"gow/auth"
-	"gow/auth/access"
-	gowhttp "gow/http"
+	"github.com/mechneerd/gow/auth"
+	"github.com/mechneerd/gow/auth/access"
+	gowhttp "github.com/mechneerd/gow/http"
 	"net/http"
 )
 
@@ -39,3 +39,4 @@ func Authorize(gate *access.Gate, ability string) func(http.Handler) http.Handle
 		})
 	}
 }
+

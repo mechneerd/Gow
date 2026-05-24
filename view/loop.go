@@ -27,3 +27,4 @@ func newLoop(index, total int) *Loop {
 		Depth:     1,
 	}
 }
+

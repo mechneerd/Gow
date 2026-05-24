@@ -9,3 +9,4 @@ type Store interface {
 	// Destroy removes the session data by ID.
 	Destroy(id string) error
 }
+

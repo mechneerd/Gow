@@ -3,7 +3,7 @@ package query
 import (
 	"context"
 	"database/sql"
-	"gow/database/dialect"
+	"github.com/mechneerd/gow/database/dialect"
 	"strings"
 	"testing"
 )
@@ -117,3 +117,4 @@ func TestBuilderDMLGeneration(t *testing.T) {
 		t.Errorf("Expected DELETE query, got: %s", mockDB.LastQuery)
 	}
 }
+

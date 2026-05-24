@@ -52,3 +52,4 @@ func (c *Counter) Render() string {
     </div>
 </div>`, c.GetID(), c.Count)
 }
+

@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"runtime/debug"
 
-	gowhttp "gow/http"
+	gowhttp "github.com/mechneerd/gow/http"
 )
 
 // ErrorHandler recovers from panics and converts them to HTTP responses.
@@ -41,3 +41,4 @@ func ErrorHandler(debugMode bool) func(http.Handler) http.Handler {
 		})
 	}
 }
+

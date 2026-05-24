@@ -139,3 +139,4 @@ func (b *Blueprint) Columns() []ColumnDefinition {
 func (b *Blueprint) Table() string {
 	return b.table
 }
+

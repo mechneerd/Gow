@@ -36,3 +36,4 @@ func (b *BcryptHasher) NeedsRehash(hashed string) bool {
 	}
 	return cost != b.cost
 }
+

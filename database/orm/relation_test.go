@@ -2,8 +2,8 @@ package orm
 
 import (
 	"database/sql"
-	"gow/database/dialect"
-	"gow/database/query"
+	"github.com/mechneerd/gow/database/dialect"
+	"github.com/mechneerd/gow/database/query"
 	"testing"
 
 	_ "modernc.org/sqlite"
@@ -84,3 +84,4 @@ func TestEagerLoading(t *testing.T) {
 		t.Errorf("Expected post user to be Alice, got %s", posts[0].User.Name)
 	}
 }
+

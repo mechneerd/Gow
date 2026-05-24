@@ -75,3 +75,4 @@ func (r *Router) CallMacro(name string, args ...any) (any, error) {
 	}
 	return nil, fmt.Errorf("macro %s not found", name)
 }
+

@@ -69,3 +69,4 @@ func PublishAssets(provider PublishableProvider, basePath string) error {
 	}
 	return nil
 }
+

@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"gow/database/redis"
+	"github.com/mechneerd/gow/database/redis"
 )
 
 // RedisStore is a cache driver backed by Redis.
@@ -67,3 +67,4 @@ func (s *RedisStore) Forget(key string) error {
 func (s *RedisStore) Flush() error {
 	return s.client.RawClient().FlushDB(s.ctx).Err()
 }
+

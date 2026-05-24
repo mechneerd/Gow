@@ -3,7 +3,7 @@ package migration
 import (
 	"database/sql"
 	"fmt"
-	"gow/database/schema"
+	"github.com/mechneerd/gow/database/schema"
 	"sort"
 )
 
@@ -371,3 +371,4 @@ func (m *Migrator) Status() error {
 
 	return nil
 }
+

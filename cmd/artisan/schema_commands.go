@@ -51,3 +51,4 @@ var ModelPruneCmd = &cobra.Command{
 		fmt.Println("Models pruned successfully.")
 	},
 }
+

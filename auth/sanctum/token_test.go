@@ -2,9 +2,9 @@ package sanctum
 
 import (
 	"database/sql"
-	"gow/database/dialect"
-	"gow/database/orm"
-	"gow/database/query"
+	"github.com/mechneerd/gow/database/dialect"
+	"github.com/mechneerd/gow/database/orm"
+	"github.com/mechneerd/gow/database/query"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -91,3 +91,4 @@ func TestTokenManager(t *testing.T) {
 		t.Errorf("Expected 200 with valid token, got %d", w.Result().StatusCode)
 	}
 }
+

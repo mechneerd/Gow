@@ -1,7 +1,7 @@
 package request
 
 import (
-	"gow/validation"
+	"github.com/mechneerd/gow/validation"
 	"net/http"
 )
 
@@ -62,3 +62,4 @@ func Validate(r *http.Request, form FormRequest) (map[string][]error, bool) {
 
 	return nil, true
 }
+

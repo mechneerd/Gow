@@ -12,3 +12,4 @@ type Store interface {
 	Forget(key string) error
 	Flush() error
 }
+

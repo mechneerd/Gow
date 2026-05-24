@@ -28,3 +28,4 @@ func (d *CookieDriver) Write(id string, data map[string]any) error {
 func (d *CookieDriver) Destroy(id string) error {
 	return nil
 }
+

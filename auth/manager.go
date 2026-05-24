@@ -4,7 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 
-	"gow/session"
+	"github.com/mechneerd/gow/session"
 )
 
 // SessionGuard implements the Guard interface using standard HTTP sessions.
@@ -134,3 +134,4 @@ func (m *Manager) AddGuard(name string, guard Guard) {
 func (m *Manager) Guard(name string) Guard {
 	return m.guards[name]
 }
+

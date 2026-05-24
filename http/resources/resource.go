@@ -68,3 +68,4 @@ func RespondWithMeta(w http.ResponseWriter, data any, meta, links map[string]any
 
 	json.NewEncoder(w).Encode(payload)
 }
+

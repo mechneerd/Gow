@@ -123,3 +123,4 @@ func (g *Gate) Authorize(user any, ability string, args ...any) {
 		panic(fmt.Sprintf("This action is unauthorized: %s", ability))
 	}
 }
+

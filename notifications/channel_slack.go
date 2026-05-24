@@ -25,3 +25,4 @@ func (s *SlackChannel) Send(notifiable any, notification Notification) error {
 	http.Post(s.WebhookURL, "application/json", bytes.NewBuffer(body))
 	return nil
 }
+

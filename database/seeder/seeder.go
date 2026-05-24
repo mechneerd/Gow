@@ -1,6 +1,6 @@
 package seeder
 
-import "gow/database/orm"
+import "github.com/mechneerd/gow/database/orm"
 
 // Seeder is an interface for database seeders.
 type Seeder interface {
@@ -34,3 +34,4 @@ func (r *Runner) Run() error {
 	}
 	return nil
 }
+

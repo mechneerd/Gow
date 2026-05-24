@@ -4,8 +4,8 @@ import (
 	"reflect"
 	"testing"
 
-	"gow/mail"
-	"gow/queue"
+	"github.com/mechneerd/gow/mail"
+	"github.com/mechneerd/gow/queue"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -86,3 +86,4 @@ func (f *EventFake) AssertDispatched(t *testing.T, eventType any, count int) {
 	
 	assert.Equal(t, count, actualCount, "Expected %d events of type %v to be dispatched, found %d", count, targetType, actualCount)
 }
+

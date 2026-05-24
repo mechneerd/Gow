@@ -99,3 +99,4 @@ func TestEngineCycleDetection(t *testing.T) {
 		t.Errorf("Expected cycle detection error, got: %v", err)
 	}
 }
+

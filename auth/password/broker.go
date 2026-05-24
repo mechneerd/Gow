@@ -3,9 +3,9 @@ package password
 import (
 	"crypto/rand"
 	"encoding/hex"
-	"gow/auth"
-	"gow/database/orm"
-	"gow/mail"
+	"github.com/mechneerd/gow/auth"
+	"github.com/mechneerd/gow/database/orm"
+	"github.com/mechneerd/gow/mail"
 )
 
 // Broker handles password reset logic.
@@ -60,3 +60,4 @@ func generateToken(length int) (string, error) {
 	}
 	return hex.EncodeToString(bytes), nil
 }
+

@@ -134,3 +134,4 @@ func buildLinks(baseURL string, current, last int) []Link {
 func itoa(i int) string {
 	return fmt.Sprintf("%d", i)
 }
+

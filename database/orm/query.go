@@ -5,9 +5,9 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"gow/database/dialect"
-	"gow/database/pagination"
-	"gow/database/query"
+	"github.com/mechneerd/gow/database/dialect"
+	"github.com/mechneerd/gow/database/pagination"
+	"github.com/mechneerd/gow/database/query"
 	"reflect"
 	"strings"
 	"time"
@@ -844,3 +844,4 @@ func touchRelations(model any) {
 		_ = now // Extend with real parent update when relation metadata is richer.
 	}
 }
+

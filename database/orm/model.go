@@ -1,7 +1,7 @@
 package orm
 
 import (
-	"gow/database/query"
+	"github.com/mechneerd/gow/database/query"
 	"reflect"
 	"strings"
 )
@@ -326,3 +326,4 @@ type SerializesAttributes interface {
 type Touches interface {
 	Touches() []string // relation names (e.g. ["post", "author"])
 }
+

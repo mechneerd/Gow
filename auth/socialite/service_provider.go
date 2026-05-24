@@ -1,7 +1,7 @@
 package socialite
 
 import (
-	"gow/foundation"
+	"github.com/mechneerd/gow/foundation"
 )
 
 // ServiceProvider registers Socialite.
@@ -17,3 +17,4 @@ func (p *ServiceProvider) Register(app *foundation.Application) {
 }
 
 func (p *ServiceProvider) Boot(app *foundation.Application) {}
+

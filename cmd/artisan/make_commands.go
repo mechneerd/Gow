@@ -44,7 +44,7 @@ var MakeControllerCmd = &cobra.Command{
 import (
 	"net/http"
 
-	"gow/http/request"
+	"github.com/mechneerd/gow/http/request"
 )
 
 type ` + name + ` struct{}
@@ -111,7 +111,7 @@ var MakeModelCmd = &cobra.Command{
 
 		stub := `package Models
 
-import "gow/database/orm"
+import "github.com/mechneerd/gow/database/orm"
 
 type {Name} struct {
 	orm.Model
@@ -322,3 +322,4 @@ func init() {
 	MakeControllerCmd.Flags().Bool("api", false, "Generate an API controller class")
 	MakeModelCmd.Flags().Bool("migration", false, "Also create a migration for the model")
 }
+

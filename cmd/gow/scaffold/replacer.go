@@ -77,3 +77,4 @@ func DefaultReplaceContext(appName string) ReplaceContext {
 		Year:           time.Now().Format("2006"),
 	}
 }
+

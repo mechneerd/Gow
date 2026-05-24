@@ -16,3 +16,4 @@ func (s *Server) Start(addr string) error {
 	// In real Octane, this would be a persistent worker
 	return http.ListenAndServe(addr, s.Handler)
 }
+

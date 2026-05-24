@@ -50,3 +50,4 @@ var ListCmd = &cobra.Command{
 		fmt.Println("\nUse 'gow <command> --help' for more information.")
 	},
 }
+

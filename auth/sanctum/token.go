@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"gow/database/orm"
-	"gow/support/str"
+	"github.com/mechneerd/gow/database/orm"
+	"github.com/mechneerd/gow/support/str"
 )
 
 // PersonalAccessToken represents the database model.
@@ -115,3 +115,4 @@ func (tm *TokenManager) Middleware() func(http.Handler) http.Handler {
 		})
 	}
 }
+

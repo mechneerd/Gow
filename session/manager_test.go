@@ -100,3 +100,4 @@ func TestSessionManager(t *testing.T) {
 		t.Errorf("expected new session to be saved in store")
 	}
 }
+

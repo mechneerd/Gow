@@ -3,7 +3,7 @@ package middleware
 import (
 	"net/http"
 
-	"gow/auth"
+	"github.com/mechneerd/gow/auth"
 )
 
 // RoleMiddleware checks if the authenticated user has the required role.
@@ -58,3 +58,4 @@ func PermissionMiddleware(permission string) func(http.Handler) http.Handler {
 		})
 	}
 }
+

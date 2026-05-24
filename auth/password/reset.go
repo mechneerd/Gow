@@ -3,7 +3,7 @@ package password
 import (
 	"time"
 
-	"gow/database/orm"
+	"github.com/mechneerd/gow/database/orm"
 )
 
 // PasswordReset represents a password reset token.
@@ -59,3 +59,4 @@ func Delete(db *orm.DB, email, token string) error {
 		Delete(&PasswordReset{})
 	return err
 }
+

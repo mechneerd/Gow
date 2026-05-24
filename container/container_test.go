@@ -115,3 +115,4 @@ func TestContainerDependencyInjection(t *testing.T) {
 		t.Errorf("Expected Mailer dependency to be injected, got nil")
 	}
 }
+

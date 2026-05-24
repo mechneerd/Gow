@@ -3,9 +3,9 @@
 package main
 
 import (
-	"gow/bootstrap"
-	"gow/cmd/artisan"
-	"gow/console"
+	"github.com/mechneerd/gow/bootstrap"
+	"github.com/mechneerd/gow/cmd/artisan"
+	"github.com/mechneerd/gow/console"
 
 	"github.com/spf13/cobra"
 )
@@ -79,3 +79,4 @@ func main() {
 	// Run the console kernel
 	kernel.Run()
 }
+

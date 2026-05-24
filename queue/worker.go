@@ -49,3 +49,4 @@ func (w *Worker) processJob(job Job) {
 		job.Failed(err)
 	}
 }
+

@@ -41,3 +41,4 @@ func ` + name + `() {
 		fmt.Printf("Seeder created: %s\n", path)
 	},
 }
+

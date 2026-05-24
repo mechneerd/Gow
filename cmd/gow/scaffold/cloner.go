@@ -92,3 +92,4 @@ func CleanupTemp(dir string) {
 func GetTemplateFullPath(skeletonPath, templateRelativePath string) string {
 	return filepath.Join(skeletonPath, templateRelativePath)
 }
+

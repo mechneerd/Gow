@@ -10,10 +10,10 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"gow/database/orm"
-	"gow/database/query"
-	"gow/foundation"
-	"gow/routing"
+	"github.com/mechneerd/gow/database/orm"
+	"github.com/mechneerd/gow/database/query"
+	"github.com/mechneerd/gow/foundation"
+	"github.com/mechneerd/gow/routing"
 )
 
 // TestCase provides a fluent testing API similar to Laravel.
@@ -218,3 +218,4 @@ func (tc *TestCase) AssertDatabaseHasExactly(table string, conditions map[string
 		tc.Errorf("Failed asserting that table [%s] has exactly 1 row matching %v. Found %d", table, conditions, count)
 	}
 }
+

@@ -59,3 +59,4 @@ func (tp *TrustedProxies) Handle(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
+

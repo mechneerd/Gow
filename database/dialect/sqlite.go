@@ -218,3 +218,4 @@ func (d *SQLiteDialect) CompileDelete(table string, wheres []WhereClause) (strin
 
 	return sql.String(), args
 }
+

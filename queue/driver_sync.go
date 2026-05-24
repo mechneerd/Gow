@@ -32,3 +32,4 @@ func (d *SyncDriver) Pop() (Job, error) {
 func (d *SyncDriver) Channel() <-chan Job {
 	return d.jobs
 }
+

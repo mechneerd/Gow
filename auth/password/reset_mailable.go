@@ -1,6 +1,6 @@
 package password
 
-import "gow/mail"
+import "github.com/mechneerd/gow/mail"
 
 // ResetPasswordMailable sends the password reset link.
 type ResetPasswordMailable struct {
@@ -45,3 +45,4 @@ The GoW Team
 		Markdown(markdown).
 		Build()
 }
+

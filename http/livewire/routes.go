@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"gow/routing"
+	"github.com/mechneerd/gow/routing"
 )
 
 // RegisterRoutes registers the standard Livewire endpoints.
@@ -57,3 +57,4 @@ func (c *demoCounter) Render() string {
 		</div>
 	</div>`
 }
+

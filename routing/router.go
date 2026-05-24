@@ -3,7 +3,7 @@ package routing
 import (
 	"context"
 	"errors"
-	"gow/http/exception"
+	"github.com/mechneerd/gow/http/exception"
 	"log"
 	"net/http"
 	"os"
@@ -397,3 +397,4 @@ func Model[T any](r *http.Request, key string) (T, bool) {
 	}
 	return zero, false
 }
+

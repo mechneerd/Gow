@@ -71,3 +71,4 @@ func TestHttpExceptionRenderHTML(t *testing.T) {
 		t.Errorf("unexpected HTML body: %s", body)
 	}
 }
+

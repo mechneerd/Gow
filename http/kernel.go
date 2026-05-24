@@ -3,8 +3,8 @@ package http
 import (
 	"context"
 	"fmt"
-	"gow/foundation"
-	"gow/routing"
+	"github.com/mechneerd/gow/foundation"
+	"github.com/mechneerd/gow/routing"
 	"log"
 	"net/http"
 	"os"
@@ -126,3 +126,4 @@ func (k *Kernel) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	handler.ServeHTTP(w, r)
 }
+

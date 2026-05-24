@@ -54,3 +54,4 @@ type BeforeRestoreHook interface {
 type AfterRestoreHook interface {
 	AfterRestore() error
 }
+

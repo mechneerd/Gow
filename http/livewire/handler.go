@@ -29,3 +29,4 @@ func MountAndRender(w http.ResponseWriter, component Component) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(payload)
 }
+

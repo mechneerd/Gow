@@ -55,3 +55,4 @@ func (l *Lockout) Reset(key string) {
 	delete(l.attempts, key)
 	delete(l.locked, key)
 }
+

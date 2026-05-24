@@ -17,3 +17,4 @@ type Guard interface {
 	// Logout logs the user out of the application.
 	Logout()
 }
+

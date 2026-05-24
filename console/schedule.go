@@ -107,3 +107,4 @@ func (s *Schedule) Run() {
 	// Block forever
 	select {}
 }
+

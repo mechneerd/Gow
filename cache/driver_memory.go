@@ -92,3 +92,4 @@ func (d *MemoryDriver) Flush() error {
 	d.items = make(map[string]memoryItem)
 	return nil
 }
+
