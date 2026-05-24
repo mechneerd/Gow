@@ -1,4 +1,4 @@
-module gow
+module module github.com/mechneerd/gow
 
 go 1.26.3
 
