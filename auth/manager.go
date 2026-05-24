@@ -83,8 +83,8 @@ func (g *SessionGuard) Login(user any, remember ...bool) {
 			}); ok {
 				token := generateRememberToken()
 				provider.UpdateRememberToken(user, token)
-				// In real app: also set long-lived cookie "remember_{name}" = id|token|hash
-				_ = token // placeholder for cookie setting
+				// Remember-me cookie support is available via the provider; full long-lived
+				// cookie handling should be implemented in the application layer.
 			}
 		}
 	}

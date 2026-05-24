@@ -67,7 +67,7 @@ var QueueRetryCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		id := args[0]
 		fmt.Printf("Retrying failed job %s...\n", id)
-		// Logic to move job from failed_jobs back to jobs table
-		fmt.Println("Job pushed back onto the queue.")
+		// Full retry from failed_jobs table requires database queue driver wiring.
+		fmt.Println("Job retry requested (implementation depends on queue driver).")
 	},
 }

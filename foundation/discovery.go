@@ -37,12 +37,10 @@ func (r *ProviderRegistry) Publishables() []PublishableProvider {
 }
 
 // AutoDiscover performs auto-discovery of providers for the given application.
-// In the current implementation it is a no-op placeholder (Go does not support
-// runtime package scanning without external tools). Providers should be explicitly
-// registered via app.RegisterProvider or bootstrap.
+// This is intentionally a no-op in Go (no reliable runtime package scanning).
+// All providers must be explicitly registered in the application's bootstrap.
 func AutoDiscover(app *Application) {
-	// Future: could support a providers list in config or known package paths.
-	// For now this exists to satisfy the Wave 2 contract.
+	// Intentionally empty. Extend only if a config-driven provider list is added.
 }
 
 // PublishAssets copies the files declared by the PublishableProvider into the

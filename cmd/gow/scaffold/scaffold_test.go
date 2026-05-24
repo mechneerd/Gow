@@ -3,6 +3,7 @@ package scaffold
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -156,5 +157,32 @@ func TestPrepareSkeleton_LocalPath(t *testing.T) {
 	// Verify the structure was copied
 	if _, err := os.Stat(filepath.Join(resultPath, "templates/web/go.mod.template")); os.IsNotExist(err) {
 		t.Error("Expected skeleton structure to be copied")
+	}
+}
+
+func TestInjectRBACBootstrapExamples(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "rbac-test-*")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	bootstrapDir := filepath.Join(tmpDir, "bootstrap")
+	os.MkdirAll(bootstrapDir, 0755)
+
+	original := `package main
+
+func main() { }
+`
+	os.WriteFile(filepath.Join(bootstrapDir, "app.go"), []byte(original), 0644)
+
+	err = InjectRBACBootstrapExamples(tmpDir)
+	if err != nil {
+		t.Fatalf("InjectRBACBootstrapExamples failed: %v", err)
+	}
+
+	content, _ := os.ReadFile(filepath.Join(bootstrapDir, "app.go"))
+	if !strings.Contains(string(content), "RBAC + Auth Middleware") {
+		t.Error("Expected RBAC examples to be injected into bootstrap/app.go")
 	}
 }

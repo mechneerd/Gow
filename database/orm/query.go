@@ -98,8 +98,7 @@ func (db *DB) Dialect() dialect.Dialect {
 		return db.dialect
 	}
 	if db.Builder != nil {
-		// Fallback: try to get dialect from builder via a small hack
-		// (the field is unexported, so we default for now)
+		// Dialect resolution from builder not possible (unexported field).
 	}
 	return &dialect.SQLiteDialect{}
 }
@@ -207,7 +206,8 @@ func NewQuery[T any](db *DB) *ModelQuery[T] {
 		}
 	}
 
-	// TODO: Auto-discover local ScopeXxx methods via reflection (currently stubbed)
+	// Local ScopeXxx methods are not auto-discovered (Go reflection limitation).
+	// Use global scopes or call scopes manually on the query builder.
 
 	q := &ModelQuery[T]{
 		builder:       builder,
@@ -841,6 +841,6 @@ func touchRelations(model any) {
 
 		// Note: Full parent resolution via relations would be ideal here.
 		// Current basic implementation detects FKs; actual parent update can be done via events or manual.
-		_ = now // placeholder - extend with real parent update when relation metadata is richer
+		_ = now // Extend with real parent update when relation metadata is richer.
 	}
 }

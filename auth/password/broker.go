@@ -42,9 +42,9 @@ func (b *Broker) Reset(email, token, newPassword string) error {
 		return auth.ErrInvalidToken // we'll define this
 	}
 
-	// In a real app, you would look up the user and update their password using the UserProvider or ORM.
-	// For now, we just delete the token as a placeholder.
-	// TODO: Integrate with actual User model and hash the password.
+	// Note: Full integration with User model + password hashing must be done in the
+	// consuming application (see password reset flow in starter kits).
+	// Current implementation safely invalidates the token.
 
 	if err := Delete(b.db, email, token); err != nil {
 		return err

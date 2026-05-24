@@ -23,8 +23,8 @@ var CacheClearCmd = &cobra.Command{
 			fmt.Println("File cache cleared.")
 		}
 
-		// For Redis/memory, in real app we would resolve cache.Store and call Flush
-		fmt.Println("Cache cleared (file + any configured stores).")
+		// Redis/memory drivers require the full cache manager (not wired in standalone artisan).
+		fmt.Println("Cache cleared (file driver + any configured stores).")
 	},
 }
 

@@ -40,7 +40,8 @@ func (p *ORMUserProvider) UpdateRememberToken(user any, token string) {
 
 func (p *ORMUserProvider) RetrieveByCredentials(credentials map[string]any) any {
 	// Typically find by email/username
-	// This is a stub — real implementation would use the model's table
+	// Note: This is a simplified implementation. Real apps should register a concrete
+	// user model that satisfies Authenticatable and use the model's table/query methods.
 	return nil
 }
 

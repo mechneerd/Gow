@@ -176,7 +176,7 @@ func (b *Builder) OrHaving(column, operator string, value any) *Builder {
 func (b *Builder) SelectRaw(sql string, args ...any) *Builder {
 	// For simplicity, we store raw columns separately or prepend to Columns
 	b.query.Columns = append(b.query.Columns, sql)
-	// Note: args for raw select are not yet fully wired in all dialects
+	// Note: Raw select args are passed through but may require dialect-specific handling.
 	return b
 }
 

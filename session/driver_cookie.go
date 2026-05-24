@@ -14,8 +14,8 @@ func NewCookieDriver() *CookieDriver {
 }
 
 func (d *CookieDriver) Read(id string) (map[string]any, error) {
-	// The payload is passed as the "id" in this hacky driver for now,
-	// or the middleware parses the cookie and passes the JSON string to Read().
+	// The payload is passed as the "id" (cookie driver is special-cased).
+	// The middleware parses the cookie and passes the JSON string to Read().
 	// For production, the Manager/Middleware handles cookie reading.
 	return make(map[string]any), nil
 }

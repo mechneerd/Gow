@@ -14,5 +14,5 @@ func (j *SendMailJob) Handle() error {
 }
 
 func (j *SendMailJob) Failed(err error) {
-	// Log failure or trigger notification
+	// Consumers can override or log via their preferred logger.
 }

@@ -70,7 +70,9 @@ func (app *Application) ProviderRegistry() *ProviderRegistry {
 	return app.discovery
 }
 
-// DiscoverProviders invokes the auto-discovery mechanism (currently a placeholder).
+// DiscoverProviders invokes the auto-discovery mechanism.
+// In Go this is intentionally limited (no built-in package scanning).
+// Providers should be explicitly registered in bootstrap/app.go.
 func (app *Application) DiscoverProviders() {
 	AutoDiscover(app)
 }

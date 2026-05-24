@@ -9,10 +9,12 @@ It delivers the **developer experience** and **productivity** of Laravel while s
 
 ## Features
 
+> **Note**: GoW is production-viable for many real-world apps but some advanced features (full RBAC wiring, queue/mail drivers, etc.) may require additional application-level code.
+
 - ✅ Beautiful routing with groups, resources, model binding, signed URLs
 - ✅ Powerful Eloquent-style ORM (relations, scopes, soft deletes, casting, upsert, locking, chunking, etc.)
 - ✅ Blade-like templating engine with components, slots, and directives
-- ✅ Production-ready authentication (Session, Sanctum, Socialite, 2FA, Lockout, Email Verification, Gate)
+- ✅ Solid authentication foundation (Session, Fortify, Socialite, 2FA, Email Verification) + RBAC (manual wiring for advanced cases)
 - ✅ Form Request validation
 - ✅ Queue, Events, Broadcasting (WebSocket), Cache, Session
 - ✅ Mail + Notifications (with Markdown support)
@@ -27,12 +29,12 @@ It delivers the **developer experience** and **productivity** of Laravel while s
 
 **macOS / Linux**
 ```bash
-curl -sSfL https://raw.githubusercontent.com/yourusername/gow/main/install.sh | sh
+curl -sSfL https://raw.githubusercontent.com/mechneerd/gow/main/install.sh | sh
 ```
 
 **Windows (PowerShell)**
 ```powershell
-iwr -useb https://raw.githubusercontent.com/yourusername/gow/main/install.ps1 | iex
+iwr -useb https://raw.githubusercontent.com/mechneerd/gow/main/install.ps1 | iex
 ```
 
 After installation:
@@ -43,7 +45,7 @@ gow --version
 ### Manual Installation
 
 ```bash
-go install github.com/yourusername/gow/cmd/gow@latest
+go install github.com/mechneerd/gow/cmd/gow@latest
 ```
 
 ---

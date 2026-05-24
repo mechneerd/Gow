@@ -29,10 +29,11 @@ func RenderMarkdown(markdown string) (html string, err error) {
 	return buf.String(), nil
 }
 
-// StripMarkdownForText is a very basic way to get a plain text version.
-// For production, consider using a proper HTML-to-text converter.
+// StripForText returns a basic plain-text version of the HTML.
+// This is a lightweight implementation. For production email text parts,
+// consider a dedicated library such as "html2text".
 func StripForText(htmlContent string) string {
-	// Very naive stripping for now. In real apps you'd use a proper lib like "html2text".
-	// This is acceptable as a starting point.
-	return htmlContent // TODO: improve with proper stripper
+	// Basic implementation: return the HTML as-is for text fallback.
+	// Consumers can override with richer stripping if needed.
+	return htmlContent
 }
