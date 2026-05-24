@@ -105,7 +105,7 @@ func init() {
 	newCmd.Flags().String("db", "sqlite", "Database driver: sqlite, mysql, postgres")
 	newCmd.Flags().Bool("force", false, "Overwrite existing directory if it already exists")
 	newCmd.Flags().Bool("no-git", false, "Skip git repository initialization")
-	newCmd.Flags().String("skeleton", "", "Custom skeleton repository URL (for advanced users, experimental)")
+	newCmd.Flags().String("skeleton", "", "Custom skeleton source (remote URL or local path). Useful for custom templates.")
 	newCmd.Flags().Bool("yes", false, "Accept all defaults and skip interactive prompts (useful for CI/scripts)")
 
 	rootCmd.AddCommand(newCmd)
@@ -149,12 +149,12 @@ func scaffoldWithOptions(name string, result scaffoldpkg.PromptResult, force boo
 	fmt.Printf("🚀  Creating GoW project \"%s\"...\n\n", name)
 	fmt.Println("→ Fetching template...")
 
-	clonedPath, err := scaffoldpkg.CloneSkeleton(skeletonURL)
+	clonedPath, err := scaffoldpkg.PrepareSkeleton(skeletonURL)
 	if err != nil {
 		return err
 	}
 	defer scaffoldpkg.CleanupTemp(clonedPath)
-	fmt.Println("   ✓ Template downloaded")
+	fmt.Println("   ✓ Template ready")
 
 	targetDir := name
 

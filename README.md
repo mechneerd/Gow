@@ -52,24 +52,38 @@ go install github.com/yourusername/gow/cmd/gow@latest
 
 ### Create a New Project
 
+`gow new` now includes an **interactive wizard** by default:
+
 ```bash
-# Full-stack web application (recommended)
-gow new myapp
-
-# API-only project
-gow new myapi --api
-
-# Minimal website / landing page
-gow new mysite --minimal
+gow new myblog
 ```
+
+Or use `--yes` for fast, non-interactive creation:
+
+```bash
+# Recommended full-stack app (with auth)
+gow new myblog --yes
+
+# REST API with PostgreSQL
+gow new myapi --api --yes --db=postgres
+
+# Minimal website
+gow new mysite --minimal --yes
+```
+
+**Supported flags** (most useful ones):
+- `--yes` — Skip prompts and use defaults
+- `--auth` / `--api` / `--minimal` — Choose starter kit
+- `--db=sqlite|mysql|postgres` — Choose database
+- `--module=github.com/user/myapp` — Custom module path
 
 ### Run the Application
 
 ```bash
-cd myapp
-go run main.go
-# or
+cd myblog
 gow serve
+# or
+go run main.go
 ```
 
 ---
@@ -78,7 +92,7 @@ gow serve
 
 **Complete documentation is available in one file:**
 
-- [Complete User Guide](docs/COMPLETE_USER_GUIDE.md) — Everything you need in a single document
+- [Complete User Guide](docs/COMPLETE_USER_GUIDE.md) — Everything you need in a single document (includes full `gow new` reference)
 
 Individual guides are also available in `docs/guide/`:
 - Getting Started
@@ -94,11 +108,17 @@ Individual guides are also available in `docs/guide/`:
 
 ## Project Types
 
-| Command                        | Best For                     |
-|--------------------------------|------------------------------|
-| `gow new myapp`                | Full web applications        |
-| `gow new myapp --api`          | REST / JSON APIs             |
-| `gow new mysite --minimal`     | Simple websites / landing pages |
+| Command                              | Best For                          | Status     |
+|--------------------------------------|-----------------------------------|------------|
+| `gow new myapp --yes`                | Full web app (with auth)          | Ready      |
+| `gow new myapp --api --yes`          | REST / JSON APIs                  | Ready      |
+| `gow new mysite --minimal --yes`     | Simple websites / landing pages   | Ready      |
+| `minimal-api` kit                    | Ultra-light API only              | Ready      |
+| `full`, `admin-panel`, etc.          | More advanced starters            | Planned    |
+
+You can also run `gow new myapp` without flags to use the **interactive wizard**.
+
+Use `--skeleton` to load custom or local templates (including the new planned kits).
 
 ---
 
@@ -106,11 +126,12 @@ Individual guides are also available in `docs/guide/`:
 
 - Excellent generic container + service provider system
 - World-class ORM (one of the most complete in Go)
-- Production-ready Authentication stack
-- Very rich Artisan CLI and developer experience
+- Production-ready Authentication stack (Session + Sanctum + Socialite + 2FA)
+- Very powerful `gow new` scaffolding + rich Artisan CLI
 - Strong testing utilities
 - Native WebSocket broadcasting
 - Clean, modern Go codebase
+- Laravel-like developer experience in Go
 
 ---
 
@@ -128,4 +149,4 @@ MIT License © 2026 GoW Contributors
 
 **GoW is now genuinely production-viable** for building real-world applications (SaaS, admin panels, APIs, full-stack apps).
 
-Start building today with `gow new myapp`
+Start building today with `gow new myblog --yes` (or run `gow new myblog` for the interactive wizard)

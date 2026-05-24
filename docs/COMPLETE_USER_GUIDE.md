@@ -1,7 +1,9 @@
 # GoW Framework — Complete User Guide
 
-**Version**: 1.0 (Feature Parity Release — May 23, 2026)  
+**Version**: 1.0 (Feature Parity Release — Updated May 24, 2026)  
 **Target**: Laravel-lite 1.2
+
+> **Note**: The `gow new` command and scaffolding system received major improvements in May 2026 (local skeletons, `--yes`, better testing, and multiple new planned starter kits).
 
 This is the single complete documentation file for the GoW framework.  
 It contains everything a new user needs after installing or cloning the project.
@@ -58,21 +60,77 @@ go install github.com/yourusername/gow/cmd/gow@latest
 
 ### Create a New Project
 
-GoW supports three main project types:
+The `gow new` command is the primary way to bootstrap new GoW applications. It is designed to feel like Laravel's `laravel new` but with modern Go tooling.
 
-| Command                        | Best For                        | Includes                              |
-|--------------------------------|---------------------------------|---------------------------------------|
-| `gow new myapp`                | Full web applications           | Blade views, Auth, ORM, Routing       |
-| `gow new myapp --api`          | REST / JSON APIs                | Sanctum, Resources, Form Requests     |
-| `gow new mysite --minimal`     | Simple websites / landing pages | Minimal routing + views               |
+#### Default Behavior (Recommended for Most Users)
+
+When you run `gow new` without any flags, it launches an **interactive wizard**:
+
+```bash
+gow new myblog
+```
+
+The wizard will ask you:
+- Which starter kit you want
+- Which database driver to use
+- Custom module path (optional)
+
+#### Non-Interactive Mode (`--yes`)
+
+For CI, scripting, or when you want fast defaults, use `--yes`:
+
+```bash
+gow new myblog --yes
+```
+
+This creates a project using the recommended defaults:
+- **Starter kit**: Web + Auth (full-stack with authentication)
+- **Database**: SQLite
+
+#### Available Starter Kits
+
+| Flag            | Command Example                  | Best For                              | Includes |
+|-----------------|----------------------------------|---------------------------------------|----------|
+| `--auth` (default) | `gow new myapp --auth`         | Full web applications                 | Blade views, Session Auth, ORM, Routing |
+| `--api`         | `gow new myapi --api`            | REST / JSON APIs                      | Sanctum, API Resources, Form Requests |
+| `--minimal`     | `gow new mysite --minimal`       | Simple websites / landing pages       | Basic routing + views |
+
+#### Useful Flags
+
+| Flag              | Description                                      | Example |
+|-------------------|--------------------------------------------------|---------|
+| `--yes`           | Skip interactive prompts and use defaults        | `gow new app --yes` |
+| `--db`            | Choose database driver (`sqlite`, `mysql`, `postgres`) | `gow new app --db=postgres` |
+| `--module`        | Set custom Go module path                        | `gow new app --module=github.com/user/myapp` |
+| `--force`         | Overwrite existing directory                     | `gow new app --force` |
+| `--no-git`        | Skip automatic `git init`                        | `gow new app --no-git` |
+| `--skeleton`      | Use a custom skeleton repository (advanced)      | `gow new app --skeleton=...` |
+
+#### Common Examples
+
+```bash
+# Full web application with authentication (recommended)
+gow new myblog --auth
+
+# REST API project with PostgreSQL
+gow new myapi --api --db=postgres --module=github.com/mechneerd/myapi
+
+# Simple landing page (no auth)
+gow new landing --minimal --yes
+
+# Fully non-interactive with custom settings
+gow new saas-app --yes --db=mysql --module=github.com/company/saas
+```
 
 ### Run the Application
 
+After creating a project:
+
 ```bash
-cd myapp
-go run main.go
-# or
+cd myblog
 gow serve
+# or
+go run main.go
 ```
 
 Default address: **http://localhost:8080**
@@ -83,9 +141,11 @@ Default address: **http://localhost:8080**
 
 ### Recommended Command
 ```bash
+# Interactive
 gow new myapi --api
-cd myapi
-gow serve
+
+# Or non-interactive
+gow new myapi --api --yes --db=postgres
 ```
 
 ### Typical API Development Flow
@@ -107,14 +167,8 @@ gow serve
    ```
 
 4. Define Routes in `routes/api.go`
-   ```go
-   router.Group("/api", func(r *routing.Router) {
-       r.Middleware("auth:sanctum")
-       r.Resource("posts", controllers.PostController{})
-   })
-   ```
 
-5. Use Eloquent ORM + Resources
+5. Use Eloquent ORM + API Resources + Sanctum
 
 You now have a production-ready JSON API with validation, authentication, and relationships.
 
@@ -124,9 +178,11 @@ You now have a production-ready JSON API with validation, authentication, and re
 
 ### Recommended Command
 ```bash
+# Interactive (recommended)
 gow new myblog
-cd myblog
-gow serve
+
+# Fast non-interactive with auth
+gow new myblog --auth --yes
 ```
 
 ### Typical Web App Development Flow
@@ -135,13 +191,14 @@ gow serve
 2. Create Controller
 3. Add routes in `routes/web.go`
 4. Create Blade views in `resources/views/`
-5. Use built-in authentication (login/register already work)
+5. Use built-in authentication (login/register already work out of the box when using `--auth` or the default)
 
-Features included:
-- Blade templating with components
-- Session authentication
+The default / `--auth` starter includes:
+- Blade-like templating with components and layouts
+- Session-based authentication
 - Form validation with old input
-- Eloquent ORM
+- CSRF protection
+- Eloquent ORM + relationships
 
 ---
 
@@ -150,11 +207,16 @@ Features included:
 ### Recommended Command
 ```bash
 gow new mysite --minimal
-cd mysite
-gow serve
+# or
+gow new mysite --minimal --yes
 ```
 
-Use basic routing and views. Ideal for landing pages and marketing sites.
+Use basic routing + views. Perfect for:
+- Landing pages
+- Marketing sites
+- Static content websites
+
+This starter has the lightest footprint.
 
 ---
 
@@ -314,11 +376,74 @@ token := user.CreateToken("api-token", []string{"read", "write"})
 
 Powerful command line tool (`gow`).
 
-### Project Commands
-- `gow new myapp`
-- `gow new myapp --api`
-- `gow new mysite --minimal`
-- `gow serve`
+### `gow new` — Project Scaffolding (Most Important Command)
+
+`gow new` is the main way to create new GoW projects. It supports both **interactive** and **non-interactive** modes.
+
+#### Basic Usage
+
+```bash
+# Interactive wizard (recommended for first-time users)
+gow new myblog
+
+# Non-interactive with defaults (Web + Auth + SQLite)
+gow new myblog --yes
+```
+
+#### Starter Kits
+
+| Flag / Kit        | Example                                      | Description                                      | Status     |
+|-------------------|----------------------------------------------|--------------------------------------------------|------------|
+| `--auth`          | `gow new app --auth --yes`                   | Full web app + authentication (recommended)      | Ready      |
+| `--api`           | `gow new api --api --yes`                    | REST API with Sanctum                            | Ready      |
+| `--minimal`       | `gow new site --minimal --yes`               | Minimal project (no auth)                        | Ready      |
+| `minimal-api`     | via `--skeleton`                             | Ultra-light API only                             | Ready      |
+| `full`            | via `--skeleton`                             | Web + API + Auth + Queue + Mail                  | Planned    |
+| `admin-panel`     | via `--skeleton`                             | Dashboard / Internal admin tools                 | Planned    |
+| `with-docker`     | via `--skeleton`                             | Includes Docker + docker-compose                 | Planned    |
+| `inertia-react`   | via `--skeleton`                             | Inertia.js + React                               | Planned    |
+| `inertia-vue`     | via `--skeleton`                             | Inertia.js + Vue 3                               | Planned    |
+| `livewire`        | via `--skeleton`                             | Livewire-style reactive components               | Planned    |
+
+#### Useful Flags
+
+| Flag            | Description                                      | Example |
+|-----------------|--------------------------------------------------|--------|
+| `--yes`         | Skip interactive prompts                         | `gow new app --yes` |
+| `--db`          | Database driver (`sqlite`, `mysql`, `postgres`)  | `gow new app --db=postgres` |
+| `--module`      | Custom Go module path                            | `gow new app --module=github.com/user/myapp` |
+| `--force`       | Overwrite existing directory                     | `gow new app --force` |
+| `--no-git`      | Skip automatic `git init`                        | `gow new app --no-git` |
+| `--skeleton`    | Use custom skeleton (remote URL **or local path**) | `gow new app --skeleton=...` |
+
+#### Common Real-World Examples
+
+```bash
+# Fast full-stack project
+gow new myblog --yes
+
+# API with PostgreSQL + custom module
+gow new myapi --api --yes --db=postgres --module=github.com/company/myapi
+
+# Force create + skip git
+gow new existing-folder --yes --force --no-git
+```
+
+**Tip**: Running `gow new myapp` without any flags will launch the interactive wizard. This is the most beginner-friendly experience.
+
+#### Using Custom Skeletons
+
+You can use any custom skeleton (remote or local) with the `--skeleton` flag:
+
+```bash
+# Remote custom skeleton
+gow new myapp --skeleton=https://github.com/yourcompany/gow-skeleton.git --yes
+
+# Local skeleton (very useful during development)
+gow new myapp --skeleton=D:\my-templates\custom-full-stack --yes
+```
+
+This allows teams to maintain their own set of official starter kits.
 
 ### Generator Commands
 - `make:controller`

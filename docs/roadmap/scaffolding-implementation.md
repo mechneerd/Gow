@@ -224,13 +224,13 @@ The CLI should ask:
 
 ## 11. Next Actions
 
-1. **Team**: Update user-facing documentation (`COMPLETE_USER_GUIDE.md`, root README) to document the powerful new `gow new` command.
-2. **Team**: Add support for local skeleton paths (`--skeleton=/path/to/folder`).
-3. **Team**: Write proper tests for the `gow new` command and scaffold package.
-4. Consider adding more official starter kits in the gow-skeleton repository.
+1. **Team**: Add support for local skeleton paths + easy default repo switching (A) → **Completed**
+2. **Team**: Write tests for `gow new` / scaffold package (B) → **In Progress** (basic tests added)
+3. **Team**: Add more official starter kits in the gow-skeleton repository (C)
+4. Expand test coverage (more edge cases, remote cloning simulation, etc.)
 
 ---
 
 **Document Status**: Living document. Update after each implementation phase.
 
-**Last Updated**: 2026-05-24 (--yes flag implemented + legacy scaffold() function removed)
+**Last Updated**: 2026-05-24 (A: Local + easy repo switching done | B: Initial tests added)
