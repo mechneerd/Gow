@@ -14,6 +14,12 @@ import (
 
 	"github.com/mechneerd/gow/cmd/artisan"
 	scaffoldpkg "github.com/mechneerd/gow/cmd/gow/scaffold"
+
+	// Database drivers (required for migrate/seed commands to work)
+	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/lib/pq"
+	_ "github.com/mattn/go-sqlite3"
+	_ "modernc.org/sqlite"
 )
 
 
