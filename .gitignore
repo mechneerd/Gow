@@ -60,3 +60,69 @@ gow.exe
 
 # Deprecated documentation (superseded by LARAVEL_LITE_1.2.md)
 Current_Capabilities.md
+
+# Skeleton patches and updates (used for maintaining the separate gow-skeleton repo)
+# These folders contain template code and are not part of the main Go module.
+# They were causing import/build errors when running `go build ./...`
+skeleton-patches/
+skeleton-updates/
+
+# =============================================================================
+# Additional Common Ignores (Go + General Development)
+# =============================================================================
+
+# More environment / secrets
+.env.*
+.envrc
+.direnv/
+
+# Coverage reports
+coverage/
+*.cover
+*.coverprofile
+*.cover.out
+
+# Cache directories
+.cache/
+**/.cache/
+
+# Vendor directory (uncomment if you ever vendor dependencies)
+# vendor/
+
+# Release / packaging artifacts
+*.tar.gz
+*.tgz
+*.zip
+releases/
+dist/
+
+# Node / frontend (in case any frontend tooling is added later)
+node_modules/
+
+# Generated storage / cache (common in frameworks)
+storage/cache/
+storage/logs/
+storage/framework/
+
+# Backup and swap files
+*.bak
+*.backup
+*.swp
+*.swo
+
+# Misc development files
+*.orig
+*.rej
+
+# Go specific
+/testbin/
+*.test
+
+# IDE / Editor (additional)
+*.sublime-project
+*.sublime-workspace
+*.code-workspace
+
+# OS generated (additional)
+Desktop.ini
+$RECYCLE.BIN/
