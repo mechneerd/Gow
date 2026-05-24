@@ -6,6 +6,11 @@
 *.dylib
 gow
 gow.exe
+
+# Allow the gow CLI source code (the binary is ignored above, but the source must be tracked)
+!cmd/gow/
+!cmd/gow/**
+
 bin/
 
 # Test binary, built with `go test -c`
