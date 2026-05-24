@@ -23,7 +23,7 @@ func New` + name + `() *` + name + ` {
 	return &` + name + `{}
 }
 `
-		path := "app/mail/" + name + ".go"
+		path := "app/Mail/" + name + ".go"
 		generateFile(path, stub)
 		fmt.Println("Mail class created. Remember to register it if needed.")
 	},
@@ -45,7 +45,7 @@ func (e ` + name + `) BroadcastOn() []string { return []string{} }
 func (e ` + name + `) BroadcastAs() string   { return "` + name + `" }
 func (e ` + name + `) BroadcastWith() map[string]any { return map[string]any{} }
 `
-		path := "app/events/" + name + ".go"
+		path := "app/Events/" + name + ".go"
 		generateFile(path, stub)
 	},
 }
@@ -66,7 +66,7 @@ func (l *` + name + `) Handle(event any) {
 	fmt.Printf("Handling event: %T\n", event)
 }
 `
-		path := "app/listeners/" + name + ".go"
+		path := "app/Listeners/" + name + ".go"
 		generateFile(path, stub)
 	},
 }
@@ -87,7 +87,7 @@ func (p *` + name + `) ` + name + `(user any, model any) bool {
 	return true
 }
 `
-		path := "app/policies/" + name + ".go"
+		path := "app/Policies/" + name + ".go"
 		generateFile(path, stub)
 	},
 }
@@ -112,29 +112,13 @@ func (r ` + name + `) ToArray() map[string]any {
 	}
 }
 `
-		path := "app/http/resources/" + name + ".go"
+		path := "app/Http/Resources/" + name + ".go"
 		generateFile(path, stub)
 	},
 }
 
-var MakeJobCmd = &cobra.Command{
-	Use:   "make:job [name]",
-	Short: "Create a new queued job",
-	Args:  cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		name := args[0]
-		stub := `package jobs
-
-type ` + name + ` struct{}
-
-func (j *` + name + `) Handle() error {
-	return nil
-}
-`
-		path := "app/jobs/" + name + ".go"
-		generateFile(path, stub)
-	},
-}
+// MakeJobCmd is defined in make_commands.go (authoritative location).
+// Duplicate removed here to fix redeclaration.
 
 var MakeNotificationCmd = &cobra.Command{
 	Use:   "make:notification [name]",
@@ -154,7 +138,7 @@ func (n *` + name + `) ToMail(notifiable any) *notifications.MailMessage {
 	return notifications.NewMailMessage().Subject("Notification").Line("Hello")
 }
 `
-		path := "app/notifications/" + name + ".go"
+		path := "app/Notifications/" + name + ".go"
 		generateFile(path, stub)
 	},
 }

@@ -14,6 +14,7 @@ import (
 	"gow/bootstrap"
 	"gow/cmd/tinker"
 	"gow/config"
+	"gow/container"
 	"gow/database/orm"
 )
 
@@ -30,13 +31,11 @@ var TinkerCmd = &cobra.Command{
 		app := bootstrap.NewApplication(".")
 
 		// Resolve useful services
-		cfg := app.Make[config.Repository]()
+		cfg, _ := container.Make[*config.Repository](app.Container)
 
 		var db *orm.DB
-		if dbIface, err := app.Resolve((*orm.DB)(nil)); err == nil {
-			if d, ok := dbIface.(*orm.DB); ok {
-				db = d
-			}
+		if d, err := container.Make[*orm.DB](app.Container); err == nil {
+			db = d
 		}
 
 		// Create interpreter

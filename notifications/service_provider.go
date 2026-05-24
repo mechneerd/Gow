@@ -1,6 +1,7 @@
 package notifications
 
 import (
+	"gow/container"
 	"gow/foundation"
 	"gow/mail"
 )
@@ -14,17 +15,9 @@ type ServiceProvider struct {
 func (p *ServiceProvider) Register(app *foundation.Application) {
 	manager := NewManager()
 
-	// Register Database channel if a DB connection is available
-	if dbIface, err := app.Resolve((*interface{})(nil)); err == nil {
-		// This is a loose check — in real usage we would resolve *orm.DB properly
-		_ = dbIface
-	}
-
-	// Register Mail channel if mailer is available
-	if mailerIface, err := app.Resolve((*mail.Mailer)(nil)); err == nil {
-		if mailer, ok := mailerIface.(*mail.Mailer); ok {
-			manager.Extend("mail", NewMailChannel(mailer))
-		}
+	// Register Mail channel if mailer is available (using the proper generic resolver)
+	if mailer, err := container.Make[*mail.Mailer](app.Container); err == nil && mailer != nil {
+		manager.Extend("mail", NewMailChannel(mailer))
 	}
 
 	// Always register database channel (it can be extended later with proper DB)

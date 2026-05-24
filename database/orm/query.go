@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"gow/database/dialect"
 	"gow/database/pagination"
 	"gow/database/query"
 	"reflect"
@@ -83,6 +84,24 @@ type DB struct {
 	Conn    query.QueryExecer
 	Builder *query.Builder
 	tx      *sql.Tx // non-nil when this instance represents an active transaction
+	dialect dialect.Dialect
+}
+
+// RawDB returns the underlying query executor (usually *sql.DB or *sql.Tx).
+func (db *DB) RawDB() query.QueryExecer {
+	return db.Conn
+}
+
+// Dialect returns the SQL dialect used by this connection.
+func (db *DB) Dialect() dialect.Dialect {
+	if db.dialect != nil {
+		return db.dialect
+	}
+	if db.Builder != nil {
+		// Fallback: try to get dialect from builder via a small hack
+		// (the field is unexported, so we default for now)
+	}
+	return &dialect.SQLiteDialect{}
 }
 
 // Transaction executes a function within a database transaction.

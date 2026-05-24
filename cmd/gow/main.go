@@ -2,10 +2,15 @@ package main
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 	"os/exec"
 
 	"github.com/spf13/cobra"
+
+	"gow/bootstrap"
+	gowhttp "gow/http"
+	"gow/routing"
 
 	scaffoldpkg "gow/cmd/gow/scaffold"
 )
@@ -17,9 +22,39 @@ var rootCmd = &cobra.Command{
 
 var serveCmd = &cobra.Command{
 	Use:   "serve",
-	Short: "Serve the application",
+	Short: "Serve the application on a local development server",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("serve command not yet implemented. Use 'go run cmd/app/main.go' for now.")
+		port := os.Getenv("APP_PORT")
+		if port == "" {
+			port = "8080"
+		}
+		addr := ":" + port
+
+		// Boot the framework application (loads config, providers, etc.)
+		app := bootstrap.NewApplication(".")
+
+		// Create router
+		router := routing.NewRouter()
+
+		// Default welcome route (overridden if user registers routes in their main or bootstrap)
+		router.Get("/", func(w http.ResponseWriter, r *http.Request) error {
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+			fmt.Fprintf(w, `<h1>Welcome to GoW Framework!</h1>
+<p>Server is running on <strong>http://localhost%s</strong></p>
+<p>Add your routes in <code>routes/web.go</code> or your <code>main.go</code>.</p>`, addr)
+			return nil
+		})
+
+		// Create HTTP kernel with graceful shutdown support
+		kernel := gowhttp.NewKernel(app, router)
+
+		fmt.Printf("🚀  GoW development server started at http://localhost%s\n", addr)
+		fmt.Println("    Press Ctrl+C to stop.")
+
+		if err := kernel.Serve(addr); err != nil {
+			fmt.Printf("Server error: %v\n", err)
+			os.Exit(1)
+		}
 	},
 }
 

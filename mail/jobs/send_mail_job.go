@@ -1,6 +1,7 @@
 package mail
 
 import (
+	"fmt"
 	"gow/queue"
 )
 
@@ -19,6 +20,5 @@ func (j *SendMailJob) Handle() error {
 }
 
 func (j *SendMailJob) Failed(err error) {
-	// Could log or notify about failed email
-	// For now, just a placeholder
+	fmt.Printf("[Mail] SendMailJob failed: %v\n", err)
 }

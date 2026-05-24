@@ -15,14 +15,14 @@ var MakeAuthCmd = &cobra.Command{
 		fmt.Println("Scaffolding Authentication...")
 
 		// Generate AuthController
-		createFile("app/http/controllers/AuthController.go", authControllerStub)
+		createFile("app/Http/Controllers/AuthController.go", authControllerStub)
 
 		// Generate Form Requests
-		createFile("app/http/requests/LoginRequest.go", loginRequestStub)
-		createFile("app/http/requests/RegisterRequest.go", registerRequestStub)
+		createFile("app/Http/Requests/LoginRequest.go", loginRequestStub)
+		createFile("app/Http/Requests/RegisterRequest.go", registerRequestStub)
 
 		// Generate User Model
-		createFile("app/models/User.go", userModelStub)
+		createFile("app/Models/User.go", userModelStub)
 
 		// Generate Views
 		createFile("resources/views/auth/login.gohtml", loginViewStub)

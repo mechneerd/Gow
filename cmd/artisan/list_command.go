@@ -25,7 +25,6 @@ var ListCmd = &cobra.Command{
 			KeyGenerateCmd,
 			AboutCmd,
 			EnvCmd,
-			ListCmd,
 			MakeModelCmd,
 			MakeMigrationCmd,
 			MakeControllerCmd,

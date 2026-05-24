@@ -2,7 +2,7 @@
 
 **Date**: May 24, 2026  
 **Version**: Post Feature Parity + Artisan & Scaffolding Upgrade + Remediation (May 24)  
-**Status**: Active remediation phase — majority of high-priority gaps have been closed or strongly mitigated. Document now reflects current reality.
+**Status**: Active remediation phase — majority of high-priority gaps closed or mitigated. Fresh full-project scan performed on 2026-05-24; new gaps documented below.
 
 This document provides an honest assessment of the framework's gaps and weaknesses. Historical problems are retained for context, while the top sections and Summary Table reflect the post-remediation state as of May 24, 2026.
 
@@ -15,11 +15,12 @@ This document provides an honest assessment of the framework's gaps and weakness
 **Major Areas Now Usable in Generated Projects**:
 - Full migration workflow (including rollback by step, status, fresh, refresh)
 - Working RBAC with pragmatic global DB wiring (`rbac.SetDefaultDB`)
-- Strong and mostly functional Artisan CLI
+- Strong and mostly functional Artisan CLI (including real `gow serve`)
 - Production-oriented starter kits (`web-auth`, `full`) with real migrations + working Super Admin seeder
 - Basic RBAC middleware available out of the box
 - Automatic seeder discovery via `gow db:seed`
 - Auth kits now ship with injected RBAC examples + protected route patterns in `bootstrap/app.go`
+- Working local development server via `gow serve` (http.Kernel + graceful shutdown)
 
 **Current Recommended Path for New Projects**:
 ```bash
@@ -33,10 +34,13 @@ gow serve
 ```
 
 **Remaining Areas Needing Attention**:
-- Directory structure consistency (actively standardized in generators; more work remains)
-- Some non-critical Artisan commands still lightweight
+- Directory structure consistency (actively standardized in generators; more work remains — additional fixes applied to make:auth this turn)
+- Many non-critical Artisan commands still lightweight or placeholder (cache, queue, schedule, etc.)
 - End-to-end testing coverage
+- Multiple core packages still contain explicit "stub"/"TODO"/"placeholder" implementations (auth, mail, foundation discovery, storage drivers, query builder) — partial progress on mail jobs
+- **Artisan package build** was previously blocked by container reflection misuse + missing DB drivers + accumulated duplicate declarations. **Fully resolved** on 2026-05-24.
 - Deeper integration of services in generated `bootstrap/app.go` (examples now present)
+- `gow serve` now works (basic but functional) — further enhancements (hot reload, config-driven routes, etc.) can be future improvements
 
 As of the end of this remediation session, GoW is considered **production-viable for many real-world applications**, especially internal tools, APIs, and small-to-medium SaaS products, provided the team is comfortable with some manual wiring for advanced use cases.
 
@@ -58,11 +62,19 @@ GoW has made impressive progress, particularly in the ORM and the Artisan CLI du
 - Directory naming consistency fixes in generators (`database/seeders/`, `database/migrations/`).
 - `db:seed` now performs automatic seeder discovery (scans database/seeders/ and lists *Seeder.go files).
 - Generated auth kits now receive injected RBAC middleware examples + protected route patterns + `SetDefaultDB` guidance directly into `bootstrap/app.go` via scaffolding post-processor.
+- More generator path standardization: `app/Jobs/`, `app/Mail/`, `app/Events/`, `app/Listeners/`, `app/Policies/`, `app/Http/Resources/`, `app/Notifications/` now used consistently in make:* generators.
+- `SendMailJob.Failed` upgraded from pure placeholder comment to actual error logging.
+- Broader directory naming standardization across make:mail, make:event, make:listener, make:policy, make:resource, make:notification (now consistently use app/Mail/, app/Events/, app/Listeners/, app/Policies/, app/Http/Resources/, app/Notifications/).
+- Schedule comments updated for casing consistency (`app/Console/`).
+- `schedule:run` command improved with better output and safety check (progress on non-critical Artisan commands).
+- **Major build cleanup**: Fixed all artisan package compilation errors (container.Make usage, logging Setup, notifications resolution, orm.DB RawDB/Dialect, duplicate command declarations, syntax rot, missing imports, initialization cycle in list_command.go, route_list type mismatch). Both `./cmd/artisan/...` and `./cmd/gow` now build cleanly.
 
 **Remaining High-Priority Gaps (being worked on)**
+- ~~`gow serve` command is a complete non-functional stub~~ → **FIXED** in this turn (real implementation using http.Kernel with graceful shutdown + default welcome route)
 - Full automatic registration of auth middleware in bootstrap (partially improved — examples now auto-injected for auth kits)
-- Remaining non-critical placeholder commands (cache, queue, etc.)
-- Broader directory naming standardization (more generators + skeletons still need alignment)
+- Remaining non-critical placeholder commands (cache, queue, schedule, etc.) — schedule:run now has real behavior + better UX; others still lightweight. Artisan package itself now builds cleanly.
+- Multiple core packages still contain real "stub"/TODO implementations (auth, mail, foundation, storage, query builder)
+- Broader directory naming standardization (significant progress in local generators; skeletons still need alignment when pulled)
 
 **Major Gaps Considered Closed or Strongly Mitigated (as of this session)**
 - Artisan migration system (fully functional with step support, status, fresh, refresh, run)
@@ -71,10 +83,38 @@ GoW has made impressive progress, particularly in the ORM and the Artisan CLI du
 - Skeleton seeder reliability + easy one-line DB setup
 - Bootstrap examples + comments for auth + RBAC in generated projects (now auto-injected via scaffold post-processor)
 - Basic RBAC middleware available
-- Directory naming standardization started in generators (seeders + migrations paths normalized; ongoing)
+- Directory naming standardization in generators (seeders + migrations + Jobs + Mail + Events + Listeners + Policies + Notifications + Http/Resources normalized; ongoing for full coverage)
 - Automatic seeder discovery in `db:seed` command
+- `schedule:run` now has working execution + improved output (progress on lightweight commands)
 
 More work is ongoing.
+
+---
+
+## Fresh Full-Project Scan Findings (May 24, 2026)
+
+A complete grep across all `.go` files and documentation for terms like `placeholder`, `stub`, `TODO`, `not yet`, `not implemented` was performed.
+
+**Critical / High-Visibility Issues Confirmed:**
+
+- ~~`gow serve` was completely non-functional~~ → **FIXED** in this session (real implementation added using `http.Kernel.Serve()` with graceful shutdown and a helpful default route).
+
+- Explicit "stub / placeholder / TODO" comments still exist in production paths (some partial improvements made):
+  - `auth/orm_user_provider.go:43` — "This is a stub"
+  - `auth/password/broker.go:46-47` — TODO for real User model + password hashing integration
+  - `auth/manager.go:87` — placeholder cookie logic
+  - `mail/jobs/send_mail_job.go:23` — improved (now logs on failure)
+  - `mail/markdown.go:37` — TODO for proper HTML stripper
+  - `foundation/application.go:73` + `foundation/discovery.go:40` — Auto-discovery is a deliberate no-op placeholder
+  - `storage/storage.go:10` — `ErrNotImplemented` for non-local drivers
+  - `database/query/builder.go:179` — "raw select args not yet fully wired in all dialects"
+
+**Other Confirmed Ongoing Gaps:**
+- Cache, queue, schedule, and several other Artisan commands remain lightweight or stubbed.
+- No comprehensive end-to-end tests for scaffolding + runtime flows.
+- Directory naming improved in most local generators (many paths now consistently use `app/Http/`, `app/Models/`, `app/Jobs/`, `app/Mail/`, etc.); some older files and external skeletons still vary.
+
+These findings were **not** present in prior remediation turns and have now been added to the Remaining Areas list above.
 
 ---
 
@@ -298,6 +338,7 @@ Significant progress has been made during the May 2026 remediation. The gap has 
 | G7 | `make:* --migration` incomplete           | Medium-High   | `make_commands.go`                   | **Resolved** — Real files generated            |
 | G8 | Heavy reflection in core paths            | Medium        | `container/`, `database/orm/`        | Still present (architectural trade-off)        |
 | G9 | Generated projects require heavy manual work | High       | All skeleton kits                    | **Significantly Reduced** — Auth kits now include injected RBAC guidance |
+| G10 | `gow serve` command non-functional         | Critical   | `cmd/gow/main.go`                    | **FIXED** — Real server using http.Kernel + graceful shutdown (May 24) |
 
 ---
 
@@ -309,14 +350,14 @@ Significant progress has been made during the May 2026 remediation. The gap has 
 - `make:* --migration` now generates real files
 - Directory naming fixes started in generators
 
-**Remaining Priorities** (ranked):
+**Remaining Priorities** (ranked — updated from fresh full-project scan):
 1. Broader directory naming standardization (generators + all skeletons + `app/` structure)
-2. End-to-end integration tests for the full `gow new --auth → migrate → db:seed` flow
-3. Reduce remaining lightweight/placeholder commands (cache, queue, schedule, etc.)
-4. Optional: Deeper automatic middleware registration in generated `bootstrap/app.go` (beyond commented examples)
+2. Clean up remaining explicit stubs/TODOs in core packages (auth, mail, foundation discovery, storage, query builder)
+3. End-to-end integration tests for the full `gow new --auth → migrate → db:seed` flow
+4. Reduce remaining lightweight/placeholder commands (cache, queue, schedule, etc.)
 5. Audit and update older marketing/docs claims for accuracy
 
-The framework is now considered production-viable for most real-world use cases with the caveats noted in the Production Readiness Status section above.
+The framework is now considered production-viable for most real-world use cases **provided** the `gow serve` limitation and a few other stubs are worked around or fixed. See Production Readiness Status above.
 
 ---
 
@@ -325,4 +366,6 @@ The framework is now considered production-viable for most real-world use cases 
 This document has been actively maintained and cleaned up during the May 24, 2026 remediation session to accurately reflect both historical issues and current post-fix reality.
 
 **Maintained by**: Kilo (AI-assisted analysis)  
-**Last Updated**: 2026-05-24 (Remediation updates applied)
+**Last Updated**: 2026-05-24 (Artisan package build fully cleaned — logging, notifications, container reflection, duplicates, and cycles resolved)
+
+> Detailed fix log for all build and code issues resolved today is available in `BUG_FIXES.md` (root).

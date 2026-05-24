@@ -98,20 +98,6 @@ func (c *` + name + `) Index(w http.ResponseWriter, r *http.Request) {
 		generateFile(path, stub)
 	},
 }
-`
-		if isResource {
-			stub += `
-func (c *{Name}) Show(w http.ResponseWriter, r *http.Request) {}
-func (c *{Name}) Store(w http.ResponseWriter, r *http.Request) {}
-func (c *{Name}) Update(w http.ResponseWriter, r *http.Request) {}
-func (c *{Name}) Destroy(w http.ResponseWriter, r *http.Request) {}
-`
-		}
-
-		content := strings.ReplaceAll(stub, "{Name}", name)
-		generateFile(path, content)
-	},
-}
 
 // MakeModelCmd scaffolds a new model.
 var MakeModelCmd = &cobra.Command{
@@ -252,7 +238,7 @@ var MakeJobCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		name := args[0]
-		path := fmt.Sprintf("app/jobs/%s.go", name)
+		path := fmt.Sprintf("app/Jobs/%s.go", name)
 		
 		stub := `package jobs
 

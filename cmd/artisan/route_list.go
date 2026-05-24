@@ -48,7 +48,11 @@ var RouteListCmd = &cobra.Command{
 			}
 			middleware := "-"
 			if len(route.Middlewares) > 0 {
-				middleware = strings.Join(route.Middlewares, ",")
+				mwNames := make([]string, len(route.Middlewares))
+				for i, mw := range route.Middlewares {
+					mwNames[i] = fmt.Sprintf("%T", mw)
+				}
+				middleware = strings.Join(mwNames, ",")
 			}
 			fmt.Printf("%-8s %-50s %-25s %-30s\n", route.Method, route.Path, name, middleware)
 		}
