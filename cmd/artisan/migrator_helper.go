@@ -9,9 +9,11 @@ import (
 	_ "github.com/lib/pq"              // postgres driver
 	_ "github.com/mattn/go-sqlite3"    // sqlite driver
 
+	"github.com/mechneerd/gow/database/dialect"
 	"github.com/mechneerd/gow/database/migration"
 	"github.com/mechneerd/gow/database/schema"
 )
+
 
 // getMigrator creates a working Migrator instance from environment variables.
 // This is a pragmatic implementation to make `gow migrate` and related commands functional.
@@ -58,7 +60,20 @@ func getMigrator() (*migration.Migrator, error) {
 		return nil, fmt.Errorf("failed to connect to database: %w", err)
 	}
 
-	builder := schema.NewBuilder(db, nil)
+	// Create the correct dialect so Schema Builder doesn't get a nil dialect
+	var d dialect.Dialect
+	switch driver {
+	case "sqlite":
+		d = &dialect.SQLiteDialect{}
+	case "mysql":
+		d = &dialect.MySQLDialect{}
+	case "postgres":
+		d = &dialect.PostgresDialect{}
+	default:
+		d = &dialect.SQLiteDialect{} // fallback
+	}
+
+	builder := schema.NewBuilder(db, d)
 	reg := migration.NewRegistry()
 	migrator := migration.NewMigrator(db, builder, reg)
 
