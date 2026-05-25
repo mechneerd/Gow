@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -19,14 +20,40 @@ var MigrateCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		cwd, _ := os.Getwd()
 
-		// 1. Auto-generate register.go (discovery)
 		if err := generateMigrationRegister(); err != nil {
 			fmt.Println("Warning: could not generate migration register:", err)
 		}
 
-		// 2. Execute via go run -C so that the local migrations package init() functions run
-		runner := "github.com/mechneerd/gow/cmd/gow/internal/migration/runner"
-		execCmd := exec.Command("go", "run", "-C", cwd, runner, "./database/migrations")
+		// Generate a small runner inside the project (this avoids module resolution issues)
+		runnerFile := filepath.Join(cwd, ".gow", "migrate_runner.go")
+		if err := os.MkdirAll(filepath.Dir(runnerFile), 0755); err != nil {
+			fmt.Println("Warning: could not create runner dir:", err)
+		}
+
+		modulePath := readModulePath(filepath.Join(cwd, "go.mod"))
+		if modulePath == "" {
+			modulePath = "unknown"
+		}
+
+		runnerCode := fmt.Sprintf(`package main
+
+import (
+	_ "%s/database/migrations"
+	"fmt"
+	"github.com/mechneerd/gow/cmd/artisan"
+)
+
+func main() {
+	fmt.Println("→ Running migrations (auto-discovered via register.go)...")
+	artisan.MigrateCmd.Run(artisan.MigrateCmd, []string{})
+}
+`, modulePath)
+
+		if err := os.WriteFile(runnerFile, []byte(runnerCode), 0644); err != nil {
+			fmt.Println("Warning: could not write migration runner:", err)
+		}
+
+		execCmd := exec.Command("go", "run", "-C", cwd, runnerFile)
 		execCmd.Stdout = os.Stdout
 		execCmd.Stderr = os.Stderr
 
@@ -35,9 +62,11 @@ var MigrateCmd = &cobra.Command{
 			fmt.Println("Migration execution failed:", err)
 			return
 		}
+
+		_ = os.Remove(runnerFile)
+		_ = os.Remove(filepath.Dir(runnerFile))
 	},
 }
-
 
 var MigrateFreshCmd = &cobra.Command{
 	Use:   "migrate:fresh",
@@ -49,8 +78,33 @@ var MigrateFreshCmd = &cobra.Command{
 			fmt.Println("Warning:", err)
 		}
 
-		runner := "github.com/mechneerd/gow/cmd/gow/internal/migration/runner"
-		execCmd := exec.Command("go", "run", "-C", cwd, runner, "./database/migrations", "fresh")
+		runnerFile := filepath.Join(cwd, ".gow", "migrate_runner.go")
+		if err := os.MkdirAll(filepath.Dir(runnerFile), 0755); err != nil {
+			fmt.Println("Warning:", err)
+		}
+
+		modulePath := readModulePath(filepath.Join(cwd, "go.mod"))
+		if modulePath == "" {
+			modulePath = "unknown"
+		}
+
+		runnerCode := fmt.Sprintf(`package main
+
+import (
+	_ "%s/database/migrations"
+	"fmt"
+	"github.com/mechneerd/gow/cmd/artisan"
+)
+
+func main() {
+	fmt.Println("→ Running migrate:fresh (auto-discovered)...")
+	artisan.MigrateFreshCmd.Run(artisan.MigrateFreshCmd, []string{})
+}
+`, modulePath)
+
+		_ = os.WriteFile(runnerFile, []byte(runnerCode), 0644)
+
+		execCmd := exec.Command("go", "run", "-C", cwd, runnerFile)
 		execCmd.Stdout = os.Stdout
 		execCmd.Stderr = os.Stderr
 
@@ -59,6 +113,9 @@ var MigrateFreshCmd = &cobra.Command{
 			fmt.Println("migrate:fresh failed:", err)
 			return
 		}
+
+		_ = os.Remove(runnerFile)
+		_ = os.Remove(filepath.Dir(runnerFile))
 	},
 }
 
@@ -178,6 +235,22 @@ func generateMigrationRegister() error {
 	}
 
 	return nil
+}
+
+// readModulePath extracts the module name from go.mod (e.g. "myapp")
+func readModulePath(goModPath string) string {
+	content, err := os.ReadFile(goModPath)
+	if err != nil {
+		return ""
+	}
+	lines := strings.Split(string(content), "\n")
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if strings.HasPrefix(line, "module ") {
+			return strings.TrimSpace(strings.TrimPrefix(line, "module "))
+		}
+	}
+	return ""
 }
 
 
