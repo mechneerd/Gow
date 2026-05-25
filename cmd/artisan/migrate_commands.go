@@ -2,16 +2,25 @@ package artisan
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 
+	gowmigration "github.com/mechneerd/gow/cmd/gow/migration"
 	"github.com/mechneerd/gow/database/migration"
 )
+
 
 var MigrateCmd = &cobra.Command{
 	Use:   "migrate",
 	Short: "Run the database migrations",
 	Run: func(cmd *cobra.Command, args []string) {
+		// Auto-discover and generate register.go before running
+		if err := generateMigrationRegister(); err != nil {
+			fmt.Println("Warning: could not generate migration register:", err)
+		}
+
 		migrator, err := getMigrator()
 		if err != nil {
 			fmt.Println("Error initializing migrator:", err)
@@ -25,6 +34,7 @@ var MigrateCmd = &cobra.Command{
 		fmt.Println("Migrations completed successfully.")
 	},
 }
+
 
 var MigrateFreshCmd = &cobra.Command{
 	Use:   "migrate:fresh",
@@ -131,4 +141,36 @@ func init() {
 
 	MigrateRollbackCmd.Flags().IntP("step", "s", 1, "Number of migrations to rollback")
 }
+
+// generateMigrationRegister auto-discovers migrations and writes register.go
+func generateMigrationRegister() error {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+
+	migrationsDir := filepath.Join(cwd, "database", "migrations")
+	if _, err := os.Stat(migrationsDir); os.IsNotExist(err) {
+		return nil // no migrations dir
+	}
+
+	found, err := gowmigration.FindMigrations(migrationsDir)
+	if err != nil {
+		return err
+	}
+
+	if err := gowmigration.GenerateRegisterFile(migrationsDir, found); err != nil {
+		return err
+	}
+
+	// Make sure it's gitignored
+	_ = gowmigration.EnsureRegisterGoIsGitignored(cwd)
+
+	if len(found) > 0 {
+		fmt.Printf("→ Discovered %d migration(s). Generated database/migrations/register.go\n", len(found))
+	}
+
+	return nil
+}
+
 
