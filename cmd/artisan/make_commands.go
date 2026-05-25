@@ -151,9 +151,14 @@ func init() {
 func ` + className + `(m *schema.Builder) error {
 	return m.Create("` + strings.ToLower(name) + `s", func(table *schema.Blueprint) {
 		table.ID()
-		// Add your columns here
+		// Add your columns here using currently supported methods:
 		// table.String("name", 255)
-		table.Timestamps()
+		// table.String("email", 255).Unique()
+		// table.Integer("age")
+		// table.Boolean("is_active").Default(true)
+		// table.Text("description").Nullable()
+		// table.Timestamps()
+		// table.SoftDeletes()
 	})
 }
 `
@@ -189,9 +194,14 @@ func init() {
 func ` + className + `(m *schema.Builder) error {
 	return m.Create("` + strings.ToLower(name) + `s", func(table *schema.Blueprint) {
 		table.ID()
-		// Add columns here:
+		// Add your columns here using currently supported methods:
 		// table.String("name", 255)
-		table.Timestamps()
+		// table.String("email", 255).Unique()
+		// table.Integer("age")
+		// table.Boolean("is_active").Default(true)
+		// table.Text("description").Nullable()
+		// table.Timestamps()
+		// table.SoftDeletes()
 	})
 }
 `
