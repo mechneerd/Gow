@@ -41,7 +41,7 @@ import (
 	_ "%s/database/migrations"
 	"log"
 
-	"github.com/mechneerd/gow/migration"
+	"github.com/mechneerd/gow/database/migration"
 )
 
 func main() {
@@ -100,7 +100,7 @@ import (
 	_ "%s/database/migrations"
 	"log"
 
-	"github.com/mechneerd/gow/migration"
+	"github.com/mechneerd/gow/database/migration"
 )
 
 func main() {
@@ -158,7 +158,7 @@ import (
 	_ "%s/database/migrations"
 	"log"
 
-	"github.com/mechneerd/gow/migration"
+	"github.com/mechneerd/gow/database/migration"
 )
 
 func main() {
@@ -220,7 +220,7 @@ import (
 	_ "%s/database/migrations"
 	"log"
 
-	"github.com/mechneerd/gow/migration"
+	"github.com/mechneerd/gow/database/migration"
 )
 
 func main() {
@@ -299,7 +299,7 @@ import (
 	_ "%s/database/migrations"
 	"log"
 
-	"github.com/mechneerd/gow/migration"
+	"github.com/mechneerd/gow/database/migration"
 )
 
 func main() {
