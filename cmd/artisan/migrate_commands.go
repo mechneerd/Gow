@@ -3,6 +3,7 @@ package artisan
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 
 	"github.com/spf13/cobra"
@@ -16,22 +17,24 @@ var MigrateCmd = &cobra.Command{
 	Use:   "migrate",
 	Short: "Run the database migrations",
 	Run: func(cmd *cobra.Command, args []string) {
-		// Auto-discover and generate register.go before running
+		cwd, _ := os.Getwd()
+
+		// 1. Auto-generate register.go (discovery)
 		if err := generateMigrationRegister(); err != nil {
 			fmt.Println("Warning: could not generate migration register:", err)
 		}
 
-		migrator, err := getMigrator()
-		if err != nil {
-			fmt.Println("Error initializing migrator:", err)
-			return
-		}
+		// 2. Execute via go run -C so that the local migrations package init() functions run
+		runner := "github.com/mechneerd/gow/cmd/gow/internal/migration/runner"
+		execCmd := exec.Command("go", "run", "-C", cwd, runner, "./database/migrations")
+		execCmd.Stdout = os.Stdout
+		execCmd.Stderr = os.Stderr
 
-		if err := migrator.Migrate(); err != nil {
-			fmt.Println("Migration failed:", err)
+		fmt.Println("→ Running migrations with auto-discovered files...")
+		if err := execCmd.Run(); err != nil {
+			fmt.Println("Migration execution failed:", err)
 			return
 		}
-		fmt.Println("Migrations completed successfully.")
 	},
 }
 
@@ -40,20 +43,25 @@ var MigrateFreshCmd = &cobra.Command{
 	Use:   "migrate:fresh",
 	Short: "Drop all tables and re-run all migrations",
 	Run: func(cmd *cobra.Command, args []string) {
-		migrator, err := getMigrator()
-		if err != nil {
-			fmt.Println("Error initializing migrator:", err)
-			return
+		cwd, _ := os.Getwd()
+
+		if err := generateMigrationRegister(); err != nil {
+			fmt.Println("Warning:", err)
 		}
 
-		if err := migrator.Fresh(); err != nil {
+		runner := "github.com/mechneerd/gow/cmd/gow/internal/migration/runner"
+		execCmd := exec.Command("go", "run", "-C", cwd, runner, "./database/migrations", "fresh")
+		execCmd.Stdout = os.Stdout
+		execCmd.Stderr = os.Stderr
+
+		fmt.Println("→ Running migrate:fresh with auto-discovered files...")
+		if err := execCmd.Run(); err != nil {
 			fmt.Println("migrate:fresh failed:", err)
 			return
 		}
-
-		fmt.Println("Database refreshed successfully.")
 	},
 }
+
 
 var MigrateRefreshCmd = &cobra.Command{
 	Use:   "migrate:refresh",
@@ -151,7 +159,7 @@ func generateMigrationRegister() error {
 
 	migrationsDir := filepath.Join(cwd, "database", "migrations")
 	if _, err := os.Stat(migrationsDir); os.IsNotExist(err) {
-		return nil // no migrations dir
+		return nil
 	}
 
 	found, err := gowmigration.FindMigrations(migrationsDir)
@@ -163,7 +171,6 @@ func generateMigrationRegister() error {
 		return err
 	}
 
-	// Make sure it's gitignored
 	_ = gowmigration.EnsureRegisterGoIsGitignored(cwd)
 
 	if len(found) > 0 {
