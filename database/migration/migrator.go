@@ -3,9 +3,12 @@ package migration
 import (
 	"database/sql"
 	"fmt"
-	"github.com/mechneerd/gow/database/schema"
 	"sort"
+
+	"github.com/mechneerd/gow/database/dialect"
+	"github.com/mechneerd/gow/database/schema"
 )
+
 
 // Migration represents a single database migration.
 type Migration interface {
@@ -29,6 +32,24 @@ func NewRegistry() *Registry {
 func (r *Registry) Register(name string, m Migration) {
 	r.migrations[name] = m
 }
+
+// --- Default / Global Registry Support (for generated migrations + clean API) ---
+
+var defaultRegistry = NewRegistry()
+
+// Register registers a migration with the default (global) registry.
+// Generated migration files call this in their init() function.
+func Register(name string, m Migration) {
+	defaultRegistry.Register(name, m)
+}
+
+// DefaultMigrator returns a new Migrator wired to the default registry.
+// This is the recommended way to run migrations when using the high-level API.
+func DefaultMigrator(db *sql.DB, d dialect.Dialect) *Migrator {
+	builder := schema.NewBuilder(db, d)
+	return NewMigrator(db, builder, defaultRegistry)
+}
+
 
 // Migrator runs migrations against the database.
 type Migrator struct {

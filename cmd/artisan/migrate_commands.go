@@ -39,13 +39,19 @@ var MigrateCmd = &cobra.Command{
 
 import (
 	_ "%s/database/migrations"
-	"fmt"
-	"github.com/mechneerd/gow/cmd/artisan"
+	"log"
+
+	"github.com/mechneerd/gow/migration"
 )
 
 func main() {
-	fmt.Println("→ Running migrations (auto-discovered via register.go)...")
-	artisan.MigrateCmd.Run(artisan.MigrateCmd, []string{})
+	db, dialect, err := migration.ConnectFromEnv()
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err := migration.RunPending(db, dialect); err != nil {
+		log.Fatal(err)
+	}
 }
 `, modulePath)
 
@@ -92,13 +98,19 @@ var MigrateFreshCmd = &cobra.Command{
 
 import (
 	_ "%s/database/migrations"
-	"fmt"
-	"github.com/mechneerd/gow/cmd/artisan"
+	"log"
+
+	"github.com/mechneerd/gow/migration"
 )
 
 func main() {
-	fmt.Println("→ Running migrate:fresh (auto-discovered)...")
-	artisan.MigrateFreshCmd.Run(artisan.MigrateFreshCmd, []string{})
+	db, dialect, err := migration.ConnectFromEnv()
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err := migration.Fresh(db, dialect); err != nil {
+		log.Fatal(err)
+	}
 }
 `, modulePath)
 
@@ -124,18 +136,60 @@ var MigrateRefreshCmd = &cobra.Command{
 	Use:   "migrate:refresh",
 	Short: "Rollback all migrations and re-run them",
 	Run: func(cmd *cobra.Command, args []string) {
-		migrator, err := getMigrator()
-		if err != nil {
-			fmt.Println("Error initializing migrator:", err)
-			return
+		cwd, _ := os.Getwd()
+
+		if err := generateMigrationRegister(); err != nil {
+			fmt.Println("Warning:", err)
 		}
 
-		if err := migrator.Refresh(); err != nil {
+		runnerFile := filepath.Join(cwd, ".gow", "migrate_runner.go")
+		if err := os.MkdirAll(filepath.Dir(runnerFile), 0755); err != nil {
+			fmt.Println("Warning:", err)
+		}
+
+		modulePath := readModulePath(filepath.Join(cwd, "go.mod"))
+		if modulePath == "" {
+			modulePath = "unknown"
+		}
+
+		runnerCode := fmt.Sprintf(`package main
+
+import (
+	_ "%s/database/migrations"
+	"log"
+
+	"github.com/mechneerd/gow/migration"
+)
+
+func main() {
+	db, dialect, err := migration.ConnectFromEnv()
+	if err != nil {
+		log.Fatal(err)
+	}
+	// Rollback everything, then run all migrations
+	if err := migration.Rollback(db, dialect, 0); err != nil {
+		log.Fatal(err)
+	}
+	if err := migration.RunPending(db, dialect); err != nil {
+		log.Fatal(err)
+	}
+}
+`, modulePath)
+
+		_ = os.WriteFile(runnerFile, []byte(runnerCode), 0644)
+
+		execCmd := exec.Command("go", "run", "-C", cwd, runnerFile)
+		execCmd.Stdout = os.Stdout
+		execCmd.Stderr = os.Stderr
+
+		fmt.Println("→ Running migrate:refresh with auto-discovered files...")
+		if err := execCmd.Run(); err != nil {
 			fmt.Println("migrate:refresh failed:", err)
 			return
 		}
 
-		fmt.Println("Database refreshed successfully.")
+		_ = os.Remove(runnerFile)
+		_ = os.Remove(filepath.Dir(runnerFile))
 	},
 }
 
@@ -144,19 +198,56 @@ var MigrateRollbackCmd = &cobra.Command{
 	Short: "Rollback the last database migration(s)",
 	Run: func(cmd *cobra.Command, args []string) {
 		steps, _ := cmd.Flags().GetInt("step")
-		fmt.Printf("Rolling back last %d migration(s)...\n", steps)
+		cwd, _ := os.Getwd()
 
-		migrator, err := getMigrator()
-		if err != nil {
-			fmt.Println("Error initializing migrator:", err)
+		if err := generateMigrationRegister(); err != nil {
+			fmt.Println("Warning:", err)
+		}
+
+		runnerFile := filepath.Join(cwd, ".gow", "migrate_runner.go")
+		if err := os.MkdirAll(filepath.Dir(runnerFile), 0755); err != nil {
+			fmt.Println("Warning:", err)
+		}
+
+		modulePath := readModulePath(filepath.Join(cwd, "go.mod"))
+		if modulePath == "" {
+			modulePath = "unknown"
+		}
+
+		runnerCode := fmt.Sprintf(`package main
+
+import (
+	_ "%s/database/migrations"
+	"log"
+
+	"github.com/mechneerd/gow/migration"
+)
+
+func main() {
+	db, dialect, err := migration.ConnectFromEnv()
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err := migration.Rollback(db, dialect, %d); err != nil {
+		log.Fatal(err)
+	}
+}
+`, modulePath, steps)
+
+		_ = os.WriteFile(runnerFile, []byte(runnerCode), 0644)
+
+		execCmd := exec.Command("go", "run", "-C", cwd, runnerFile)
+		execCmd.Stdout = os.Stdout
+		execCmd.Stderr = os.Stderr
+
+		fmt.Printf("→ Running migrate:rollback (--step=%d) with auto-discovered files...\n", steps)
+		if err := execCmd.Run(); err != nil {
+			fmt.Println("migrate:rollback failed:", err)
 			return
 		}
 
-		if err := migrator.RollbackSteps(steps); err != nil {
-			fmt.Println("Rollback failed:", err)
-			return
-		}
-		fmt.Println("Rollback completed successfully.")
+		_ = os.Remove(runnerFile)
+		_ = os.Remove(filepath.Dir(runnerFile))
 	},
 }
 
@@ -186,16 +277,56 @@ var MigrateStatusCmd = &cobra.Command{
 	Use:   "migrate:status",
 	Short: "Show the status of all migrations",
 	Run: func(cmd *cobra.Command, args []string) {
-		migrator, err := getMigrator()
-		if err != nil {
-			fmt.Println("Error initializing migrator:", err)
+		cwd, _ := os.Getwd()
+
+		if err := generateMigrationRegister(); err != nil {
+			fmt.Println("Warning:", err)
+		}
+
+		runnerFile := filepath.Join(cwd, ".gow", "migrate_runner.go")
+		if err := os.MkdirAll(filepath.Dir(runnerFile), 0755); err != nil {
+			fmt.Println("Warning:", err)
+		}
+
+		modulePath := readModulePath(filepath.Join(cwd, "go.mod"))
+		if modulePath == "" {
+			modulePath = "unknown"
+		}
+
+		runnerCode := fmt.Sprintf(`package main
+
+import (
+	_ "%s/database/migrations"
+	"log"
+
+	"github.com/mechneerd/gow/migration"
+)
+
+func main() {
+	db, dialect, err := migration.ConnectFromEnv()
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err := migration.Status(db, dialect); err != nil {
+		log.Fatal(err)
+	}
+}
+`, modulePath)
+
+		_ = os.WriteFile(runnerFile, []byte(runnerCode), 0644)
+
+		execCmd := exec.Command("go", "run", "-C", cwd, runnerFile)
+		execCmd.Stdout = os.Stdout
+		execCmd.Stderr = os.Stderr
+
+		fmt.Println("→ Running migrate:status with auto-discovered files...")
+		if err := execCmd.Run(); err != nil {
+			fmt.Println("migrate:status failed:", err)
 			return
 		}
 
-		if err := migrator.Status(); err != nil {
-			fmt.Println("Failed to get migration status:", err)
-			return
-		}
+		_ = os.Remove(runnerFile)
+		_ = os.Remove(filepath.Dir(runnerFile))
 	},
 }
 
