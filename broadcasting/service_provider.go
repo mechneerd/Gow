@@ -38,6 +38,9 @@ func (p *ServiceProvider) Register(app *foundation.Application) {
 	managerType := reflect.TypeOf((*Manager)(nil))
 	if iface, err := app.Resolve(managerType); err == nil {
 		if bm, ok := iface.(*Manager); ok {
+			if bm.drivers == nil {
+				bm.drivers = make(map[string]Broadcaster)
+			}
 			bm.Extend("websocket", wsDriver)
 			log.Println("[GoW] WebSocket broadcast driver registered")
 		}

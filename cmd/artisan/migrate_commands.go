@@ -39,6 +39,9 @@ var MigrateCmd = &cobra.Command{
 
 import (
 	_ "%s/database/migrations"
+	_ "modernc.org/sqlite"
+	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/lib/pq"
 	"log"
 
 	"github.com/mechneerd/gow/database/migration"
@@ -58,6 +61,8 @@ func main() {
 		if err := os.WriteFile(runnerFile, []byte(runnerCode), 0644); err != nil {
 			fmt.Println("Warning: could not write migration runner:", err)
 		}
+
+		ensureDriverDeps(cwd)
 
 		execCmd := exec.Command("go", "run", "-C", cwd, runnerFile)
 		execCmd.Stdout = os.Stdout
@@ -98,6 +103,9 @@ var MigrateFreshCmd = &cobra.Command{
 
 import (
 	_ "%s/database/migrations"
+	_ "modernc.org/sqlite"
+	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/lib/pq"
 	"log"
 
 	"github.com/mechneerd/gow/database/migration"
@@ -115,6 +123,8 @@ func main() {
 `, modulePath)
 
 		_ = os.WriteFile(runnerFile, []byte(runnerCode), 0644)
+
+		ensureDriverDeps(cwd)
 
 		execCmd := exec.Command("go", "run", "-C", cwd, runnerFile)
 		execCmd.Stdout = os.Stdout
@@ -156,6 +166,9 @@ var MigrateRefreshCmd = &cobra.Command{
 
 import (
 	_ "%s/database/migrations"
+	_ "modernc.org/sqlite"
+	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/lib/pq"
 	"log"
 
 	"github.com/mechneerd/gow/database/migration"
@@ -177,6 +190,8 @@ func main() {
 `, modulePath)
 
 		_ = os.WriteFile(runnerFile, []byte(runnerCode), 0644)
+
+		ensureDriverDeps(cwd)
 
 		execCmd := exec.Command("go", "run", "-C", cwd, runnerFile)
 		execCmd.Stdout = os.Stdout
@@ -218,6 +233,9 @@ var MigrateRollbackCmd = &cobra.Command{
 
 import (
 	_ "%s/database/migrations"
+	_ "modernc.org/sqlite"
+	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/lib/pq"
 	"log"
 
 	"github.com/mechneerd/gow/database/migration"
@@ -235,6 +253,8 @@ func main() {
 `, modulePath, steps)
 
 		_ = os.WriteFile(runnerFile, []byte(runnerCode), 0644)
+
+		ensureDriverDeps(cwd)
 
 		execCmd := exec.Command("go", "run", "-C", cwd, runnerFile)
 		execCmd.Stdout = os.Stdout
@@ -297,6 +317,9 @@ var MigrateStatusCmd = &cobra.Command{
 
 import (
 	_ "%s/database/migrations"
+	_ "modernc.org/sqlite"
+	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/lib/pq"
 	"log"
 
 	"github.com/mechneerd/gow/database/migration"
@@ -314,6 +337,8 @@ func main() {
 `, modulePath)
 
 		_ = os.WriteFile(runnerFile, []byte(runnerCode), 0644)
+
+		ensureDriverDeps(cwd)
 
 		execCmd := exec.Command("go", "run", "-C", cwd, runnerFile)
 		execCmd.Stdout = os.Stdout
@@ -389,6 +414,21 @@ func readModulePath(goModPath string) string {
 		}
 	}
 	return ""
+}
+
+// ensureDriverDeps runs go get for all database drivers so the migration runner can compile.
+func ensureDriverDeps(dir string) {
+	drivers := []string{
+		"modernc.org/sqlite",
+		"github.com/go-sql-driver/mysql",
+		"github.com/lib/pq",
+	}
+	args := append([]string{"get"}, drivers...)
+	got := exec.Command("go", args...)
+	got.Dir = dir
+	got.Stdout = os.Stdout
+	got.Stderr = os.Stderr
+	_ = got.Run()
 }
 
 

@@ -7,6 +7,9 @@ import (
 
 	"github.com/joho/godotenv"
 	"github.com/mechneerd/gow/database/dialect"
+	_ "modernc.org/sqlite"
+	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/lib/pq"
 )
 
 // ConnectFromEnv reads standard environment variables (DB_CONNECTION, DB_DATABASE, etc.)
