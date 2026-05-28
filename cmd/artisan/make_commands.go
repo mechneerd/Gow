@@ -144,22 +144,27 @@ import (
 	"github.com/mechneerd/gow/database/schema"
 )
 
-func init() {
-	migration.Register("` + timestamp + `_` + migrationName + `", ` + className + `)
-}
+type ` + className + ` struct{}
 
-func ` + className + `(m *schema.Builder) error {
+func (` + className + `) Up(m *schema.Builder) error {
 	return m.Create("` + strings.ToLower(name) + `s", func(table *schema.Blueprint) {
 		table.ID()
-		// Add your columns here using currently supported methods:
+		// Add your columns here (only use currently supported methods)
 		// table.String("name", 255)
 		// table.String("email", 255).Unique()
 		// table.Integer("age")
 		// table.Boolean("is_active").Default(true)
 		// table.Text("description").Nullable()
-		// table.Timestamps()
-		// table.SoftDeletes()
+		table.Timestamps()
 	})
+}
+
+func (` + className + `) Down(m *schema.Builder) error {
+	return m.Drop("` + strings.ToLower(name) + `s")
+}
+
+func init() {
+	migration.Register("` + timestamp + `_` + migrationName + `", ` + className + `{})
 }
 `
 			generateFile(migPath, migStub)
@@ -187,22 +192,27 @@ import (
 	"github.com/mechneerd/gow/database/schema"
 )
 
-func init() {
-	migration.Register("` + timestamp + `_` + name + `", ` + className + `)
-}
+type ` + className + ` struct{}
 
-func ` + className + `(m *schema.Builder) error {
+func (` + className + `) Up(m *schema.Builder) error {
 	return m.Create("` + strings.ToLower(name) + `s", func(table *schema.Blueprint) {
 		table.ID()
-		// Add your columns here using currently supported methods:
+		// Add columns here (only use currently supported methods):
 		// table.String("name", 255)
 		// table.String("email", 255).Unique()
 		// table.Integer("age")
 		// table.Boolean("is_active").Default(true)
 		// table.Text("description").Nullable()
-		// table.Timestamps()
-		// table.SoftDeletes()
+		table.Timestamps()
 	})
+}
+
+func (` + className + `) Down(m *schema.Builder) error {
+	return m.Drop("` + strings.ToLower(name) + `s")
+}
+
+func init() {
+	migration.Register("` + timestamp + `_` + name + `", ` + className + `{})
 }
 `
 		generateFile(path, stub)

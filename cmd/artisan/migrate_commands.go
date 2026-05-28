@@ -339,6 +339,7 @@ func init() {
 }
 
 // generateMigrationRegister auto-discovers migrations and writes register.go
+// Skips generation if migrations already self-register via migration.Register() in init().
 func generateMigrationRegister() error {
 	cwd, err := os.Getwd()
 	if err != nil {
@@ -347,6 +348,12 @@ func generateMigrationRegister() error {
 
 	migrationsDir := filepath.Join(cwd, "database", "migrations")
 	if _, err := os.Stat(migrationsDir); os.IsNotExist(err) {
+		return nil
+	}
+
+	// If migrations already self-register (struct-based pattern from skeleton kits),
+	// skip generating register.go to avoid unused import errors.
+	if gowmigration.HasSelfRegisteringMigrations(migrationsDir) {
 		return nil
 	}
 
