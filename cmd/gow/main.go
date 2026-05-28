@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 
@@ -32,6 +33,27 @@ var serveCmd = &cobra.Command{
 	Use:   "serve",
 	Short: "Serve the application on a local development server",
 	Run: func(cmd *cobra.Command, args []string) {
+		cwd, _ := os.Getwd()
+
+		// If the project has its own main.go, run it directly
+		if _, err := os.Stat(filepath.Join(cwd, "main.go")); err == nil {
+			fmt.Println("🚀  Starting application server...")
+			fmt.Println("    Press Ctrl+C to stop.")
+
+			serveCmd := exec.Command("go", "run", "main.go")
+			serveCmd.Dir = cwd
+			serveCmd.Stdout = os.Stdout
+			serveCmd.Stderr = os.Stderr
+			serveCmd.Stdin = os.Stdin
+
+			if err := serveCmd.Run(); err != nil {
+				fmt.Printf("Server error: %v\n", err)
+				os.Exit(1)
+			}
+			return
+		}
+
+		// Fallback: framework default server (no user main.go found)
 		port := os.Getenv("APP_PORT")
 		if port == "" {
 			port = "8080"
@@ -44,7 +66,7 @@ var serveCmd = &cobra.Command{
 		// Create router
 		router := routing.NewRouter()
 
-		// Default welcome route (overridden if user registers routes in their main or bootstrap)
+		// Default welcome route
 		router.Get("/", func(w http.ResponseWriter, r *http.Request) error {
 			w.Header().Set("Content-Type", "text/html; charset=utf-8")
 			fmt.Fprintf(w, `<h1>Welcome to GoW Framework!</h1>
