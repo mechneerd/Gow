@@ -79,13 +79,32 @@ func NewBuilder(conn QueryExecer, d dialect.Dialect) *Builder {
 	}
 }
 
-// Clone creates a copy of the builder, optionally with a different connection.
+// Clone creates a deep copy of the builder.
 func (b *Builder) Clone() *Builder {
+	q := b.query
+	q.Wheres = append([]dialect.WhereClause{}, b.query.Wheres...)
+	q.OrderBys = append([]dialect.OrderByClause{}, b.query.OrderBys...)
+	q.Joins = append([]dialect.JoinClause{}, b.query.Joins...)
+	q.Columns = append([]string{}, b.query.Columns...)
+	q.GroupBys = append([]string{}, b.query.GroupBys...)
+	q.Havings = append([]dialect.WhereClause{}, b.query.Havings...)
+	if b.query.Aggregate != nil {
+		agg := *b.query.Aggregate
+		q.Aggregate = &agg
+	}
+	if b.query.Limit != nil {
+		limit := *b.query.Limit
+		q.Limit = &limit
+	}
+	if b.query.Offset != nil {
+		offset := *b.query.Offset
+		q.Offset = &offset
+	}
 	return &Builder{
 		conn:    b.conn,
 		dialect: b.dialect,
 		ctx:     b.ctx,
-		query:   b.query, // careful, slices in query might be shared if mutated later, but usually we clone fresh builders for new queries
+		query:   q,
 	}
 }
 
@@ -379,16 +398,17 @@ func (b *Builder) WhereBetween(column string, values []any) *Builder {
 // --- AGGREGATES ---
 
 func (b *Builder) aggregate(function, column string) (int, error) {
-	// Clone builder or manipulate query
-	b.query.Aggregate = &dialect.AggregateClause{
+	// Clone builder to avoid mutating the original
+	b2 := b.Clone()
+	b2.query.Aggregate = &dialect.AggregateClause{
 		Function: function,
 		Column:   column,
 	}
 	
-	sqlQuery, args := b.dialect.CompileSelect(b.query)
+	sqlQuery, args := b2.dialect.CompileSelect(b2.query)
 	var result int
 	start := time.Now()
-	err := b.conn.QueryRowContext(b.ctx, sqlQuery, args...).Scan(&result)
+	err := b2.conn.QueryRowContext(b2.ctx, sqlQuery, args...).Scan(&result)
 	dispatchQueryEvent(sqlQuery, args, time.Since(start))
 	return result, err
 }

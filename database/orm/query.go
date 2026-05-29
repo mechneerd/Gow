@@ -240,6 +240,17 @@ func (q *ModelQuery[T]) applySoftDeletes() {
 	}
 }
 
+// applySoftDeletesOn applies soft delete conditions on the given builder (for cloned builders).
+func (q *ModelQuery[T]) applySoftDeletesOn(b *query.Builder) {
+	if q.softDeleteCol != "" {
+		if q.onlyTrashed {
+			b.WhereNotNull(q.softDeleteCol)
+		} else if !q.withTrashed {
+			b.WhereNull(q.softDeleteCol)
+		}
+	}
+}
+
 // With adds a relationship to be eager-loaded.
 func (q *ModelQuery[T]) With(relation string) *ModelQuery[T] {
 	q.with = append(q.with, relation)
@@ -252,11 +263,18 @@ func (q *ModelQuery[T]) Where(column, operator string, value any) *ModelQuery[T]
 	return q
 }
 
+// getBuilder returns a fresh clone of the builder for each query operation
+// to prevent mutation of shared state.
+func (q *ModelQuery[T]) getBuilder() *query.Builder {
+	return q.builder.Clone()
+}
+
 // First fetches the first matching record.
 func (q *ModelQuery[T]) First() (*T, error) {
-	q.applySoftDeletes()
-	q.builder.Limit(1)
-	rows, err := q.builder.Get()
+	b := q.getBuilder()
+	q.applySoftDeletesOn(b)
+	b.Limit(1)
+	rows, err := b.Get()
 	if err != nil {
 		return nil, err
 	}
@@ -276,8 +294,9 @@ func (q *ModelQuery[T]) First() (*T, error) {
 
 // Get fetches all matching records.
 func (q *ModelQuery[T]) Get() ([]*T, error) {
-	q.applySoftDeletes()
-	rows, err := q.builder.Get()
+	b := q.getBuilder()
+	q.applySoftDeletesOn(b)
+	rows, err := b.Get()
 	if err != nil {
 		return nil, err
 	}
@@ -553,8 +572,10 @@ func (q *ModelQuery[T]) Update(model *T) error {
 	}
 
 	q.applySoftDeletes()
-	q.builder.Where(pkColumn, "=", pkValue)
-	_, err := q.builder.Update(values)
+	b := q.getBuilder()
+	q.applySoftDeletesOn(b)
+	b.Where(pkColumn, "=", pkValue)
+	_, err := b.Update(values)
 	if err == nil {
 		DispatchModelEvent(model, "updated")
 		touchRelations(model)
@@ -671,7 +692,6 @@ func (q *ModelQuery[T]) Restore(model *T) error {
 	
 	if err == nil {
 		DispatchModelEvent(model, "restored")
-		meta := getMetadata(val.Type())
 		for _, field := range meta.Fields {
 			if field.Column == q.softDeleteCol {
 				f := val.Field(field.Index)
@@ -700,9 +720,13 @@ func (q *ModelQuery[T]) Save(model *T) error {
 	for _, field := range meta.Fields {
 		if field.IsPrimary {
 			v := val.Field(field.Index)
-			switch v.Kind() {
+		switch v.Kind() {
 			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 				if v.Int() != 0 {
+					isNew = false
+				}
+			case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+				if v.Uint() != 0 {
 					isNew = false
 				}
 			case reflect.String:
