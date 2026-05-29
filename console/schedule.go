@@ -1,6 +1,7 @@
 package console
 
 import (
+	"context"
 	"log"
 	"os"
 	"os/exec"
@@ -94,15 +95,15 @@ func (s *Schedule) Command(command string) *Event {
 }
 
 // Run executes the scheduler blocking the current thread.
-func (s *Schedule) Run() {
+// It stops when the context is cancelled.
+func (s *Schedule) Run(ctx context.Context) {
 	c := cron.New()
 	
 	for _, event := range s.events {
 		if event.expression == "" {
-			continue // Skip unconfigured events
+			continue
 		}
 
-		// Closure capture issue prevention
 		ev := event 
 		
 		_, err := c.AddFunc(ev.expression, func() {
@@ -117,7 +118,9 @@ func (s *Schedule) Run() {
 	log.Println("Scheduler started. Press CTRL+C to abort.")
 	c.Start()
 	
-	// Block forever
-	select {}
+	// Wait for context cancellation
+	<-ctx.Done()
+	log.Println("Scheduler shutting down...")
+	c.Stop()
 }
 

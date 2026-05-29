@@ -813,22 +813,27 @@ func (q *ModelQuery[T]) Chunk(size int, callback func([]T) error) error {
 
 	page := 1
 	for {
-		clone := &ModelQuery[T]{
-			builder:       q.builder.Clone(),
-			db:            q.db,
-			with:          append([]string{}, q.with...),
-			softDeleteCol: q.softDeleteCol,
-			withTrashed:   q.withTrashed,
-			onlyTrashed:   q.onlyTrashed,
-		}
+		b := q.builder.Clone()
+		q.applySoftDeletesOn(b)
 
 		offset := (page - 1) * size
-		clone.builder.Offset(offset).Limit(size + 1)
+		b.Offset(offset).Limit(size + 1)
 
-		results, err := clone.Get()
+		rows, err := b.Get()
 		if err != nil {
 			return err
 		}
+
+		var results []*T
+		for rows.Next() {
+			model, err := hydrateModel[T](rows)
+			if err != nil {
+				rows.Close()
+				return err
+			}
+			results = append(results, model)
+		}
+		rows.Close()
 
 		if len(results) == 0 {
 			break

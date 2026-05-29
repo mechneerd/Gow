@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 )
 
@@ -21,8 +22,22 @@ func (s *SlackChannel) Send(notifiable any, notification Notification) error {
 		"text": fmt.Sprintf("Notification for %v: %T", notifiable, notification),
 	}
 
-	body, _ := json.Marshal(message)
-	http.Post(s.WebhookURL, "application/json", bytes.NewBuffer(body))
+	body, err := json.Marshal(message)
+	if err != nil {
+		return fmt.Errorf("failed to marshal slack message: %w", err)
+	}
+
+	resp, err := http.Post(s.WebhookURL, "application/json", bytes.NewBuffer(body))
+	if err != nil {
+		return fmt.Errorf("failed to send slack notification: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 400 {
+		respBody, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("slack webhook returned status %d: %s", resp.StatusCode, string(respBody))
+	}
+
 	return nil
 }
 

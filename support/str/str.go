@@ -75,8 +75,9 @@ func Contains(haystack string, needle string) bool {
 func splitIntoWords(s string) []string {
 	var words []string
 	var currentWord strings.Builder
+	runes := []rune(s)
 
-	for i, r := range s {
+	for i, r := range runes {
 		if !unicode.IsLetter(r) && !unicode.IsNumber(r) {
 			if currentWord.Len() > 0 {
 				words = append(words, currentWord.String())
@@ -86,11 +87,13 @@ func splitIntoWords(s string) []string {
 		}
 
 		if unicode.IsUpper(r) && currentWord.Len() > 0 {
-			// Check if previous character was lower or next is lower (e.g., XMLHttp -> XML Http)
-			prev := rune(s[i-1])
-			if unicode.IsLower(prev) {
-				words = append(words, currentWord.String())
-				currentWord.Reset()
+			// Check if previous character was lower (e.g., XMLHttp -> XML Http)
+			if i > 0 {
+				prev := runes[i-1]
+				if unicode.IsLower(prev) {
+					words = append(words, currentWord.String())
+					currentWord.Reset()
+				}
 			}
 		}
 
