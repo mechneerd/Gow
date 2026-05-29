@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"log"
 	"github.com/mechneerd/gow/session"
 	"net/http"
 	"time"
@@ -22,7 +23,9 @@ func StartSession(store session.Store) func(http.Handler) http.Handler {
 			}
 
 			manager := session.NewManager(store, sessionID)
-			manager.Start()
+			if err := manager.Start(); err != nil {
+				log.Printf("session start error: %v", err)
+			}
 
 			// Add manager to context
 			ctx := context.WithValue(r.Context(), SessionKey, manager)

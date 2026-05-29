@@ -63,7 +63,12 @@ func (d *FileDriver) Write(id string, data map[string]any) error {
 		return err
 	}
 
-	return os.WriteFile(file, b, 0644)
+	// Atomic write: write to temp file then rename
+	tmpFile := file + ".tmp"
+	if err := os.WriteFile(tmpFile, b, 0644); err != nil {
+		return err
+	}
+	return os.Rename(tmpFile, file)
 }
 
 func (d *FileDriver) Destroy(id string) error {

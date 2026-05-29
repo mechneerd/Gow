@@ -52,7 +52,7 @@ func (m *Manager) ageFlashData() {
 		flash = map[string][]string{"old": {}, "new": {}}
 		
 		if typedMap, ok := flashRaw.(map[string]any); ok {
-			if oldArr, ok := typedMap["new"].([]any); ok {
+			if oldArr, ok := typedMap["old"].([]any); ok {
 				var oldStr []string
 				for _, v := range oldArr {
 					if str, ok := v.(string); ok {
@@ -60,6 +60,15 @@ func (m *Manager) ageFlashData() {
 					}
 				}
 				flash["old"] = oldStr
+			}
+			if newArr, ok := typedMap["new"].([]any); ok {
+				var newStr []string
+				for _, v := range newArr {
+					if str, ok := v.(string); ok {
+						newStr = append(newStr, str)
+					}
+				}
+				flash["new"] = newStr
 			}
 		}
 	} else {
