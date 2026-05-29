@@ -168,11 +168,7 @@ func (c *Compiler) CompileString(raw string) string {
 	})
 	compiled = strings.ReplaceAll(compiled, "@endonce", `{{ end }}`)
 
-	// ==================== Components & Slots (Improved Implementation) ====================
-
-	// We now use a more practical approach:
-	// <x-alert ...>content</x-alert> is compiled to a call that renders the component view
-	// using the engine's Make method with a special context.
+	// ==================== Components & Slots ====================
 
 	// Self-closing: <x-alert type="error" />
 	selfClose := regexp.MustCompile(`<x-([a-zA-Z0-9_-]+)([^>]*?)\s*/>`)
@@ -183,17 +179,61 @@ func (c *Compiler) CompileString(raw string) string {
 		return fmt.Sprintf(`{{ component "%s" . "%s" "" }}`, name, attrs)
 	})
 
-	// With content (slots)
-	withSlot := regexp.MustCompile(`<x-([a-zA-Z0-9_-]+)([^>]*?)>([\s\S]*?)</x-[a-zA-Z0-9_-]+>`)
-	compiled = withSlot.ReplaceAllStringFunc(compiled, func(m string) string {
-		matches := withSlot.FindStringSubmatch(m)
-		name := matches[1]
-		attrs := matches[2]
-		slot := strings.TrimSpace(matches[3])
-		return fmt.Sprintf(`{{ component "%s" . "%s" "%s" }}`, name, attrs, slot)
-	})
+	// With content (slots) - handle nesting via iterative innermost-first replacement
+	compiled = replaceNestedComponents(compiled)
 
 	return compiled
+}
+
+// replaceNestedComponents handles <x-name>...</x-name> with proper nesting support.
+// It iteratively replaces innermost components first.
+func replaceNestedComponents(s string) string {
+	tagRe := regexp.MustCompile(`<x-([a-zA-Z0-9_-]+)([^>]*?)>`)
+	changed := true
+	for changed {
+		changed = false
+		idx := tagRe.FindStringIndex(s)
+		if idx == nil {
+			break
+		}
+		// Find the matching closing tag by counting nesting depth
+		start := idx[0]
+		tagStart := s[idx[0]:idx[1]]
+		matches := tagRe.FindStringSubmatch(tagStart)
+		name := matches[1]
+
+		depth := 1
+		pos := idx[1]
+		closePattern := "</x-" + name + ">"
+		openPattern := "<x-" + name
+
+		for depth > 0 && pos < len(s) {
+			nextOpen := strings.Index(s[pos:], openPattern)
+			nextClose := strings.Index(s[pos:], closePattern)
+
+			if nextClose == -1 {
+				break
+			}
+
+			if nextOpen != -1 && nextOpen < nextClose {
+				depth++
+				pos += nextOpen + len(openPattern)
+			} else {
+				depth--
+				if depth == 0 {
+					closeEnd := pos + nextClose + len(closePattern)
+					attrs := matches[2]
+					slotContent := strings.TrimSpace(s[idx[1]:pos+nextClose])
+					replacement := fmt.Sprintf(`{{ component "%s" . "%s" "%s" }}`, name, attrs, slotContent)
+					s = s[:start] + replacement + s[closeEnd:]
+					changed = true
+				} else {
+					pos += nextClose + len(closePattern)
+				}
+			}
+		}
+	}
+	return s
 }
 
 // CompileFile reads a file, compiles it, and caches the output, returning the path to the cached file.

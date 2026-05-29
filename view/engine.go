@@ -157,9 +157,10 @@ func (e *Engine) Make(name string, data map[string]any) (string, error) {
 			return true
 		},
 		"while": func() []struct{} {
-			// Returns a very large slice to simulate a while loop.
+			// Returns a slice to simulate a while loop.
 			// Go templates do not natively support infinite loops.
-			return make([]struct{}, 100000)
+			// The break mechanism stops iteration early when the condition is false.
+			return make([]struct{}, 1000)
 		},
 		// raw allows unescaped output: {!! $html !!}
 		"raw": func(s any) template.HTML {
@@ -240,15 +241,28 @@ func (e *Engine) Make(name string, data map[string]any) (string, error) {
 		"lang":   localization.Translate,
 	}
 
-	// baseName is arbitrary for the template set, but ParseFiles will use the base name of each file for its templates
-	tmpl, err := template.New(rootLayoutBaseName).Funcs(funcMap).ParseFiles(filesToParse...)
-	if err != nil {
-		return "", err
+	// Use full path as template name to avoid collisions between files with same base name
+	tmpl := template.New(rootLayoutBaseName).Funcs(funcMap)
+	for _, f := range filesToParse {
+		content, err := os.ReadFile(f)
+		if err != nil {
+			return "", err
+		}
+		name := filepath.ToSlash(f)
+		t, err := template.New(name).Funcs(funcMap).Parse(string(content))
+		if err != nil {
+			return "", err
+		}
+		// Merge all templates from this file into the main template set
+		for _, t2 := range t.Templates() {
+			tmpl, _ = tmpl.AddParseTree(t2.Name(), t2.Tree)
+		}
 	}
 
 	var buf bytes.Buffer
-	err = tmpl.ExecuteTemplate(&buf, rootLayoutBaseName, data)
-	if err != nil {
+	// Execute using the root layout's full path as template name
+	rootPath := filepath.ToSlash(filesToParse[len(filesToParse)-1])
+	if err := tmpl.ExecuteTemplate(&buf, rootPath, data); err != nil {
 		return "", err
 	}
 
