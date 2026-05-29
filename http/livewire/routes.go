@@ -3,9 +3,23 @@ package livewire
 import (
 	"encoding/json"
 	"net/http"
+	"sync"
 
 	"github.com/mechneerd/gow/routing"
 )
+
+var (
+	defaultManager *Manager
+	managerOnce    sync.Once
+)
+
+// getManager returns a singleton Manager instance.
+func getManager() *Manager {
+	managerOnce.Do(func() {
+		defaultManager = NewManager()
+	})
+	return defaultManager
+}
 
 // RegisterRoutes registers the standard Livewire endpoints.
 // Usage in your routes file:
@@ -13,7 +27,7 @@ import (
 //	router := routing.NewRouter()
 //	livewire.RegisterRoutes(router)
 func RegisterRoutes(router *routing.Router) {
-	manager := NewManager()
+	manager := getManager()
 
 	// Main Livewire update endpoint (used by livewire.js)
 	router.Post("/livewire/update", func(w http.ResponseWriter, r *http.Request) error {

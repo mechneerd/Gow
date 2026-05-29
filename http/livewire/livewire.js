@@ -86,8 +86,6 @@
                 state: stateUpdate
             };
 
-            const componentEl = document.querySelector(`[wire\\:id="${id}"]`);
-
             // Show loading states
             if (componentEl) {
                 componentEl.querySelectorAll('[wire\\:loading]').forEach(el => {
@@ -99,7 +97,8 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Accept': 'application/json'
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': this.getCSRFToken()
                 },
                 body: JSON.stringify(payload)
             })
@@ -182,6 +181,23 @@
                     this.updateProperty(id, property, input.value);
                 });
             });
+        },
+
+        // Get CSRF token from meta tag or hidden input
+        getCSRFToken: function () {
+            // Try meta tag first
+            const meta = document.querySelector('meta[name="csrf-token"]');
+            if (meta) return meta.getAttribute('content');
+
+            // Try hidden input
+            const input = document.querySelector('input[name="_token"]');
+            if (input) return input.value;
+
+            // Try cookie
+            const match = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
+            if (match) return decodeURIComponent(match[1]);
+
+            return '';
         }
     };
 
