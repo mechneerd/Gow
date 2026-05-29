@@ -60,10 +60,15 @@ func getMetadata(typ reflect.Type) *ModelMetadata {
 		Fields:    make([]FieldMeta, 0, typ.NumField()),
 	}
 
-	// Try to instantiate to check for TableName() interface
-	dummyPtr := reflect.New(typ).Interface()
-	if m, ok := dummyPtr.(Model); ok {
-		meta.TableName = m.TableName()
+	// Check if type implements Model interface (TableName() method) without instantiating
+	modelType := reflect.TypeOf((*Model)(nil)).Elem()
+	ptrType := reflect.PointerTo(typ)
+	if ptrType.Implements(modelType) || typ.Implements(modelType) {
+		// Need a dummy instance to call TableName() — only once per type
+		dummyPtr := reflect.New(typ).Interface()
+		if m, ok := dummyPtr.(Model); ok {
+			meta.TableName = m.TableName()
+		}
 	}
 
 	for i := 0; i < typ.NumField(); i++ {

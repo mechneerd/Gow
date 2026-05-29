@@ -12,6 +12,16 @@ import (
 	"time"
 )
 
+// Pre-compiled regexes to avoid recompilation on every validation call.
+var (
+	emailRegex  = regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
+	urlRegex    = regexp.MustCompile(`^(https?|ftp)://[^\s/$.?#].[^\s]*$`)
+	uuidRegex   = regexp.MustCompile(`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$`)
+	alphaRegex  = regexp.MustCompile(`^[a-zA-Z]+$`)
+	alphaNumRegex   = regexp.MustCompile(`^[a-zA-Z0-9]+$`)
+	alphaDashRegex  = regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)
+)
+
 // Validator handles struct and rule-based validation.
 type Validator struct {
 	data  map[string]any
@@ -109,7 +119,6 @@ func (v *Validator) applyRule(field string, value any, exists bool, rule string)
 			return errors.New("The " + field + " field is required.")
 		}
 	case "email":
-		emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
 		if !emailRegex.MatchString(strVal) {
 			return errors.New("The " + field + " field must be a valid email address.")
 		}
@@ -228,31 +237,26 @@ func (v *Validator) applyRule(field string, value any, exists bool, rule string)
 		}
 
 	case "url":
-		urlRegex := regexp.MustCompile(`^(https?|ftp)://[^\s/$.?#].[^\s]*$`)
 		if !urlRegex.MatchString(strVal) {
 			return errors.New("The " + field + " field must be a valid URL.")
 		}
 
 	case "uuid":
-		uuidRegex := regexp.MustCompile(`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$`)
 		if !uuidRegex.MatchString(strVal) {
 			return errors.New("The " + field + " field must be a valid UUID.")
 		}
 
 	case "alpha":
-		alphaRegex := regexp.MustCompile(`^[a-zA-Z]+$`)
 		if !alphaRegex.MatchString(strVal) {
 			return errors.New("The " + field + " field may only contain letters.")
 		}
 
 	case "alpha_num":
-		alphaNumRegex := regexp.MustCompile(`^[a-zA-Z0-9]+$`)
 		if !alphaNumRegex.MatchString(strVal) {
 			return errors.New("The " + field + " field may only contain letters and numbers.")
 		}
 
 	case "alpha_dash":
-		alphaDashRegex := regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)
 		if !alphaDashRegex.MatchString(strVal) {
 			return errors.New("The " + field + " field may only contain letters, numbers, dashes and underscores.")
 		}

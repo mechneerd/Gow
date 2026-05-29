@@ -19,6 +19,8 @@ type Kernel struct {
 	app             *foundation.Application
 	router          *routing.Router
 	middlewares     []func(http.Handler) http.Handler
+	chain           http.Handler // built middleware chain, cached
+	chainDirty      bool        // true when middlewares changed since last build
 	shutdownHooks   []func()
 	shutdownTimeout time.Duration
 	mu              sync.Mutex
@@ -112,18 +114,24 @@ func (k *Kernel) Serve(addr string) error {
 // Use adds global middleware to the kernel.
 func (k *Kernel) Use(mw func(http.Handler) http.Handler) {
 	k.middlewares = append(k.middlewares, mw)
+	k.chainDirty = true
 }
 
-// ServeHTTP implements http.Handler. It builds the middleware pipeline
-// and dispatches the request to the router.
-func (k *Kernel) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// Build the middleware pipeline
+// buildChain builds the middleware pipeline once and caches it.
+func (k *Kernel) buildChain() {
 	var handler http.Handler = k.router
-
 	for i := len(k.middlewares) - 1; i >= 0; i-- {
 		handler = k.middlewares[i](handler)
 	}
+	k.chain = handler
+	k.chainDirty = false
+}
 
-	handler.ServeHTTP(w, r)
+// ServeHTTP implements http.Handler. It uses the cached middleware pipeline.
+func (k *Kernel) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if k.chainDirty || k.chain == nil {
+		k.buildChain()
+	}
+	k.chain.ServeHTTP(w, r)
 }
 
