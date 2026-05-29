@@ -36,7 +36,8 @@ func (d *SQLiteDialect) compileWheres(wheres []WhereClause, args *[]any) string 
 		switch w.Type {
 		case "Basic":
 			sql.WriteString(d.QuoteIdentifier(w.Column))
-			sql.WriteString(" " + w.Operator + " ")
+			op, _ := ValidateOperator(w.Operator)
+			sql.WriteString(" " + op + " ")
 			sql.WriteString(d.Placeholder(len(*args) + 1))
 			*args = append(*args, w.Value)
 		case "In":

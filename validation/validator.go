@@ -169,8 +169,12 @@ func (v *Validator) applyRule(field string, value any, exists bool, rule string)
 		// unique:table,column
 		if v.db != nil && len(ruleParams) >= 2 {
 			table, column := ruleParams[0], ruleParams[1]
+			// Validate identifiers to prevent SQL injection
+			if !isValidIdentifier(table) || !isValidIdentifier(column) {
+				return errors.New("The " + field + " validation rule contains invalid identifiers.")
+			}
 			var count int
-			query := fmt.Sprintf("SELECT COUNT(*) FROM %s WHERE %s = ?", table, column)
+			query := fmt.Sprintf("SELECT COUNT(*) FROM \"%s\" WHERE \"%s\" = ?", table, column)
 			v.db.QueryRow(query, value).Scan(&count)
 			if count > 0 {
 				return errors.New("The " + field + " has already been taken.")
@@ -180,8 +184,12 @@ func (v *Validator) applyRule(field string, value any, exists bool, rule string)
 		// exists:table,column
 		if v.db != nil && len(ruleParams) >= 2 {
 			table, column := ruleParams[0], ruleParams[1]
+			// Validate identifiers to prevent SQL injection
+			if !isValidIdentifier(table) || !isValidIdentifier(column) {
+				return errors.New("The " + field + " validation rule contains invalid identifiers.")
+			}
 			var count int
-			query := fmt.Sprintf("SELECT COUNT(*) FROM %s WHERE %s = ?", table, column)
+			query := fmt.Sprintf("SELECT COUNT(*) FROM \"%s\" WHERE \"%s\" = ?", table, column)
 			v.db.QueryRow(query, value).Scan(&count)
 			if count == 0 {
 				return errors.New("The selected " + field + " is invalid.")
@@ -390,5 +398,22 @@ func isEmpty(val any) bool {
 		return v.IsNil()
 	}
 	return false
+}
+
+// isValidIdentifier checks if a string is a safe SQL identifier (alphanumeric + underscore only).
+func isValidIdentifier(s string) bool {
+	if s == "" {
+		return false
+	}
+	for i, c := range s {
+		if c == '_' || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') {
+			if i == 0 && c >= '0' && c <= '9' {
+				return false // can't start with digit
+			}
+			continue
+		}
+		return false
+	}
+	return true
 }
 

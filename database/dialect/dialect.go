@@ -1,6 +1,27 @@
 package dialect
 
-// Dialect represents a SQL dialect for a specific database driver.
+import "fmt"
+
+// ValidOperators is the whitelist of allowed SQL comparison operators.
+var ValidOperators = map[string]bool{
+	"=": true, "==": true, "!=": true, "<>": true,
+	">": true, "<": true, ">=": true, "<=": true,
+	"LIKE": true, "NOT LIKE": true, "ILIKE": true,
+	"IN": true, "NOT IN": true,
+	"IS": true, "IS NOT": true,
+	"BETWEEN": true, "NOT BETWEEN": true,
+}
+
+// ValidateOperator checks if an operator is in the whitelist.
+// Returns the operator if valid, or an error message if not.
+func ValidateOperator(op string) (string, error) {
+	if ValidOperators[op] {
+		return op, nil
+	}
+	return "", fmt.Errorf("invalid SQL operator: %s", op)
+}
+
+// QuoteIdentifier quotes a table or column name (e.g. `col` for MySQL, "col" for Postgres)
 type Dialect interface {
 	// QuoteIdentifier quotes a table or column name (e.g. `col` for MySQL, "col" for Postgres)
 	QuoteIdentifier(name string) string
