@@ -1,14 +1,28 @@
 package middleware
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/hex"
-	gowhttp "github.com/mechneerd/gow/http"
 	"net/http"
+	"strings"
+
+	gowhttp "github.com/mechneerd/gow/http"
 )
 
+// CsrfOptions configures the CSRF middleware.
+type CsrfOptions struct {
+	// URIs is a list of URI prefixes to exclude from CSRF checks (e.g., "/api/").
+	URIs []string
+}
+
 // VerifyCsrfToken validates the CSRF token on mutating requests.
-func VerifyCsrfToken() func(http.Handler) http.Handler {
+func VerifyCsrfToken(opts ...CsrfOptions) func(http.Handler) http.Handler {
+	var options CsrfOptions
+	if len(opts) > 0 {
+		options = opts[0]
+	}
+
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			manager := GetSession(r)
@@ -19,15 +33,13 @@ func VerifyCsrfToken() func(http.Handler) http.Handler {
 
 			// Generate token if not exists
 			token := manager.Get("_token")
-		if token == nil {
+			if token == nil {
 				token = generateToken()
 				manager.Put("_token", token)
 			}
 
-			// Convert token to string safely
 			tokenStr, ok := token.(string)
 			if !ok {
-				// Token is not a string (e.g., deserialized as different type), regenerate
 				token = generateToken()
 				manager.Put("_token", token)
 				tokenStr = token.(string)
@@ -35,8 +47,19 @@ func VerifyCsrfToken() func(http.Handler) http.Handler {
 
 			// For read operations, skip validation
 			if r.Method == "GET" || r.Method == "HEAD" || r.Method == "OPTIONS" {
-				next.ServeHTTP(w, r)
+				// Inject token into request context for template access
+				ctx := r.Context()
+				ctx = context.WithValue(ctx, csrfTokenKey, tokenStr)
+				next.ServeHTTP(w, r.WithContext(ctx))
 				return
+			}
+
+			// Check URI exceptions
+			for _, prefix := range options.URIs {
+				if strings.HasPrefix(r.URL.Path, prefix) {
+					next.ServeHTTP(w, r)
+					return
+				}
 			}
 
 			// Check token
@@ -53,6 +76,19 @@ func VerifyCsrfToken() func(http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 		})
 	}
+}
+
+// CsrfTokenKey is the context key for the CSRF token.
+type csrfTokenKeyType string
+
+const csrfTokenKey csrfTokenKeyType = "csrf_token"
+
+// CsrfTokenFromContext retrieves the CSRF token from the request context.
+func CsrfTokenFromContext(r *http.Request) string {
+	if token, ok := r.Context().Value(csrfTokenKey).(string); ok {
+		return token
+	}
+	return ""
 }
 
 func generateToken() string {

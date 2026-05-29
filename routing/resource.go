@@ -10,16 +10,17 @@ import (
 
 // Resource registers standard CRUD routes for a controller using reflection.
 // It maps methods like Index, Create, Store, Show, Edit, Update, Destroy.
-func (r *Router) Resource(name string, controller any) {
-	r.registerResource(name, controller, false)
+// Optional middleware can be passed as additional arguments.
+func (r *Router) Resource(name string, controller any, middleware ...func(http.Handler) http.Handler) {
+	r.registerResource(name, controller, false, middleware...)
 }
 
 // ApiResource registers standard API CRUD routes (excluding Create and Edit).
-func (r *Router) ApiResource(name string, controller any) {
-	r.registerResource(name, controller, true)
+func (r *Router) ApiResource(name string, controller any, middleware ...func(http.Handler) http.Handler) {
+	r.registerResource(name, controller, true, middleware...)
 }
 
-func (r *Router) registerResource(name string, controller any, apiOnly bool) {
+func (r *Router) registerResource(name string, controller any, apiOnly bool, middleware ...func(http.Handler) http.Handler) {
 	val := reflect.ValueOf(controller)
 	if val.Kind() != reflect.Ptr && val.Kind() != reflect.Struct {
 		panic("controller must be a struct or pointer to struct")
@@ -49,13 +50,21 @@ func (r *Router) registerResource(name string, controller any, apiOnly bool) {
 
 		methodVal := val.MethodByName(methodName)
 		if methodVal.IsValid() {
-			// We expect the method to match HandlerFunc: func(http.ResponseWriter, *http.Request) error
 			handler, ok := methodVal.Interface().(func(http.ResponseWriter, *http.Request) error)
 			if ok {
 				route := r.AddRoute(routeInfo.method, routeInfo.path, handler)
-				// Set a default name like "photos.index"
 				routeName := fmt.Sprintf("%s.%s", name, strings.ToLower(methodName))
 				r.SetName(route, routeName)
+				// Apply resource-specific middleware
+				for i := len(middleware) - 1; i >= 0; i-- {
+					currentHandler := route.Handler
+					route.Handler = func(w http.ResponseWriter, r *http.Request) error {
+						middleware[i](http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+							_ = currentHandler(w, r)
+						})).ServeHTTP(w, r)
+						return nil
+					}
+				}
 			}
 		}
 	}

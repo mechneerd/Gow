@@ -1,10 +1,32 @@
 package seeder
 
-import "github.com/mechneerd/gow/database/orm"
+import (
+	"fmt"
+	"github.com/mechneerd/gow/database/orm"
+)
 
 // Seeder is an interface for database seeders.
 type Seeder interface {
 	Run(db *orm.DB) error
+}
+
+// DatabaseSeeder is a base type that seeders can embed.
+// It provides the standard Seed() method that calls Run().
+type DatabaseSeeder struct {
+	Seeders []Seeder
+}
+
+// Run executes all sub-seeders registered in Seeders.
+func (s *DatabaseSeeder) Run(db *orm.DB) error {
+	for _, seeder := range s.Seeders {
+		name := fmt.Sprintf("%T", seeder)
+		fmt.Printf("Seeding: %s\n", name)
+		if err := seeder.Run(db); err != nil {
+			return fmt.Errorf("seeder %s failed: %w", name, err)
+		}
+		fmt.Printf("Seeded:  %s\n", name)
+	}
+	return nil
 }
 
 // Runner manages and executes database seeders.
