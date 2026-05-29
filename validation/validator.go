@@ -214,7 +214,7 @@ func (v *Validator) applyRule(field string, value any, exists bool, rule string)
 		}
 
 	case "array":
-		if reflect.TypeOf(value).Kind() != reflect.Slice {
+		if value == nil || reflect.TypeOf(value).Kind() != reflect.Slice {
 			return errors.New("The " + field + " field must be an array.")
 		}
 

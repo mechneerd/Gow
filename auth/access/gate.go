@@ -101,7 +101,16 @@ func (g *Gate) check(user any, ability string, args ...any) bool {
 					callArgs = callArgs[:methodType.NumIn()]
 				}
 
-				result := method.Call(callArgs)
+				// Safely call the method with recover to handle panics
+				var result []reflect.Value
+				func() {
+					defer func() {
+						if r := recover(); r != nil {
+							result = []reflect.Value{reflect.ValueOf(false)}
+						}
+					}()
+					result = method.Call(callArgs)
+				}()
 				if len(result) > 0 {
 					return result[0].Bool()
 				}

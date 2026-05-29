@@ -93,7 +93,10 @@ func loadHasThrough[T any](db *DB, models []*T, relationName, gowTag string, isM
 
 	// Determine target (final) model type from the relation field
 	var sample T
-	field, _ := reflect.TypeOf(&sample).Elem().FieldByName(relationName)
+	field, found := reflect.TypeOf(&sample).Elem().FieldByName(relationName)
+	if !found {
+		return fmt.Errorf("hasThrough relation field %s not found on model", relationName)
+	}
 	targetType := field.Type
 	if targetType.Kind() == reflect.Slice {
 		targetType = targetType.Elem()

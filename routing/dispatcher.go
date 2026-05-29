@@ -32,7 +32,10 @@ func (d *Dispatcher) Wrap(handler any) HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) error {
 		in := make([]reflect.Value, typ.NumIn())
-		params := r.Context().Value(ParamsKey).(map[string]string)
+		params, _ := r.Context().Value(ParamsKey).(map[string]string)
+		if params == nil {
+			params = make(map[string]string)
+		}
 
 		for i := 0; i < typ.NumIn(); i++ {
 			paramType := typ.In(i)

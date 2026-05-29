@@ -25,9 +25,9 @@ var ScheduleRunCmd = &cobra.Command{
 		fmt.Println("🕒 Running scheduled tasks...")
 		if scheduleInstance == nil {
 			fmt.Println("   (No schedule instance configured — using default empty schedule)")
-		} else {
-			fmt.Println("   (Schedule tasks run from console kernel registration)")
+			return
 		}
+		fmt.Println("   (Schedule tasks run from console kernel registration)")
 		scheduleInstance.Run()
 		fmt.Println("✅ Schedule run completed.")
 	},

@@ -47,7 +47,13 @@ func (g *SessionGuard) User() any {
 
 func (g *SessionGuard) ID() string {
 	if g.Check() {
-		return g.session.Get(g.getName()).(string)
+		val := g.session.Get(g.getName())
+		if val == nil {
+			return ""
+		}
+		if id, ok := val.(string); ok {
+			return id
+		}
 	}
 	return ""
 }

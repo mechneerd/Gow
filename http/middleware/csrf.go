@@ -19,9 +19,18 @@ func VerifyCsrfToken() func(http.Handler) http.Handler {
 
 			// Generate token if not exists
 			token := manager.Get("_token")
-			if token == nil {
+		if token == nil {
 				token = generateToken()
 				manager.Put("_token", token)
+			}
+
+			// Convert token to string safely
+			tokenStr, ok := token.(string)
+			if !ok {
+				// Token is not a string (e.g., deserialized as different type), regenerate
+				token = generateToken()
+				manager.Put("_token", token)
+				tokenStr = token.(string)
 			}
 
 			// For read operations, skip validation
@@ -36,7 +45,7 @@ func VerifyCsrfToken() func(http.Handler) http.Handler {
 				requestToken = r.FormValue("_token")
 			}
 
-			if requestToken != token.(string) {
+			if requestToken != tokenStr {
 				gowhttp.Abort(419, "CSRF token mismatch")
 				return
 			}
