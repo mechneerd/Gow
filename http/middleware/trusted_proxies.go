@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"crypto/tls"
 	"net/http"
 	"strings"
 )
@@ -41,17 +40,11 @@ func (tp *TrustedProxies) Handle(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if tp.isTrusted(r.RemoteAddr) {
 			if forwardedFor := r.Header.Get("X-Forwarded-For"); forwardedFor != "" {
-				// The right-most IP is the most reliable
+				// The right-most IP is the most reliable (closest to the proxy)
 				ips := strings.Split(forwardedFor, ",")
-				clientIP := strings.TrimSpace(ips[0])
+				clientIP := strings.TrimSpace(ips[len(ips)-1])
 				if clientIP != "" {
 					r.RemoteAddr = clientIP + ":0" // fake port to maintain format
-				}
-			}
-			
-			if forwardedProto := r.Header.Get("X-Forwarded-Proto"); forwardedProto != "" {
-				if forwardedProto == "https" {
-					r.TLS = &tls.ConnectionState{} // Hack to trick some downstream handlers that it's secure
 				}
 			}
 		}

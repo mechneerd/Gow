@@ -10,7 +10,7 @@ import (
 func EncryptCookies(manager *cookie.Manager, except []string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// Decrypt incoming cookies
+			// Decrypt incoming cookies by replacing values in-place
 			for _, c := range r.Cookies() {
 				// Check exemption list
 				exempt := false
@@ -25,16 +25,14 @@ func EncryptCookies(manager *cookie.Manager, except []string) func(http.Handler)
 					decrypted, err := manager.Decrypt(c.Value)
 					if err == nil {
 						c.Value = decrypted
-						// Update the request with the decrypted cookie so downstream handlers see plaintext
-						r.AddCookie(c) 
 					}
 				}
 			}
 
-			// In Go, intercepting ResponseWriter to encrypt outgoing cookies 
+			// In Go, intercepting ResponseWriter to encrypt outgoing cookies
 			// requires a custom ResponseWriter wrapper, but for simplicity
 			// controllers should use the cookie.Manager.Set() method directly.
-			
+
 			next.ServeHTTP(w, r)
 		})
 	}

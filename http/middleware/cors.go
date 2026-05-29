@@ -40,7 +40,12 @@ func Cors(config CorsConfig) func(http.Handler) http.Handler {
 						break
 					}
 				}
-				if allowOrigin != "" {
+			if allowOrigin != "" {
+					// When credentials are allowed, replace wildcard with actual origin
+					// (browsers reject Access-Control-Allow-Origin: * with credentials)
+					if config.AllowCredentials && allowOrigin == "*" {
+						allowOrigin = origin
+					}
 					w.Header().Set("Access-Control-Allow-Origin", allowOrigin)
 				}
 

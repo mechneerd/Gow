@@ -78,8 +78,18 @@ func (h *HasRoles) AssignRole(roleName string) error {
 		return fmt.Errorf("role not found: %s", roleName)
 	}
 
+	// Check if the assignment already exists to avoid duplicates across all databases
+	var exists int
+	err = h.db.QueryRow("SELECT COUNT(*) FROM role_user WHERE role_id = ? AND user_id = ?", roleID, h.ID).Scan(&exists)
+	if err != nil {
+		return fmt.Errorf("failed to check existing role assignment: %w", err)
+	}
+	if exists > 0 {
+		return nil // already assigned, nothing to do
+	}
+
 	_, err = h.db.Exec(`
-		INSERT OR IGNORE INTO role_user (role_id, user_id) 
+		INSERT INTO role_user (role_id, user_id) 
 		VALUES (?, ?)
 	`, roleID, h.ID)
 

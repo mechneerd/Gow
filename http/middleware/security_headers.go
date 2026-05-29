@@ -17,8 +17,10 @@ func SecurityHeaders() func(http.Handler) http.Handler {
 			// Enables the Cross-Site Scripting (XSS) filter built into most recent web browsers.
 			w.Header().Set("X-XSS-Protection", "1; mode=block")
 
-			// Enforces secure (HTTP over SSL/TLS) connections to the server.
-			w.Header().Set("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+			// Enforces secure (HTTP over SSL/TLS) connections — only over HTTPS
+			if r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == "https" {
+				w.Header().Set("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+			}
 
 			// Prevents browsers from referring to this page when following a link to another site.
 			w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
