@@ -392,8 +392,15 @@ func (q *ModelQuery[T]) CursorPaginate(perPage int, after any) (*pagination.Curs
 		perPage = 15
 	}
 
+	// Use model's primary key from metadata instead of hardcoded "id"
+	meta := getMetadata(reflect.TypeOf((*T)(nil)))
+	pkColumn := meta.PrimaryKey
+	if pkColumn == "" {
+		pkColumn = "id"
+	}
+
 	if after != nil {
-		q.builder.Where("id", ">", after)
+		q.builder.Where(pkColumn, ">", after)
 	}
 
 	q.builder.Limit(perPage + 1)
@@ -419,10 +426,19 @@ func (q *ModelQuery[T]) CursorPaginate(perPage int, after any) (*pagination.Curs
 	if hasMore && len(plainItems) > 0 {
 		last := plainItems[len(plainItems)-1]
 		v := reflect.ValueOf(last)
+		if v.Kind() == reflect.Ptr {
+			v = v.Elem()
+		}
 		if v.Kind() == reflect.Struct {
-			if idField := v.FieldByName("ID"); idField.IsValid() {
-				s := fmt.Sprintf("%v", idField.Interface())
-				nextCursor = &s
+			// Find field matching the primary key column
+			for i := 0; i < v.NumField(); i++ {
+				f := v.Type().Field(i)
+				dbTag := f.Tag.Get("db")
+				if dbTag == pkColumn || strings.EqualFold(f.Name, "ID") && pkColumn == "id" {
+					s := fmt.Sprintf("%v", v.Field(i).Interface())
+					nextCursor = &s
+					break
+				}
 			}
 		}
 	}
@@ -471,7 +487,8 @@ func (q *ModelQuery[T]) Insert(model *T) error {
 			continue
 		}
 		
-		// Skip primary key if it's zero
+		// Skip integer primary key if it's zero (auto-increment handled by DB).
+		// String PKs (e.g. UUID) are NOT skipped — empty string means DB should generate.
 		if field.IsPrimary {
 			v := val.Field(field.Index)
 			switch v.Kind() {
@@ -481,10 +498,6 @@ func (q *ModelQuery[T]) Insert(model *T) error {
 				}
 			case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 				if v.Uint() == 0 {
-					continue
-				}
-			case reflect.String:
-				if v.String() == "" {
 					continue
 				}
 			}

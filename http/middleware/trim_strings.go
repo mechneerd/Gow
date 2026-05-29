@@ -9,7 +9,7 @@ import (
 )
 
 // TrimStrings middleware trims whitespace from incoming string parameters.
-// Currently, it handles URL query parameters and x-www-form-urlencoded body.
+// Handles URL query parameters, x-www-form-urlencoded, and multipart/form-data bodies.
 func TrimStrings(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Trim Query Parameters
@@ -37,8 +37,16 @@ func TrimStrings(next http.Handler) http.Handler {
 					r.Body = io.NopCloser(strings.NewReader(newBody))
 					r.ContentLength = int64(len(newBody))
 				} else {
-					// Fallback
 					r.Body = io.NopCloser(bytes.NewReader(bodyBytes))
+				}
+			}
+		} else if strings.HasPrefix(contentType, "multipart/form-data") {
+			// Parse multipart form and trim string values
+			if err := r.ParseMultipartForm(32 << 20); err == nil {
+				for key, values := range r.MultipartForm.Value {
+					for i, v := range values {
+						r.MultipartForm.Value[key][i] = strings.TrimSpace(v)
+					}
 				}
 			}
 		}

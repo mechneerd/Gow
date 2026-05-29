@@ -125,3 +125,13 @@ func GetTableName(model any) string {
 	return meta.TableName
 }
 
+// ClearCache removes cached metadata for the given model type.
+// Call this after altering struct tags or table mappings at runtime.
+func ClearCache(modelType any) {
+	typ := reflect.TypeOf(modelType)
+	if typ.Kind() == reflect.Ptr {
+		typ = typ.Elem()
+	}
+	metaCache.Delete(typ)
+}
+

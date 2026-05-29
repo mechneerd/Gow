@@ -41,6 +41,35 @@ func (c *Client) Get(url string) (*Response, error) {
 
 // Post makes a POST request.
 func (c *Client) Post(url string, body any) (*Response, error) {
+	return c.sendWithBody("POST", url, body)
+}
+
+// Put makes a PUT request.
+func (c *Client) Put(url string, body any) (*Response, error) {
+	return c.sendWithBody("PUT", url, body)
+}
+
+// Patch makes a PATCH request.
+func (c *Client) Patch(url string, body any) (*Response, error) {
+	return c.sendWithBody("PATCH", url, body)
+}
+
+// Delete makes a DELETE request.
+func (c *Client) Delete(url string) (*Response, error) {
+	return c.request("DELETE", url, nil)
+}
+
+// Head makes a HEAD request.
+func (c *Client) Head(url string) (*Response, error) {
+	return c.request("HEAD", url, nil)
+}
+
+// Options makes an OPTIONS request.
+func (c *Client) Options(url string) (*Response, error) {
+	return c.request("OPTIONS", url, nil)
+}
+
+func (c *Client) sendWithBody(method, url string, body any) (*Response, error) {
 	var bodyReader io.Reader
 	if body != nil {
 		b, err := json.Marshal(body)
@@ -50,8 +79,7 @@ func (c *Client) Post(url string, body any) (*Response, error) {
 		bodyReader = bytes.NewReader(b)
 		c.WithHeader("Content-Type", "application/json")
 	}
-
-	return c.request("POST", url, bodyReader)
+	return c.request(method, url, bodyReader)
 }
 
 func (c *Client) request(method, url string, body io.Reader) (*Response, error) {
