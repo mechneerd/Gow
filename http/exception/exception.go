@@ -71,8 +71,7 @@ func (e *HttpException) Render(w http.ResponseWriter, r *http.Request) {
 </html>`, e.Code, safeMessage, e.Code, safeMessage, safeMessage, stack)
 
 	// Simple production fallback (no stack)
-	safeMessage2 := html.EscapeString(e.Message)
-	prodHTML := fmt.Sprintf("<html><head><title>%d %s</title></head><body><h1>%d %s</h1><p>Something went wrong.</p></body></html>", e.Code, safeMessage2, e.Code, safeMessage2)
+	prodHTML := fmt.Sprintf("<html><head><title>%d %s</title></head><body><h1>%d %s</h1><p>Something went wrong.</p></body></html>", e.Code, safeMessage, e.Code, safeMessage)
 
 	// Show debug page only when APP_DEBUG=true, otherwise show production page
 	if os.Getenv("APP_DEBUG") == "true" {

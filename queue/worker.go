@@ -3,7 +3,13 @@ package queue
 import (
 	"context"
 	"log"
+	"math"
 	"time"
+)
+
+const (
+	maxRetries  = 3
+	baseBackoff = 1 * time.Second
 )
 
 // Worker processes jobs from a queue connection.
@@ -26,7 +32,6 @@ func (w *Worker) Work(ctx context.Context, connectionName string) {
 
 	log.Printf("Starting worker on connection [%s]...", connectionName)
 
-	// Since SyncDriver uses channels, we can optimize by checking if it's the sync driver.
 	if syncDriver, ok := driver.(*SyncDriver); ok {
 		for {
 			select {
@@ -41,7 +46,6 @@ func (w *Worker) Work(ctx context.Context, connectionName string) {
 			}
 		}
 	} else {
-		// Generic polling for Redis/DB drivers
 		for {
 			select {
 			case <-ctx.Done():
@@ -57,7 +61,7 @@ func (w *Worker) Work(ctx context.Context, connectionName string) {
 				continue
 			}
 			if job != nil {
-				w.processJob(job)
+				w.processJobWithRetry(job)
 			} else {
 				time.Sleep(1 * time.Second)
 			}
@@ -65,10 +69,22 @@ func (w *Worker) Work(ctx context.Context, connectionName string) {
 	}
 }
 
-func (w *Worker) processJob(job Job) {
-	err := job.Handle()
-	if err != nil {
-		job.Failed(err)
+func (w *Worker) processJobWithRetry(job Job) {
+	var lastErr error
+	for attempt := 0; attempt <= maxRetries; attempt++ {
+		if err := job.Handle(); err != nil {
+			lastErr = err
+			backoff := time.Duration(math.Pow(2, float64(attempt))) * baseBackoff
+			log.Printf("Job failed (attempt %d/%d): %v, retrying in %v", attempt+1, maxRetries+1, err, backoff)
+			time.Sleep(backoff)
+			continue
+		}
+		return // success
 	}
+	job.Failed(lastErr)
+}
+
+func (w *Worker) processJob(job Job) {
+	w.processJobWithRetry(job)
 }
 

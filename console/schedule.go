@@ -2,8 +2,10 @@ package console
 
 import (
 	"log"
+	"os"
+	"os/exec"
+	"strings"
 	"sync"
-	"time"
 
 	"github.com/robfig/cron/v3"
 )
@@ -59,8 +61,19 @@ func (e *Event) run() {
 	}
 
 	log.Printf("Running scheduled command: %s", e.command)
-	// In a full implementation, we'd trigger the actual artisan command here via exec or directly.
-	time.Sleep(100 * time.Millisecond) // Mock execution
+
+	// Parse command and args, then execute
+	parts := strings.Fields(e.command)
+	if len(parts) == 0 {
+		return
+	}
+
+	cmd := exec.Command(parts[0], parts[1:]...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		log.Printf("Scheduled command [%s] failed: %v", e.command, err)
+	}
 }
 
 // Schedule manages registered tasks.

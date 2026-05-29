@@ -105,6 +105,8 @@ func (m *Manager) Dispatch(event Event) {
 }
 
 // QueueListen registers a listener that should be queued.
+// Deprecated: This currently runs synchronously. For actual queue support,
+// dispatch the event through the queue system in your listener implementation.
 func (m *Manager) QueueListen(event Event, listener Listener) {
 	m.Listen(event, func(e Event) {
 		listener(e)

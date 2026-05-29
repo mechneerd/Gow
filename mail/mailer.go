@@ -1,8 +1,10 @@
 package mail
 
 import (
+	"crypto/tls"
 	"encoding/base64"
 	"log"
+	"net"
 	"net/smtp"
 	"strings"
 
@@ -36,17 +38,11 @@ type SmtpDriver struct {
 }
 
 func (d *SmtpDriver) Send(msg *Message) error {
-	auth := smtp.PlainAuth("", d.Username, d.Password, d.Host)
-
 	rcpts := append([]string{}, msg.To...)
 	rcpts = append(rcpts, msg.Cc...)
 	rcpts = append(rcpts, msg.Bcc...)
 
 	addr := d.Host + ":" + d.Port
-
-	// For now we keep using the simple SendMail for compatibility.
-	// A production version would use tls.Dial + smtp.NewClient for full STARTTLS/SMTPS support.
-	// This improved version at least documents the encryption intent and fixes attachment encoding.
 
 	var body strings.Builder
 	body.WriteString("To: " + strings.Join(msg.To, ",") + "\r\n")
@@ -74,7 +70,6 @@ func (d *SmtpDriver) Send(msg *Message) error {
 			body.WriteString("Content-Type: application/octet-stream; name=\"" + att.Name + "\"\r\n")
 			body.WriteString("Content-Disposition: attachment; filename=\"" + att.Name + "\"\r\n")
 			body.WriteString("Content-Transfer-Encoding: base64\r\n\r\n")
-			// Proper base64 encoding for attachments
 			encoded := base64.StdEncoding.EncodeToString(att.Data)
 			body.WriteString(encoded + "\r\n\r\n")
 		}
@@ -89,7 +84,67 @@ func (d *SmtpDriver) Send(msg *Message) error {
 		}
 	}
 
-	return smtp.SendMail(addr, auth, msg.From, rcpts, []byte(body.String()))
+	// Connect with appropriate encryption
+	switch d.Encryption {
+	case "tls", "ssl":
+		// Implicit TLS (SMTPS) — connect with TLS from the start
+		tlsConfig := &tls.Config{ServerName: d.Host}
+		conn, err := tls.Dial("tcp", addr, tlsConfig)
+		if err != nil {
+			return err
+		}
+		return d.sendViaClient(conn, msg.From, rcpts, body.String())
+
+	case "starttls":
+		// Plain connection, then upgrade via STARTTLS
+		conn, err := net.Dial("tcp", addr)
+		if err != nil {
+			return err
+		}
+		return d.sendViaClient(conn, msg.From, rcpts, body.String())
+
+	default:
+		// No encryption — plain SMTP
+		auth := smtp.PlainAuth("", d.Username, d.Password, d.Host)
+		return smtp.SendMail(addr, auth, msg.From, rcpts, []byte(body.String()))
+	}
+}
+
+func (d *SmtpDriver) sendViaClient(conn net.Conn, from string, rcpts []string, body string) error {
+	client, err := smtp.NewClient(conn, d.Host)
+	if err != nil {
+		return err
+	}
+	defer client.Close()
+
+	if d.Username != "" && d.Password != "" {
+		auth := smtp.PlainAuth("", d.Username, d.Password, d.Host)
+		if err = client.Auth(auth); err != nil {
+			return err
+		}
+	}
+
+	if err = client.Mail(from); err != nil {
+		return err
+	}
+	for _, rcpt := range rcpts {
+		if err = client.Rcpt(rcpt); err != nil {
+			return err
+		}
+	}
+
+	w, err := client.Data()
+	if err != nil {
+		return err
+	}
+	if _, err = w.Write([]byte(body)); err != nil {
+		return err
+	}
+	if err = w.Close(); err != nil {
+		return err
+	}
+
+	return client.Quit()
 }
 
 // Mailer abstracts sending emails using a configured driver.
