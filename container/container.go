@@ -156,22 +156,34 @@ func (b *ContextualBindingBuilder) Give(factory any) {
 
 // Resolve resolves a dependency by its reflection type.
 func (c *Container) Resolve(typ reflect.Type) (any, error) {
+	// Check instances first (fast path, no lock needed for reads after initial check)
+	c.mu.RLock()
+	if instance, ok := c.instances[typ]; ok {
+		c.mu.RUnlock()
+		return instance, nil
+	}
+	c.mu.RUnlock()
+
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	
+
+	// Double-check instances after acquiring write lock
+	if instance, ok := c.instances[typ]; ok {
+		return instance, nil
+	}
+
 	// Check contextual bindings if we have a resolution stack
 	if len(c.resolutionStack) > 0 {
 		parent := c.resolutionStack[len(c.resolutionStack)-1]
 		if ctxMap, ok := c.contextualBindings[parent]; ok {
 			if b, ok := ctxMap[typ]; ok {
-				return c.callFactory(b.factory)
+				// Release lock before calling factory to avoid deadlock
+				c.mu.Unlock()
+				instance, err := c.callFactory(b.factory)
+				c.mu.Lock()
+				return instance, err
 			}
 		}
-	}
-
-	// Check instances first
-	if instance, ok := c.instances[typ]; ok {
-		return instance, nil
 	}
 
 	// Check bindings
@@ -180,13 +192,18 @@ func (c *Container) Resolve(typ reflect.Type) (any, error) {
 	if !ok {
 		// Attempt to resolve struct or pointer to struct if it's concrete type
 		if typ.Kind() == reflect.Struct {
+			c.mu.Unlock()
 			ptr, err := c.build(typ)
+			c.mu.Lock()
 			if err != nil {
 				return nil, err
 			}
 			return reflect.ValueOf(ptr).Elem().Interface(), nil
 		} else if typ.Kind() == reflect.Ptr && typ.Elem().Kind() == reflect.Struct {
-			return c.build(typ.Elem())
+			c.mu.Unlock()
+			instance, err := c.build(typ.Elem())
+			c.mu.Lock()
+			return instance, err
 		}
 		return nil, fmt.Errorf("%w: %v", ErrBindingNotFound, typ)
 	}
@@ -194,9 +211,11 @@ func (c *Container) Resolve(typ reflect.Type) (any, error) {
 	// Push to stack to keep track of context
 	c.resolutionStack = append(c.resolutionStack, typ)
 
-	// Build via factory
+	// Release lock before calling factory to avoid deadlock with recursive resolution
+	c.mu.Unlock()
 	instance, err := c.callFactory(b.factory)
-	
+	c.mu.Lock()
+
 	// Pop from stack
 	c.resolutionStack = c.resolutionStack[:len(c.resolutionStack)-1]
 
@@ -205,7 +224,7 @@ func (c *Container) Resolve(typ reflect.Type) (any, error) {
 	}
 
 	if b.singleton {
-		// Double-check instance wasn't created while acquiring lock
+		// Double-check instance wasn't created while lock was released
 		if inst, ok := c.instances[typ]; ok {
 			return inst, nil
 		}

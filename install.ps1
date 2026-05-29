@@ -6,24 +6,31 @@ $binaryName = "gow.exe"
 
 Write-Host "Installing gow from $repo..."
 
-$os = "windows"
-$arch = if ([Environment]::Is64BitOperatingSystem) { "amd64" } else { "386" }
+$arch = if ([Environment]::Is64BitOperatingSystem) { "x86_64" } else { "i386" }
 
-$url = "https://github.com/$repo/releases/latest/download/gow-$os-$arch.exe"
+$url = "https://github.com/$repo/releases/latest/download/gow_Windows_${arch}.zip"
 
-$tmp = "$env:TEMP\gow.exe"
-Invoke-WebRequest -Uri $url -OutFile $tmp
+$tmpZip = "$env:TEMP\gow.zip"
+$tmpDir = "$env:TEMP\gow_extract"
+
+Invoke-WebRequest -Uri $url -OutFile $tmpZip
+
+if (Test-Path $tmpDir) { Remove-Item -Recurse -Force $tmpDir }
+Expand-Archive -Path $tmpZip -DestinationPath $tmpDir -Force
 
 if (-not (Test-Path $installDir)) {
     New-Item -ItemType Directory -Path $installDir | Out-Null
 }
 
-Move-Item -Force $tmp "$installDir\$binaryName"
+Move-Item -Force "$tmpDir\gow.exe" "$installDir\$binaryName"
+
+Remove-Item -Recurse -Force $tmpDir
+Remove-Item -Force $tmpZip
 
 $envPath = [Environment]::GetEnvironmentVariable("Path", "Machine")
 if ($envPath -notlike "*$installDir*") {
     [Environment]::SetEnvironmentVariable("Path", "$envPath;$installDir", "Machine")
 }
 
-Write-Host "✅ gow installed successfully!"
+Write-Host "gow installed successfully!"
 & "$installDir\$binaryName" --version

@@ -1,6 +1,7 @@
 package artisan
 
 import (
+	"context"
 	"fmt"
 	"github.com/mechneerd/gow/console"
 
@@ -28,7 +29,7 @@ var ScheduleRunCmd = &cobra.Command{
 			return
 		}
 		fmt.Println("   (Schedule tasks run from console kernel registration)")
-		scheduleInstance.Run()
+		scheduleInstance.Run(context.Background())
 		fmt.Println("✅ Schedule run completed.")
 	},
 }
