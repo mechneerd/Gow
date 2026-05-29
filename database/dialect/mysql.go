@@ -76,7 +76,7 @@ func (d *MySQLDialect) CompileSelect(query SelectQuery) (string, []any) {
 	sql.WriteString("SELECT ")
 	if query.Aggregate != nil {
 		sql.WriteString(fmt.Sprintf("%s(%s)", query.Aggregate.Function, d.QuoteIdentifier(query.Aggregate.Column)))
-	} else if len(query.Columns) == 0 {
+	} else if len(query.Columns) == 0 && len(query.RawColumns) == 0 {
 		sql.WriteString("*")
 	} else {
 		for i, col := range query.Columns {
@@ -84,6 +84,12 @@ func (d *MySQLDialect) CompileSelect(query SelectQuery) (string, []any) {
 				sql.WriteString(", ")
 			}
 			sql.WriteString(d.QuoteIdentifier(col))
+		}
+		for i, raw := range query.RawColumns {
+			if i > 0 || len(query.Columns) > 0 {
+				sql.WriteString(", ")
+			}
+			sql.WriteString(raw)
 		}
 	}
 
@@ -221,5 +227,24 @@ func (d *MySQLDialect) CompileDelete(table string, wheres []WhereClause) (string
 	sql.WriteString(d.compileWheres(wheres, &args))
 
 	return sql.String(), args
+}
+
+func (d *MySQLDialect) CompileUpsert(table string, columns []string, values [][]any, conflictCols []string, updateCols []string) (string, []any) {
+	// MySQL uses INSERT ... ON DUPLICATE KEY UPDATE
+	sqlStr, args := d.CompileInsert(table, columns, values)
+
+	if len(updateCols) > 0 {
+		updateParts := make([]string, 0, len(updateCols))
+		for _, col := range updateCols {
+			updateParts = append(updateParts, fmt.Sprintf("%s=VALUES(%s)", d.QuoteIdentifier(col), d.QuoteIdentifier(col)))
+		}
+		sqlStr += " ON DUPLICATE KEY UPDATE " + strings.Join(updateParts, ", ")
+	}
+
+	return sqlStr, args
+}
+
+func (d *MySQLDialect) AutoIncrementSQL() string {
+	return "BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY"
 }
 

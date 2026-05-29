@@ -40,7 +40,12 @@ func (c *DatabaseChannel) Send(notifiable Notifiable, notification Notification)
 
 	notifiableType, notifiableID := getNotifiableKey(notifiable)
 
-	builder := query.NewBuilder(c.db.RawDB(), c.db.Dialect())
+	d, err := c.db.Dialect()
+	if err != nil {
+		return err
+	}
+
+	builder := query.NewBuilder(c.db.RawDB(), d)
 	builder.Table("notifications")
 	
 	_, err = builder.Insert(map[string]any{

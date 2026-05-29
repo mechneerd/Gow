@@ -41,21 +41,28 @@ type Dialect interface {
 	
 	// CompileDelete compiles a DELETE statement
 	CompileDelete(table string, wheres []WhereClause) (string, []any)
+
+	// CompileUpsert compiles an INSERT ... ON CONFLICT (or equivalent) statement.
+	CompileUpsert(table string, columns []string, values [][]any, conflictCols []string, updateCols []string) (string, []any)
+
+	// AutoIncrementSQL returns the SQL fragment for an auto-increment primary key column.
+	AutoIncrementSQL() string
 }
 
 // SelectQuery represents the components of a SELECT query for compilation.
 type SelectQuery struct {
-	Table     string
-	Columns   []string
-	Wheres    []WhereClause
-	OrderBys  []OrderByClause
-	Joins     []JoinClause
-	Aggregate *AggregateClause
-	Limit     *int
-	Offset    *int
-	GroupBys  []string
-	Havings   []WhereClause
-	Lock      string // e.g. "FOR UPDATE", "FOR SHARE" for pessimistic locking
+	Table      string
+	Columns    []string
+	RawColumns []string // Raw SQL expressions (e.g. "COUNT(*) as total") — not quoted
+	Wheres     []WhereClause
+	OrderBys   []OrderByClause
+	Joins      []JoinClause
+	Aggregate  *AggregateClause
+	Limit      *int
+	Offset     *int
+	GroupBys   []string
+	Havings    []WhereClause
+	Lock       string // e.g. "FOR UPDATE", "FOR SHARE" for pessimistic locking
 }
 
 // JoinClause represents a table JOIN condition.

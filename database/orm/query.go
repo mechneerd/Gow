@@ -93,14 +93,11 @@ func (db *DB) RawDB() query.QueryExecer {
 }
 
 // Dialect returns the SQL dialect used by this connection.
-func (db *DB) Dialect() dialect.Dialect {
+func (db *DB) Dialect() (dialect.Dialect, error) {
 	if db.dialect != nil {
-		return db.dialect
+		return db.dialect, nil
 	}
-	if db.Builder != nil {
-		// Dialect resolution from builder not possible (unexported field).
-	}
-	return &dialect.SQLiteDialect{}
+	return nil, errors.New("database dialect not configured")
 }
 
 // Transaction executes a function within a database transaction.
@@ -151,6 +148,7 @@ func (db *DB) Begin(ctx context.Context) (*DB, error) {
 	txDB := &DB{
 		Conn:    tx,
 		Builder: db.Builder.WithConn(tx),
+		dialect: db.dialect,
 		tx:      tx,
 	}
 	return txDB, nil

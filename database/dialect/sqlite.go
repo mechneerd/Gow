@@ -60,6 +60,9 @@ func (d *SQLiteDialect) compileWheres(wheres []WhereClause, args *[]any) string 
 			*args = append(*args, w.Values[0])
 			sql.WriteString(d.Placeholder(len(*args) + 1))
 			*args = append(*args, w.Values[1])
+		case "Raw":
+			sql.WriteString(w.RawSQL)
+			*args = append(*args, w.RawArgs...)
 		}
 	}
 	return sql.String()
@@ -73,7 +76,7 @@ func (d *SQLiteDialect) CompileSelect(query SelectQuery) (string, []any) {
 	sql.WriteString("SELECT ")
 	if query.Aggregate != nil {
 		sql.WriteString(fmt.Sprintf("%s(%s)", query.Aggregate.Function, d.QuoteIdentifier(query.Aggregate.Column)))
-	} else if len(query.Columns) == 0 {
+	} else if len(query.Columns) == 0 && len(query.RawColumns) == 0 {
 		sql.WriteString("*")
 	} else {
 		for i, col := range query.Columns {
@@ -81,6 +84,12 @@ func (d *SQLiteDialect) CompileSelect(query SelectQuery) (string, []any) {
 				sql.WriteString(", ")
 			}
 			sql.WriteString(d.QuoteIdentifier(col))
+		}
+		for i, raw := range query.RawColumns {
+			if i > 0 || len(query.Columns) > 0 {
+				sql.WriteString(", ")
+			}
+			sql.WriteString(raw)
 		}
 	}
 
@@ -218,5 +227,28 @@ func (d *SQLiteDialect) CompileDelete(table string, wheres []WhereClause) (strin
 	sql.WriteString(d.compileWheres(wheres, &args))
 
 	return sql.String(), args
+}
+
+func (d *SQLiteDialect) CompileUpsert(table string, columns []string, values [][]any, conflictCols []string, updateCols []string) (string, []any) {
+	// SQLite uses INSERT ... ON CONFLICT DO UPDATE SET
+	sqlStr, args := d.CompileInsert(table, columns, values)
+
+	if len(updateCols) > 0 && len(conflictCols) > 0 {
+		updateParts := make([]string, 0, len(updateCols))
+		for _, col := range updateCols {
+			updateParts = append(updateParts, fmt.Sprintf("%s = excluded.%s", d.QuoteIdentifier(col), d.QuoteIdentifier(col)))
+		}
+		conflictColsStr := make([]string, 0, len(conflictCols))
+		for _, col := range conflictCols {
+			conflictColsStr = append(conflictColsStr, d.QuoteIdentifier(col))
+		}
+		sqlStr += fmt.Sprintf(" ON CONFLICT (%s) DO UPDATE SET %s", strings.Join(conflictColsStr, ", "), strings.Join(updateParts, ", "))
+	}
+
+	return sqlStr, args
+}
+
+func (d *SQLiteDialect) AutoIncrementSQL() string {
+	return "INTEGER PRIMARY KEY AUTOINCREMENT"
 }
 

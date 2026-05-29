@@ -145,7 +145,11 @@ func (tr *TestResponse) AssertHeader(key, value string) *TestResponse {
 // AssertDatabaseHas asserts that a database table contains a row matching the given constraints.
 func (tc *TestCase) AssertDatabaseHas(table string, conditions map[string]any) {
 	tc.Helper()
-	builder := query.NewBuilder(tc.DB.RawDB(), tc.DB.Dialect())
+	d, err := tc.DB.Dialect()
+	if err != nil {
+		tc.Fatalf("Dialect not configured: %v", err)
+	}
+	builder := query.NewBuilder(tc.DB.RawDB(), d)
 	builder.Table(table)
 	
 	for k, v := range conditions {
@@ -164,7 +168,11 @@ func (tc *TestCase) AssertDatabaseHas(table string, conditions map[string]any) {
 // AssertDatabaseMissing asserts that a database table does NOT contain a row matching the given constraints.
 func (tc *TestCase) AssertDatabaseMissing(table string, conditions map[string]any) {
 	tc.Helper()
-	builder := query.NewBuilder(tc.DB.RawDB(), tc.DB.Dialect())
+	d, err := tc.DB.Dialect()
+	if err != nil {
+		tc.Fatalf("Dialect not configured: %v", err)
+	}
+	builder := query.NewBuilder(tc.DB.RawDB(), d)
 	builder.Table(table)
 	
 	for k, v := range conditions {
@@ -183,7 +191,11 @@ func (tc *TestCase) AssertDatabaseMissing(table string, conditions map[string]an
 // AssertDatabaseCount asserts that a table has exactly `expected` number of rows.
 func (tc *TestCase) AssertDatabaseCount(table string, expected int) {
 	tc.Helper()
-	builder := query.NewBuilder(tc.DB.RawDB(), tc.DB.Dialect())
+	d, err := tc.DB.Dialect()
+	if err != nil {
+		tc.Fatalf("Dialect not configured: %v", err)
+	}
+	builder := query.NewBuilder(tc.DB.RawDB(), d)
 	builder.Table(table)
 
 	count, err := builder.Count("*")
@@ -203,7 +215,11 @@ func (tc *TestCase) AssertDatabaseHasNoRecords(table string) {
 // AssertDatabaseHasExactly asserts that a table contains **exactly one** row matching the conditions.
 func (tc *TestCase) AssertDatabaseHasExactly(table string, conditions map[string]any) {
 	tc.Helper()
-	builder := query.NewBuilder(tc.DB.RawDB(), tc.DB.Dialect())
+	d, err := tc.DB.Dialect()
+	if err != nil {
+		tc.Fatalf("Dialect not configured: %v", err)
+	}
+	builder := query.NewBuilder(tc.DB.RawDB(), d)
 	builder.Table(table)
 	
 	for k, v := range conditions {

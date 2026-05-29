@@ -3,8 +3,6 @@ package query
 import (
 	"context"
 	"database/sql"
-	"fmt"
-	"strings"
 	"sync"
 	"time"
 	
@@ -204,8 +202,7 @@ func (b *Builder) OrHaving(column, operator string, value any) *Builder {
 
 // SelectRaw allows raw SELECT expressions (e.g. "COUNT(*) as total").
 func (b *Builder) SelectRaw(sql string, args ...any) *Builder {
-	// For simplicity, we store raw columns separately or prepend to Columns
-	b.query.Columns = append(b.query.Columns, sql)
+	b.query.RawColumns = append(b.query.RawColumns, sql)
 	// Note: Raw select args are passed through but may require dialect-specific handling.
 	return b
 }
@@ -264,11 +261,8 @@ func (b *Builder) Insert(values map[string]any) (sql.Result, error) {
 	return res, err
 }
 
-// Upsert inserts or updates on duplicate key (MySQL/SQLite friendly).
-// For full cross-dialect, dialects can be extended.
-func (b *Builder) Upsert(values map[string]any, updateColumns []string) (sql.Result, error) {
-	// Simple implementation: try insert, on conflict update (basic)
-	// For production, better to use dialect.CompileUpsert
+// Upsert inserts or updates on conflict using dialect-specific syntax.
+func (b *Builder) Upsert(values map[string]any, updateColumns []string, conflictColumns []string) (sql.Result, error) {
 	columns := make([]string, 0, len(values))
 	row := make([]any, 0, len(values))
 	for k, v := range values {
@@ -276,15 +270,7 @@ func (b *Builder) Upsert(values map[string]any, updateColumns []string) (sql.Res
 		row = append(row, v)
 	}
 
-	// Use INSERT ... ON DUPLICATE KEY UPDATE for MySQL-like
-	sqlQ, args := b.dialect.CompileInsert(b.query.Table, columns, [][]any{row})
-	if len(updateColumns) > 0 {
-		updateParts := []string{}
-		for _, col := range updateColumns {
-			updateParts = append(updateParts, fmt.Sprintf("%s=VALUES(%s)", col, col))
-		}
-		sqlQ += " ON DUPLICATE KEY UPDATE " + strings.Join(updateParts, ", ")
-	}
+	sqlQ, args := b.dialect.CompileUpsert(b.query.Table, columns, [][]any{row}, conflictColumns, updateColumns)
 
 	start := time.Now()
 	res, err := b.conn.ExecContext(b.ctx, sqlQ, args...)

@@ -6,6 +6,24 @@ import (
 	"sync"
 )
 
+// pluralize converts a model name to a table name by lowercasing and appending "s".
+// For production, consider using a proper inflection library.
+func pluralize(name string) string {
+	lower := strings.ToLower(name)
+	// Basic English pluralization rules
+	if strings.HasSuffix(lower, "s") || strings.HasSuffix(lower, "x") || strings.HasSuffix(lower, "z") ||
+		strings.HasSuffix(lower, "ch") || strings.HasSuffix(lower, "sh") {
+		return lower + "es"
+	}
+	if strings.HasSuffix(lower, "y") && len(lower) > 1 {
+		prev := lower[len(lower)-2]
+		if prev != 'a' && prev != 'e' && prev != 'i' && prev != 'o' && prev != 'u' {
+			return lower[:len(lower)-1] + "ies"
+		}
+	}
+	return lower + "s"
+}
+
 // FieldMeta represents cached metadata for a struct field.
 type FieldMeta struct {
 	Name       string // struct field name
@@ -38,13 +56,11 @@ func getMetadata(typ reflect.Type) *ModelMetadata {
 	}
 
 	meta := &ModelMetadata{
-		TableName: strings.ToLower(typ.Name()) + "s", // Default simplistic pluralization
+		TableName: pluralize(typ.Name()),
 		Fields:    make([]FieldMeta, 0, typ.NumField()),
 	}
 
 	// Try to instantiate to check for TableName() interface
-	// This requires reflection to create a dummy value.
-	// We handle TableName overriding in getTableName, but we can cache the default here.
 	dummyPtr := reflect.New(typ).Interface()
 	if m, ok := dummyPtr.(Model); ok {
 		meta.TableName = m.TableName()

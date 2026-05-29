@@ -43,8 +43,7 @@ func (s *Builder) Create(table string, callback func(*Blueprint)) error {
 		if col.Type == "varchar" {
 			colType = fmt.Sprintf("VARCHAR(%d)", col.Length)
 		} else if col.Type == "bigint" && col.AutoIncrement {
-			// Extremely naive SQLite primary key for now
-			colType = "INTEGER PRIMARY KEY AUTOINCREMENT"
+			colType = s.dialect.AutoIncrementSQL()
 		}
 
 		sqlStr.WriteString(fmt.Sprintf("    %s %s", s.dialect.QuoteIdentifier(col.Name), colType))

@@ -76,7 +76,7 @@ func (d *PostgresDialect) CompileSelect(query SelectQuery) (string, []any) {
 	sql.WriteString("SELECT ")
 	if query.Aggregate != nil {
 		sql.WriteString(fmt.Sprintf("%s(%s)", query.Aggregate.Function, d.QuoteIdentifier(query.Aggregate.Column)))
-	} else if len(query.Columns) == 0 {
+	} else if len(query.Columns) == 0 && len(query.RawColumns) == 0 {
 		sql.WriteString("*")
 	} else {
 		for i, col := range query.Columns {
@@ -84,6 +84,12 @@ func (d *PostgresDialect) CompileSelect(query SelectQuery) (string, []any) {
 				sql.WriteString(", ")
 			}
 			sql.WriteString(d.QuoteIdentifier(col))
+		}
+		for i, raw := range query.RawColumns {
+			if i > 0 || len(query.Columns) > 0 {
+				sql.WriteString(", ")
+			}
+			sql.WriteString(raw)
 		}
 	}
 
@@ -221,5 +227,28 @@ func (d *PostgresDialect) CompileDelete(table string, wheres []WhereClause) (str
 	sql.WriteString(d.compileWheres(wheres, &args))
 
 	return sql.String(), args
+}
+
+func (d *PostgresDialect) CompileUpsert(table string, columns []string, values [][]any, conflictCols []string, updateCols []string) (string, []any) {
+	// PostgreSQL uses INSERT ... ON CONFLICT DO UPDATE SET
+	sqlStr, args := d.CompileInsert(table, columns, values)
+
+	if len(updateCols) > 0 && len(conflictCols) > 0 {
+		updateParts := make([]string, 0, len(updateCols))
+		for _, col := range updateCols {
+			updateParts = append(updateParts, fmt.Sprintf("%s = EXCLUDED.%s", d.QuoteIdentifier(col), d.QuoteIdentifier(col)))
+		}
+		conflictColsStr := make([]string, 0, len(conflictCols))
+		for _, col := range conflictCols {
+			conflictColsStr = append(conflictColsStr, d.QuoteIdentifier(col))
+		}
+		sqlStr += fmt.Sprintf(" ON CONFLICT (%s) DO UPDATE SET %s", strings.Join(conflictColsStr, ", "), strings.Join(updateParts, ", "))
+	}
+
+	return sqlStr, args
+}
+
+func (d *PostgresDialect) AutoIncrementSQL() string {
+	return "BIGSERIAL PRIMARY KEY"
 }
 
