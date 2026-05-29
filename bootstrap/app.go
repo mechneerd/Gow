@@ -1,6 +1,10 @@
 package bootstrap
 
 import (
+	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/lib/pq"
+	_ "modernc.org/sqlite"
+
 	"github.com/mechneerd/gow/broadcasting"
 	"github.com/mechneerd/gow/config"
 	"github.com/mechneerd/gow/foundation"

@@ -1,6 +1,7 @@
 package broadcasting
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -8,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gorilla/websocket"
+	"github.com/coder/websocket"
 )
 
 type TestUser struct {
@@ -66,13 +67,12 @@ func TestWebSocketServer(t *testing.T) {
 
 	// Convert http:// to ws://
 	wsURL := "ws" + strings.TrimPrefix(server.URL, "http")
-	
-	dialer := websocket.Dialer{}
-	conn, _, err := dialer.Dial(wsURL, nil)
+
+	conn, _, err := websocket.Dial(context.Background(), wsURL, nil)
 	if err != nil {
 		t.Fatalf("Failed to connect to websocket: %v", err)
 	}
-	defer conn.Close()
+	defer conn.Close(websocket.StatusNormalClosure, "")
 
 	// Wait briefly for connection registration
 	time.Sleep(50 * time.Millisecond)
@@ -85,7 +85,8 @@ func TestWebSocketServer(t *testing.T) {
 			"auth":    "fake-auth",
 		},
 	}
-	conn.WriteJSON(subscribeMsg)
+	msgBytes, _ := json.Marshal(subscribeMsg)
+	conn.Write(context.Background(), websocket.MessageText, msgBytes)
 
 	// Wait briefly for subscription to process
 	time.Sleep(50 * time.Millisecond)
@@ -98,11 +99,17 @@ func TestWebSocketServer(t *testing.T) {
 	}
 
 	// Read the broadcasted message
-	conn.SetReadDeadline(time.Now().Add(2 * time.Second))
-	var receivedMsg BroadcastMessage
-	err = conn.ReadJSON(&receivedMsg)
+	readCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	_, rawMsg, err := conn.Read(readCtx)
 	if err != nil {
 		t.Fatalf("Failed to read message: %v", err)
+	}
+
+	var receivedMsg BroadcastMessage
+	err = json.Unmarshal(rawMsg, &receivedMsg)
+	if err != nil {
+		t.Fatalf("Failed to unmarshal message: %v", err)
 	}
 
 	if receivedMsg.Event != "chat.message" {
