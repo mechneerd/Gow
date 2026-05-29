@@ -166,16 +166,25 @@ func (v *Validator) applyRule(field string, value any, exists bool, rule string)
 			return errors.New("The " + field + " confirmation does not match.")
 		}
 	case "unique":
-		// unique:table,column
+		// unique:table,column or unique:table,column,id
 		if v.db != nil && len(ruleParams) >= 2 {
 			table, column := ruleParams[0], ruleParams[1]
-			// Validate identifiers to prevent SQL injection
 			if !isValidIdentifier(table) || !isValidIdentifier(column) {
 				return errors.New("The " + field + " validation rule contains invalid identifiers.")
 			}
 			var count int
-			query := fmt.Sprintf("SELECT COUNT(*) FROM \"%s\" WHERE \"%s\" = ?", table, column)
-			v.db.QueryRow(query, value).Scan(&count)
+			var query string
+			var args []any
+			if len(ruleParams) >= 3 {
+				// Exclude current record by ID
+				id := ruleParams[2]
+				query = fmt.Sprintf("SELECT COUNT(*) FROM \"%s\" WHERE \"%s\" = ? AND \"id\" != ?", table, column)
+				args = []any{value, id}
+			} else {
+				query = fmt.Sprintf("SELECT COUNT(*) FROM \"%s\" WHERE \"%s\" = ?", table, column)
+				args = []any{value}
+			}
+			v.db.QueryRow(query, args...).Scan(&count)
 			if count > 0 {
 				return errors.New("The " + field + " has already been taken.")
 			}
@@ -290,7 +299,14 @@ func (v *Validator) applyRule(field string, value any, exists bool, rule string)
 				compareVal = compare
 			}
 			cf, _ := strconv.ParseFloat(fmt.Sprintf("%v", compareVal), 64)
-			if valLen <= cf {
+			// For numeric strings, compare the numeric value; otherwise compare length
+			var compareResult bool
+			if isNumeric {
+				compareResult = numVal <= cf
+			} else {
+				compareResult = valLen <= cf
+			}
+			if compareResult {
 				return fmt.Errorf("The %s field must be greater than %v.", field, compare)
 			}
 		}
@@ -303,7 +319,13 @@ func (v *Validator) applyRule(field string, value any, exists bool, rule string)
 				compareVal = compare
 			}
 			cf, _ := strconv.ParseFloat(fmt.Sprintf("%v", compareVal), 64)
-			if valLen < cf {
+			var compareResult bool
+			if isNumeric {
+				compareResult = numVal < cf
+			} else {
+				compareResult = valLen < cf
+			}
+			if compareResult {
 				return fmt.Errorf("The %s field must be greater than or equal to %v.", field, compare)
 			}
 		}
@@ -316,7 +338,13 @@ func (v *Validator) applyRule(field string, value any, exists bool, rule string)
 				compareVal = compare
 			}
 			cf, _ := strconv.ParseFloat(fmt.Sprintf("%v", compareVal), 64)
-			if valLen >= cf {
+			var compareResult bool
+			if isNumeric {
+				compareResult = numVal >= cf
+			} else {
+				compareResult = valLen >= cf
+			}
+			if compareResult {
 				return fmt.Errorf("The %s field must be less than %v.", field, compare)
 			}
 		}
@@ -329,15 +357,15 @@ func (v *Validator) applyRule(field string, value any, exists bool, rule string)
 				compareVal = compare
 			}
 			cf, _ := strconv.ParseFloat(fmt.Sprintf("%v", compareVal), 64)
-			if valLen > cf {
+			var compareResult bool
+			if isNumeric {
+				compareResult = numVal > cf
+			} else {
+				compareResult = valLen > cf
+			}
+			if compareResult {
 				return fmt.Errorf("The %s field must be less than or equal to %v.", field, compare)
 			}
-		}
-
-	case "nullable":
-		// If value is empty/null, skip all further rules for this field
-		if !exists || isEmpty(value) {
-			return nil // skip remaining rules
 		}
 
 	case "bail":
@@ -361,8 +389,17 @@ func (v *Validator) applyRule(field string, value any, exists bool, rule string)
 				targetVal = target
 			}
 			targetStr := fmt.Sprintf("%v", targetVal)
-			if strVal >= targetStr {
-				return fmt.Errorf("The %s field must be a date before %s.", field, target)
+			t, err1 := time.Parse("2006-01-02", strVal)
+			targetTime, err2 := time.Parse("2006-01-02", targetStr)
+			if err1 == nil && err2 == nil {
+				if !t.Before(targetTime) {
+					return fmt.Errorf("The %s field must be a date before %s.", field, target)
+				}
+			} else {
+				// Fallback to string comparison if not parseable as dates
+				if strVal >= targetStr {
+					return fmt.Errorf("The %s field must be before %s.", field, target)
+				}
 			}
 		}
 
@@ -374,8 +411,17 @@ func (v *Validator) applyRule(field string, value any, exists bool, rule string)
 				targetVal = target
 			}
 			targetStr := fmt.Sprintf("%v", targetVal)
-			if strVal <= targetStr {
-				return fmt.Errorf("The %s field must be a date after %s.", field, target)
+			t, err1 := time.Parse("2006-01-02", strVal)
+			targetTime, err2 := time.Parse("2006-01-02", targetStr)
+			if err1 == nil && err2 == nil {
+				if !t.After(targetTime) {
+					return fmt.Errorf("The %s field must be a date after %s.", field, target)
+				}
+			} else {
+				// Fallback to string comparison if not parseable as dates
+				if strVal <= targetStr {
+					return fmt.Errorf("The %s field must be after %s.", field, target)
+				}
 			}
 		}
 
