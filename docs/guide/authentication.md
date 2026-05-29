@@ -46,6 +46,54 @@ api := router.Group("/api")
 api.Use(authMiddleware.Guard("sanctum"))
 ```
 
+## Auth Middleware Guidance
+
+GoW provides two auth middleware options. Choose the right one for your use case:
+
+### `auth.Middleware(guard)` — Recommended for most cases
+
+This is the **primary auth middleware**. It stores the authenticated user in the request context, making it available via `auth.User(r)`.
+
+```go
+import "github.com/mechneerd/gow/auth"
+
+guard := authManager.Guard("web")
+router.Use(auth.Middleware(guard))
+```
+
+**Use when:**
+- You need `auth.User(r)` to work in downstream handlers
+- Building web applications with session-based auth
+- You want the user available in template data
+
+### `middleware.Authenticate(manager, guardName)` — Deprecated
+
+This is a **legacy wrapper** kept for backward compatibility. It does NOT store the user in context — use `auth.Middleware` instead.
+
+```go
+import "github.com/mechneerd/gow/http/middleware"
+
+// Deprecated: use auth.Middleware(guard) instead
+router.Use(middleware.Authenticate(authManager, "web"))
+```
+
+### `middleware.Authorize(gate, ability)` — For authorization
+
+Use this **after** `auth.Middleware` to check permissions via the Gate system:
+
+```go
+router.Use(auth.Middleware(guard))
+router.Use(middleware.Authorize(gate, "edit-post"))
+```
+
+### `auth.GuestMiddleware(guard, redirectTo)` — Guest-only routes
+
+Restricts routes to unauthenticated users (e.g., login/register pages):
+
+```go
+router.Use(auth.GuestMiddleware(guard, "/dashboard"))
+```
+
 ---
 
 ## Socialite (OAuth)

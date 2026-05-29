@@ -34,16 +34,57 @@ func (u *User) Guarded() []string {
 
 Goquent supports all common relationship types including **Polymorphic** and **Through** relations.
 
+### Relationship Tags Reference
+
+All relationships are defined using the `gow` struct tag. The following tags are supported:
+
+| Tag | Description | Example |
+|---|---|---|
+| `gow:"hasMany"` | One-to-many relationship | `Comments []Comment \`gow:"hasMany"\`` |
+| `gow:"belongsTo"` | Inverse one-to-many (foreign key on this model) | `User orm.BelongsTo[User] \`gow:"belongsTo"\`` |
+| `gow:"belongsToMany"` | Many-to-many via pivot table | `Roles orm.BelongsToMany[Role] \`gow:"belongsToMany"\`` |
+| `gow:"hasOne"` | One-to-one relationship | `Profile orm.HasOne[Profile] \`gow:"hasOne"\`` |
+| `gow:"morphMany"` | Polymorphic one-to-many | `Comments orm.MorphMany[Comment] \`gow:"morphMany"\`` |
+| `gow:"morphOne"` | Polymorphic one-to-one | `Image orm.MorphOne[Image] \`gow:"morphOne"\`` |
+| `gow:"morphTo"` | Inverse polymorphic | `Commentable orm.MorphTo \`gow:"morphTo"\`` |
+| `gow:"hasOneThrough"` | One-to-one through intermediate | `Country orm.HasOneThrough[Country] \`gow:"hasOneThrough"\`` |
+| `gow:"hasManyThrough"` | One-to-many through intermediate | `Country orm.HasManyThrough[Country] \`gow:"hasManyThrough"\`` |
+
+### Tag Options
+
+| Option | Description | Example |
+|---|---|---|
+| `foreignKey=<column>` | Custom foreign key column | `gow:"hasMany,foreignKey=post_id"` |
+| `relatedKey=<column>` | Custom related key column | `gow:"hasMany,relatedKey=user_id"` |
+| `through=<table>` | Intermediate table for Through relations | `gow:"hasManyThrough,through=users"` |
+| `morphType=<column>` | Polymorphic type column | `gow:"morphMany,morphType=commentable_type"` |
+| `morphId=<column>` | Polymorphic ID column | `gow:"morphMany,morphId=commentable_id"` |
+| `type=<Name>` | Concrete type name for morph relations | `gow:"morphMany,type=Post"` |
+| `pivot=<table>` | Pivot table name (default: `table1_table2`) | `gow:"belongsToMany,pivot=role_user"` |
+
 ### Standard Relations
 
 ```go
 type Post struct {
-    // ...
-    UserID int
-    User   orm.BelongsTo[User] `gow:"belongsTo"`
-    Comments []Comment         `gow:"hasMany"`
+    ID        int    `db:"id"`
+    UserID    int    `db:"user_id"`
+    User      orm.BelongsTo[User] `gow:"belongsTo"`
+    Comments  []Comment           `gow:"hasMany"`
+    Tags      orm.BelongsToMany[Tag] `gow:"belongsToMany,pivot=post_tag"`
 }
 ```
+
+The foreign key is automatically derived from the relationship name (e.g., `User` → `user_id`). Override with `foreignKey=` if needed.
+
+### BelongsToMany (Many-to-Many)
+
+```go
+type Post struct {
+    Tags orm.BelongsToMany[Tag] `gow:"belongsToMany,pivot=post_tag,foreignKey=post_id,relatedKey=tag_id"`
+}
+```
+
+Default pivot table name: `<pluralized_model>_<pluralized_relation>` (e.g., `post_tags`). Override with `pivot=`.
 
 ### Polymorphic Relations
 
