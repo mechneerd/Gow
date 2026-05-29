@@ -11,9 +11,9 @@ type Guard interface {
 	// ID returns the ID of the currently authenticated user.
 	ID() string
 	// Attempt tries to authenticate a user using the given credentials.
-	Attempt(credentials map[string]any) bool
+	Attempt(credentials map[string]any, remember ...bool) bool
 	// Login logs a user into the application.
-	Login(user any)
+	Login(user any, remember ...bool)
 	// Logout logs the user out of the application.
 	Logout()
 }

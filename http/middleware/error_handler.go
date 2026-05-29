@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"runtime/debug"
 
-	gowhttp "github.com/mechneerd/gow/http"
+	"github.com/mechneerd/gow/http/exception"
 )
 
 // ErrorHandler recovers from panics and converts them to HTTP responses.
@@ -18,9 +18,13 @@ func ErrorHandler(debugMode bool) func(http.Handler) http.Handler {
 					status := http.StatusInternalServerError
 					message := "Internal Server Error"
 					
-					// Type assert for our custom HttpException
-					if httpErr, ok := err.(gowhttp.HttpException); ok {
-						status = httpErr.StatusCode
+					// Type assert for our custom HttpException (pointer type)
+					if httpErr, ok := err.(*exception.HttpException); ok {
+						status = httpErr.Code
+						message = httpErr.Message
+					} else if httpErr, ok := err.(exception.HttpException); ok {
+						// Also check value type for backward compatibility
+						status = httpErr.Code
 						message = httpErr.Message
 					} else {
 						// For other panics, preserve the original error message if in debug mode
@@ -29,8 +33,6 @@ func ErrorHandler(debugMode bool) func(http.Handler) http.Handler {
 						}
 					}
 
-					// We could try to render a view here (e.g., view.Make("errors.500"))
-					// For this middleware, we'll write the status and message.
 					w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 					w.WriteHeader(status)
 					w.Write([]byte(fmt.Sprintf("%d | %s", status, message)))

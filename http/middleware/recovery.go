@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	gowhttp "github.com/mechneerd/gow/http"
+	"github.com/mechneerd/gow/http/exception"
 	"github.com/mechneerd/gow/http/response"
 	"log"
 	"net/http"
@@ -16,9 +16,14 @@ func Recovery() func(http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			defer func() {
 				if err := recover(); err != nil {
-					// Check if it's our custom HttpException
-					if httpErr, ok := err.(gowhttp.HttpException); ok {
-						response.Error(w, httpErr.StatusCode, httpErr.Message)
+					// Check if it's our custom HttpException (pointer type)
+					if httpErr, ok := err.(*exception.HttpException); ok {
+						response.Error(w, httpErr.Code, httpErr.Message)
+						return
+					}
+					// Also check value type for backward compatibility
+					if httpErr, ok := err.(exception.HttpException); ok {
+						response.Error(w, httpErr.Code, httpErr.Message)
 						return
 					}
 
