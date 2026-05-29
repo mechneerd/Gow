@@ -291,9 +291,8 @@ func (r *Router) Head(path string, handler HandlerFunc) *Route {
 
 // Group creates a new route group
 func (r *Router) Group(prefix string, callback func(*Router)) {
-	oldPrefix := r.groupPrefix
-	
 	r.mu.Lock()
+	oldPrefix := r.groupPrefix
 	r.groupPrefix = oldPrefix + prefix
 	r.mu.Unlock()
 	

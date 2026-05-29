@@ -156,14 +156,14 @@ func (b *ContextualBindingBuilder) Give(factory any) {
 
 // Resolve resolves a dependency by its reflection type.
 func (c *Container) Resolve(typ reflect.Type) (any, error) {
-	c.mu.RLock()
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	
 	// Check contextual bindings if we have a resolution stack
 	if len(c.resolutionStack) > 0 {
 		parent := c.resolutionStack[len(c.resolutionStack)-1]
 		if ctxMap, ok := c.contextualBindings[parent]; ok {
 			if b, ok := ctxMap[typ]; ok {
-				c.mu.RUnlock()
 				return c.callFactory(b.factory)
 			}
 		}
@@ -171,13 +171,11 @@ func (c *Container) Resolve(typ reflect.Type) (any, error) {
 
 	// Check instances first
 	if instance, ok := c.instances[typ]; ok {
-		c.mu.RUnlock()
 		return instance, nil
 	}
 
 	// Check bindings
 	b, ok := c.bindings[typ]
-	c.mu.RUnlock()
 
 	if !ok {
 		// Attempt to resolve struct or pointer to struct if it's concrete type
@@ -194,31 +192,24 @@ func (c *Container) Resolve(typ reflect.Type) (any, error) {
 	}
 
 	// Push to stack to keep track of context
-	c.mu.Lock()
 	c.resolutionStack = append(c.resolutionStack, typ)
-	c.mu.Unlock()
 
 	// Build via factory
 	instance, err := c.callFactory(b.factory)
 	
 	// Pop from stack
-	c.mu.Lock()
 	c.resolutionStack = c.resolutionStack[:len(c.resolutionStack)-1]
-	c.mu.Unlock()
 
 	if err != nil {
 		return nil, err
 	}
 
 	if b.singleton {
-		c.mu.Lock()
 		// Double-check instance wasn't created while acquiring lock
 		if inst, ok := c.instances[typ]; ok {
-			c.mu.Unlock()
 			return inst, nil
 		}
 		c.instances[typ] = instance
-		c.mu.Unlock()
 	}
 
 	return instance, nil

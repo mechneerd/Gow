@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 	
 	"github.com/mechneerd/gow/database/dialect"
@@ -21,15 +22,25 @@ type QueryEvent struct {
 // QueryListener is a callback function that listens for query events.
 type QueryListener func(QueryEvent)
 
-var queryListeners []QueryListener
+var (
+	queryListeners []QueryListener
+	listenerMu     sync.RWMutex
+)
 
 // Listen registers a new query listener.
 func Listen(listener QueryListener) {
+	listenerMu.Lock()
+	defer listenerMu.Unlock()
 	queryListeners = append(queryListeners, listener)
 }
 
 func dispatchQueryEvent(sql string, bindings []any, duration time.Duration) {
-	if len(queryListeners) == 0 {
+	listenerMu.RLock()
+	listeners := make([]QueryListener, len(queryListeners))
+	copy(listeners, queryListeners)
+	listenerMu.RUnlock()
+
+	if len(listeners) == 0 {
 		return
 	}
 	event := QueryEvent{
@@ -37,7 +48,7 @@ func dispatchQueryEvent(sql string, bindings []any, duration time.Duration) {
 		Bindings: bindings,
 		Duration: duration,
 	}
-	for _, listener := range queryListeners {
+	for _, listener := range listeners {
 		listener(event)
 	}
 }

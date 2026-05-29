@@ -24,8 +24,8 @@ func NewMemoryDriver() *MemoryDriver {
 }
 
 func (d *MemoryDriver) Get(key string) (any, error) {
-	d.mu.RLock()
-	defer d.mu.RUnlock()
+	d.mu.Lock()
+	defer d.mu.Unlock()
 
 	item, exists := d.items[key]
 	if !exists {
@@ -33,7 +33,8 @@ func (d *MemoryDriver) Get(key string) (any, error) {
 	}
 
 	if item.expires > 0 && time.Now().UnixNano() > item.expires {
-		return nil, nil // Expired
+		delete(d.items, key) // Clean expired item
+		return nil, nil      // Expired
 	}
 
 	return item.value, nil

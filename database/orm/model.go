@@ -3,6 +3,7 @@ package orm
 import (
 	"github.com/mechneerd/gow/database/query"
 	"reflect"
+	"sync"
 	"strings"
 )
 
@@ -31,10 +32,15 @@ func (f ScopeFunc) Apply(builder *query.Builder) *query.Builder {
 }
 
 // GlobalScopes registry.
-var globalScopes = make(map[string][]Scope)
+var (
+	globalScopes = make(map[string][]Scope)
+	scopeMu      sync.RWMutex
+)
 
 // AddGlobalScope registers a global scope for a given model type name.
 func AddGlobalScope(model string, scope Scope) {
+	scopeMu.Lock()
+	defer scopeMu.Unlock()
 	globalScopes[model] = append(globalScopes[model], scope)
 }
 
@@ -49,10 +55,15 @@ type Observer interface {
 }
 
 // Observers registry.
-var observers = make(map[string][]Observer)
+var (
+	observers = make(map[string][]Observer)
+	observerMu sync.RWMutex
+)
 
 // Observe registers an observer for a model.
 func Observe(model string, observer Observer) {
+	observerMu.Lock()
+	defer observerMu.Unlock()
 	observers[model] = append(observers[model], observer)
 }
 

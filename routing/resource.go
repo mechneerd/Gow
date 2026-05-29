@@ -3,6 +3,7 @@ package routing
 import (
 	"fmt"
 	"net/http"
+	"sync"
 	"reflect"
 	"strings"
 )
@@ -61,16 +62,24 @@ func (r *Router) registerResource(name string, controller any, apiOnly bool) {
 }
 
 // Macro support for Router (adds dynamic methods basically)
-var routerMacros = make(map[string]func(*Router, ...any) any)
+var (
+	routerMacros = make(map[string]func(*Router, ...any) any)
+	macroMu      sync.RWMutex
+)
 
 // Macro registers a custom macro on the router
 func (r *Router) Macro(name string, macro func(*Router, ...any) any) {
+	macroMu.Lock()
+	defer macroMu.Unlock()
 	routerMacros[name] = macro
 }
 
 // CallMacro executes a registered macro
 func (r *Router) CallMacro(name string, args ...any) (any, error) {
-	if macro, exists := routerMacros[name]; exists {
+	macroMu.RLock()
+	macro, exists := routerMacros[name]
+	macroMu.RUnlock()
+	if exists {
 		return macro(r, args...), nil
 	}
 	return nil, fmt.Errorf("macro %s not found", name)

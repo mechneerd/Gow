@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"sync"
 	"strings"
 	"time"
 )
@@ -28,7 +29,9 @@ func NewURLGenerator(router *Router, appKey string) *URLGenerator {
 
 // SignedRoute generates a cryptographically signed URL for a named route.
 func (u *URLGenerator) SignedRoute(name string, parameters map[string]string, expiration time.Time) (string, error) {
+	u.router.mu.RLock()
 	route, exists := u.router.namedRoutes[name]
+	u.router.mu.RUnlock()
 	if !exists {
 		return "", fmt.Errorf("route %s not found", name)
 	}
@@ -95,16 +98,24 @@ func (u *URLGenerator) HasValidSignature(r *http.Request) bool {
 // TemporarySignedRoute is a convenience helper that generates a signed URL
 // that expires after the given duration. It requires a global router to be set
 // via SetGlobalRouterForSignedURLs (or similar) in real apps.
-var globalURLGenerator *URLGenerator
+var (
+	globalURLGenerator *URLGenerator
+	urlMu              sync.RWMutex
+)
 
 // SetGlobalURLGenerator allows setting a global URL generator for convenience helpers.
 func SetGlobalURLGenerator(gen *URLGenerator) {
+	urlMu.Lock()
+	defer urlMu.Unlock()
 	globalURLGenerator = gen
 }
 
 // TemporarySignedRoute generates a temporary signed URL (convenience wrapper).
 func TemporarySignedRoute(name string, expiresIn time.Duration, params map[string]string) (string, error) {
-	if globalURLGenerator == nil {
+	urlMu.RLock()
+	gen := globalURLGenerator
+	urlMu.RUnlock()
+	if gen == nil {
 		return "", fmt.Errorf("no global URL generator set. Use routing.SetGlobalURLGenerator")
 	}
 	expiresAt := time.Now().Add(expiresIn)

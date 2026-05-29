@@ -5,6 +5,7 @@ import (
 	"context"
 	"os/exec"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -24,11 +25,16 @@ type Process struct {
 	result  *Result
 }
 
-var fakesEnabled bool
-var fakeResults map[string]*Result
+var (
+	fakesEnabled bool
+	fakeResults  map[string]*Result
+	processMu    sync.RWMutex
+)
 
 // Fake globally enables faking for testing.
 func Fake(results map[string]*Result) {
+	processMu.Lock()
+	defer processMu.Unlock()
 	fakesEnabled = true
 	fakeResults = results
 }
@@ -48,12 +54,17 @@ func (p *Process) Timeout(d time.Duration) *Process {
 
 // Run executes the command synchronously.
 func (p *Process) Run() *Result {
-	if fakesEnabled {
+	processMu.RLock()
+	enabled := fakesEnabled
+	results := fakeResults
+	processMu.RUnlock()
+
+	if enabled {
 		cmdStr := p.cmd.Path + " " + strings.Join(p.cmd.Args[1:], " ")
-		if res, ok := fakeResults[cmdStr]; ok {
+		if res, ok := results[cmdStr]; ok {
 			return res
 		}
-		if res, ok := fakeResults["*"]; ok {
+		if res, ok := results["*"]; ok {
 			return res
 		}
 	}

@@ -1,6 +1,9 @@
 package events
 
-import "reflect"
+import (
+	"reflect"
+	"sync"
+)
 
 // Event represents an application event.
 type Event any
@@ -27,6 +30,7 @@ type Broadcaster interface {
 
 // Manager orchestrates application events.
 type Manager struct {
+	mu          sync.RWMutex
 	listeners   map[reflect.Type][]Listener
 	wildcards   []Listener
 	broadcaster Broadcaster
@@ -42,12 +46,15 @@ func NewManager() *Manager {
 
 // SetBroadcaster assigns the broadcasting manager for ShouldBroadcast events.
 func (m *Manager) SetBroadcaster(b Broadcaster) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	m.broadcaster = b
 }
 
 // Listen registers a listener for a specific event type.
-// You should pass an instance of the event type, e.g. Listen(UserCreated{}, func)
 func (m *Manager) Listen(event Event, listener Listener) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	eventType := reflect.TypeOf(event)
 	if eventType.Kind() == reflect.Ptr {
 		eventType = eventType.Elem()
@@ -57,6 +64,8 @@ func (m *Manager) Listen(event Event, listener Listener) {
 
 // ListenAny registers a wildcard listener that catches all events.
 func (m *Manager) ListenAny(listener Listener) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	m.wildcards = append(m.wildcards, listener)
 }
 
@@ -67,26 +76,31 @@ func (m *Manager) Subscribe(subscriber Subscriber) {
 
 // Dispatch triggers all registered listeners for the given event.
 func (m *Manager) Dispatch(event Event) {
-	// Handle ShouldBroadcast
-	if bEvent, ok := event.(ShouldBroadcast); ok && m.broadcaster != nil {
-		m.broadcaster.Broadcast(bEvent.BroadcastOn(), bEvent.BroadcastAs(), bEvent.BroadcastWith())
-	}
-
+	m.mu.RLock()
+	broadcaster := m.broadcaster
+	wildcards := make([]Listener, len(m.wildcards))
+	copy(wildcards, m.wildcards)
 	eventType := reflect.TypeOf(event)
 	if eventType.Kind() == reflect.Ptr {
 		eventType = eventType.Elem()
 	}
+	specificListeners := make([]Listener, len(m.listeners[eventType]))
+	copy(specificListeners, m.listeners[eventType])
+	m.mu.RUnlock()
+
+	// Handle ShouldBroadcast
+	if bEvent, ok := event.(ShouldBroadcast); ok && broadcaster != nil {
+		broadcaster.Broadcast(bEvent.BroadcastOn(), bEvent.BroadcastAs(), bEvent.BroadcastWith())
+	}
 
 	// Execute wildcard listeners
-	for _, listener := range m.wildcards {
+	for _, listener := range wildcards {
 		listener(event)
 	}
 
 	// Execute specific listeners
-	if listeners, ok := m.listeners[eventType]; ok {
-		for _, listener := range listeners {
-			listener(event)
-		}
+	for _, listener := range specificListeners {
+		listener(event)
 	}
 }
 
