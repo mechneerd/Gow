@@ -3,7 +3,7 @@ package artisan
 import (
 	_ "github.com/go-sql-driver/mysql" // mysql driver
 	_ "github.com/lib/pq"              // postgres driver
-	_ "github.com/mattn/go-sqlite3"    // sqlite driver
+	_ "modernc.org/sqlite"
 
 	"github.com/mechneerd/gow/database/migration"
 )
