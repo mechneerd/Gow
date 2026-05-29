@@ -1,8 +1,9 @@
 package queue
 
 import (
-	"bytes"
-	"encoding/gob"
+	"database/sql"
+	"encoding/json"
+	"fmt"
 	"time"
 	"github.com/mechneerd/gow/database/orm"
 )
@@ -23,16 +24,11 @@ func NewDatabaseDriver(db *orm.DB, defaultQueueName string) *DatabaseDriver {
 
 // Push pushes a job into the jobs table.
 func (d *DatabaseDriver) Push(job Job) error {
-	var buf bytes.Buffer
-	enc := gob.NewEncoder(&buf)
-	
-	err := enc.Encode(&job)
+	payload, err := json.Marshal(job)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to marshal job: %w", err)
 	}
 
-	payload := buf.Bytes()
-	
 	builder := d.db.Builder.Clone()
 	builder.Table("jobs")
 	
@@ -48,67 +44,54 @@ func (d *DatabaseDriver) Push(job Job) error {
 	return err
 }
 
-// Pop retrieves and reserves a job from the jobs table.
+// Pop retrieves and reserves a job from the jobs table using a transaction
+// to prevent race conditions between concurrent workers.
 func (d *DatabaseDriver) Pop() (Job, error) {
-	// A simple pop mechanism (for production, use SELECT FOR UPDATE)
-	builder := d.db.Builder.Clone()
-	builder.Table("jobs")
-	builder.Where("queue", "=", d.queue)
-	builder.WhereNull("reserved_at")
-	builder.OrderBy("id", "ASC")
-	builder.Limit(1)
-	
-	rows, err := builder.Get()
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	
-	if !rows.Next() {
-		return nil, nil // No jobs
-	}
-	
-	var id int
-	var payload string
-	// Simplified scanning assuming standard jobs table
-	cols, _ := rows.Columns()
-	scanArgs := make([]any, len(cols))
-	for i, col := range cols {
-		if col == "id" {
-			scanArgs[i] = &id
-		} else if col == "payload" {
-			scanArgs[i] = &payload
-		} else {
-			var dummy any
-			scanArgs[i] = &dummy
-		}
-	}
-	
-	if err := rows.Scan(scanArgs...); err != nil {
-		return nil, err
-	}
-	
-	// Mark as reserved
-	updateBuilder := d.db.Builder.Clone()
-	updateBuilder.Table("jobs").Where("id", "=", id)
-	_, err = updateBuilder.Update(map[string]any{
-		"reserved_at": time.Now().Unix(),
-		"attempts":    1, // simplistic
-	})
-	
-	if err != nil {
-		return nil, err
-	}
-
 	var job Job
-	buf := bytes.NewBuffer([]byte(payload))
-	dec := gob.NewDecoder(buf)
-	
-	err = dec.Decode(&job)
-	if err != nil {
-		return nil, err
-	}
-	
-	return job, nil
+	err := d.db.TransactionFn(func(txDB *orm.DB) error {
+		// Use the underlying sql.Tx for SELECT FOR UPDATE
+		sqlDB, ok := txDB.RawDB().(*sql.Tx)
+		if !ok {
+			return fmt.Errorf("expected *sql.Tx, got %T", txDB.RawDB())
+		}
+
+		var id int
+		var payload string
+		
+		row := sqlDB.QueryRow(
+			fmt.Sprintf(`SELECT id, payload FROM "%s" WHERE "queue" = $1 AND "reserved_at" IS NULL ORDER BY "id" ASC LIMIT 1 FOR UPDATE`, "jobs"),
+			d.queue,
+		)
+		err := row.Scan(&id, &payload)
+		if err != nil {
+			return nil
+		}
+
+		updateBuilder := txDB.Builder.Clone()
+		updateBuilder.Table("jobs").Where("id", "=", id)
+		_, err = updateBuilder.Update(map[string]any{
+			"reserved_at": time.Now().Unix(),
+			"attempts":    1,
+		})
+		if err != nil {
+			return err
+		}
+
+		var decoded Job
+		err = json.Unmarshal([]byte(payload), &decoded)
+		if err != nil {
+			resetBuilder := txDB.Builder.Clone()
+			resetBuilder.Table("jobs").Where("id", "=", id)
+			_, _ = resetBuilder.Update(map[string]any{
+				"reserved_at": nil,
+			})
+			return fmt.Errorf("failed to decode job payload: %w", err)
+		}
+
+		job = decoded
+		return nil
+	})
+
+	return job, err
 }
 

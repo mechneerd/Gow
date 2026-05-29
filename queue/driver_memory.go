@@ -1,5 +1,10 @@
 package queue
 
+import (
+	"errors"
+	"time"
+)
+
 // MemoryDriver is a goroutine-safe queue driver backed by a buffered channel.
 type MemoryDriver struct {
 	jobs chan Job
@@ -12,10 +17,14 @@ func NewMemoryDriver(capacity int) *MemoryDriver {
 	}
 }
 
-// Push adds a new job to the channel. Blocks if the buffer is full.
+// Push adds a new job to the channel. Returns an error if the queue is full after 5 seconds.
 func (d *MemoryDriver) Push(job Job) error {
-	d.jobs <- job
-	return nil
+	select {
+	case d.jobs <- job:
+		return nil
+	case <-time.After(5 * time.Second):
+		return errors.New("queue full: timed out waiting to push job")
+	}
 }
 
 // Pop blocks until a job is available and returns it.
