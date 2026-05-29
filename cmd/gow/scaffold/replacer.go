@@ -65,6 +65,78 @@ func replaceInContent(content string, ctx ReplaceContext) string {
 	for placeholder, value := range replacements {
 		result = strings.ReplaceAll(result, placeholder, value)
 	}
+
+	// Fallback: replace hardcoded skeleton placeholder names with the actual module path.
+	// Some skeleton templates use literal strings instead of {{ .ModulePath }} placeholders.
+	if ctx.ModulePath != "" && ctx.ModulePath != "test-project" {
+		result = strings.ReplaceAll(result, "test-project", ctx.ModulePath)
+	}
+
+	// Fix framework imports: skeleton templates may use <module>/auth/rbac, <module>/database/orm, etc.
+	// instead of the full github.com/mechneerd/gow/... path.
+	frameworkPrefixes := []string{
+		"auth/rbac",
+		"auth/sanctum",
+		"auth/access",
+		"auth/fortify",
+		"auth/password",
+		"auth/socialite",
+		"auth/verification",
+		"database/orm",
+		"database/query",
+		"database/migration",
+		"database/schema",
+		"database/factory",
+		"database/seeder",
+		"database/pagination",
+		"container",
+		"routing",
+		"view",
+		"validation",
+		"encryption",
+		"hashing",
+		"session",
+		"cache",
+		"queue",
+		"events",
+		"mail",
+		"notifications",
+		"broadcasting",
+		"logging",
+		"config",
+		"console",
+		"cookie",
+		"storage",
+		"localization",
+		"http/client",
+		"http/middleware",
+		"http/request",
+		"http/response",
+		"http/resources",
+		"http/exception",
+		"support/collection",
+		"support/str",
+		"support/arr",
+		"support/pipeline",
+		"support/telescope",
+		"support/health",
+		"support/metrics",
+		"support/scout",
+		"support/process",
+		"support/pennant",
+		"support/fakes",
+		"support/httpclient",
+		"testing",
+		"foundation",
+		"bootstrap",
+	}
+	for _, prefix := range frameworkPrefixes {
+		// Replace "<module>/prefix" with "github.com/mechneerd/gow/prefix"
+		oldImport := ctx.ModulePath + "/" + prefix
+		newImport := "github.com/mechneerd/gow/" + prefix
+		result = strings.ReplaceAll(result, oldImport, newImport)
+	}
+
 	return result
 }
 
