@@ -64,6 +64,7 @@ Current_Capabilities.md
 # Analysis reports (generated, not for repo)
 *_analysis.md
 analyzed_bug_implementation_plan.md
+BUG_FIX_SUMMARY.md
 
 # Skeleton patches and updates (used for maintaining the separate gow-skeleton repo)
 # These folders contain template code and are not part of the main Go module.
