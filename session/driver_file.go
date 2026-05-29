@@ -2,8 +2,10 @@ package session
 
 import (
 	"encoding/json"
+	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // FileDriver implements the session.Store interface using local files.
@@ -17,8 +19,23 @@ func NewFileDriver(path string) *FileDriver {
 	return &FileDriver{Path: path}
 }
 
+// sanitizeSessionID validates a session ID to prevent path traversal.
+func sanitizeSessionID(id string) (string, error) {
+	if id == "" {
+		return "", errors.New("session ID cannot be empty")
+	}
+	if strings.Contains(id, "..") || strings.Contains(id, "/") || strings.Contains(id, "\\") {
+		return "", errors.New("session ID contains invalid characters")
+	}
+	return id, nil
+}
+
 func (d *FileDriver) Read(id string) (map[string]any, error) {
-	file := filepath.Join(d.Path, id)
+	safeID, err := sanitizeSessionID(id)
+	if err != nil {
+		return nil, err
+	}
+	file := filepath.Join(d.Path, safeID)
 	data, err := os.ReadFile(file)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -36,7 +53,11 @@ func (d *FileDriver) Read(id string) (map[string]any, error) {
 }
 
 func (d *FileDriver) Write(id string, data map[string]any) error {
-	file := filepath.Join(d.Path, id)
+	safeID, err := sanitizeSessionID(id)
+	if err != nil {
+		return err
+	}
+	file := filepath.Join(d.Path, safeID)
 	b, err := json.Marshal(data)
 	if err != nil {
 		return err
@@ -46,8 +67,12 @@ func (d *FileDriver) Write(id string, data map[string]any) error {
 }
 
 func (d *FileDriver) Destroy(id string) error {
-	file := filepath.Join(d.Path, id)
-	err := os.Remove(file)
+	safeID, err := sanitizeSessionID(id)
+	if err != nil {
+		return err
+	}
+	file := filepath.Join(d.Path, safeID)
+	err = os.Remove(file)
 	if os.IsNotExist(err) {
 		return nil
 	}

@@ -4,10 +4,10 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/base64"
 	"errors"
 	"io"
-	"strings"
 )
 
 // Encrypter manages data encryption and decryption.
@@ -16,17 +16,15 @@ type Encrypter struct {
 }
 
 // NewEncrypter creates a new encrypter instance.
+// Keys are hashed with SHA-256 to produce a consistent 32-byte key,
+// preventing collision from zero-padding short keys.
 func NewEncrypter(appKey string) (*Encrypter, error) {
-	key := []byte(appKey)
-	if len(key) < 32 {
-		padded := make([]byte, 32)
-		copy(padded, key)
-		key = padded
-	} else if len(key) > 32 {
-		key = key[:32]
+	if appKey == "" {
+		return nil, errors.New("encryption key cannot be empty")
 	}
-
-	return &Encrypter{key: key}, nil
+	// Hash the key to get exactly 32 bytes (AES-256)
+	hash := sha256.Sum256([]byte(appKey))
+	return &Encrypter{key: hash[:]}, nil
 }
 
 // Encrypt encrypts a plaintext string using AES-256-GCM.
@@ -54,9 +52,6 @@ func (e *Encrypter) Encrypt(value string) (string, error) {
 
 // Decrypt decrypts a previously encrypted string.
 func (e *Encrypter) Decrypt(payload string) (string, error) {
-	// If the payload has unexpected padding or prefix, clean it.
-	payload = strings.TrimSpace(payload)
-	
 	data, err := base64.URLEncoding.DecodeString(payload)
 	if err != nil {
 		return "", err

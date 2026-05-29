@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -35,6 +36,11 @@ var CacheForgetCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		key := args[0]
+		// Sanitize key to prevent path traversal
+		if strings.Contains(key, "..") || strings.Contains(key, "/") || strings.Contains(key, "\\") {
+			fmt.Printf("Invalid cache key '%s' (contains path traversal characters).\n", key)
+			return
+		}
 		cacheDir := "storage/cache"
 		filePath := filepath.Join(cacheDir, key+".cache")
 		if err := os.Remove(filePath); err == nil {

@@ -3,7 +3,9 @@ package exception
 import (
 	"encoding/json"
 	"fmt"
+	"html"
 	"net/http"
+	"os"
 	"runtime/debug"
 	"strings"
 )
@@ -44,6 +46,7 @@ func (e *HttpException) Render(w http.ResponseWriter, r *http.Request) {
 
 	// Professional debug error page (Whoops-style) when in development
 	stack := string(debug.Stack())
+	safeMessage := html.EscapeString(e.Message)
 	debugHTML := fmt.Sprintf(`
 <!DOCTYPE html>
 <html>
@@ -65,14 +68,18 @@ func (e *HttpException) Render(w http.ResponseWriter, r *http.Request) {
     <h3>Stack Trace</h3>
     <pre class="stack">%s</pre>
 </body>
-</html>`, e.Code, e.Message, e.Code, e.Message, e.Message, stack)
+</html>`, e.Code, safeMessage, e.Code, safeMessage, safeMessage, stack)
 
 	// Simple production fallback (no stack)
-	prodHTML := fmt.Sprintf("<html><head><title>%d %s</title></head><body><h1>%d %s</h1><p>Something went wrong.</p></body></html>", e.Code, e.Message, e.Code, e.Message)
+	safeMessage2 := html.EscapeString(e.Message)
+	prodHTML := fmt.Sprintf("<html><head><title>%d %s</title></head><body><h1>%d %s</h1><p>Something went wrong.</p></body></html>", e.Code, safeMessage2, e.Code, safeMessage2)
 
-	// For now always show debug (in real app check config app.debug)
-	fmt.Fprint(w, debugHTML)
-	_ = prodHTML // keep for future conditional
+	// Show debug page only when APP_DEBUG=true, otherwise show production page
+	if os.Getenv("APP_DEBUG") == "true" {
+		fmt.Fprint(w, debugHTML)
+	} else {
+		fmt.Fprint(w, prodHTML)
+	}
 }
 
 // Constructors
