@@ -54,12 +54,11 @@ func (d *Dispatcher) Wrap(handler any) HandlerFunc {
 				if idStr, ok := params[modelName]; ok {
 					modelPtr := reflect.New(paramType.Elem())
 
-					tableName := modelName + "s"
-					if m, ok := modelPtr.Interface().(orm.Model); ok {
-						tableName = m.TableName()
-					}
+					// Use ORM metadata for table name resolution (avoids naive pluralization)
+					tableName := orm.GetTableName(modelPtr.Interface())
 
-					builder := d.db.Builder.Table(tableName)
+					// Clone builder to avoid mutating shared state
+					builder := d.db.Builder.Clone().Table(tableName)
 					builder.Where("id", "=", idStr)
 					builder.Limit(1)
 

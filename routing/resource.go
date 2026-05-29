@@ -26,7 +26,7 @@ func (r *Router) registerResource(name string, controller any, apiOnly bool) {
 	}
 
 	basePath := "/" + strings.Trim(name, "/")
-	paramName := "{" + strings.TrimSuffix(name, "s") + "}" // e.g. "photos" -> "{photo}"
+	paramName := "{" + singularize(name) + "}" // e.g. "photos" -> "{photo}"
 
 	methods := map[string]struct {
 		method string
@@ -83,5 +83,31 @@ func (r *Router) CallMacro(name string, args ...any) (any, error) {
 		return macro(r, args...), nil
 	}
 	return nil, fmt.Errorf("macro %s not found", name)
+}
+
+// singularize converts a plural name to singular using basic English rules.
+func singularize(name string) string {
+	lower := strings.ToLower(name)
+	// Handle common irregular forms
+	if lower == "children" {
+		return "child"
+	}
+	if lower == "people" {
+		return "person"
+	}
+	// HandleIES: categories -> category, entries -> entry
+	if strings.HasSuffix(lower, "ies") && len(lower) > 3 {
+		return lower[:len(lower)-3] + "y"
+	}
+	// HandleSES/SHES/CHES/XES/ZES: boxes -> box, churches -> church
+	if strings.HasSuffix(lower, "ses") || strings.HasSuffix(lower, "shes") ||
+		strings.HasSuffix(lower, "ches") || strings.HasSuffix(lower, "xes") || strings.HasSuffix(lower, "zes") {
+		return lower[:len(lower)-2]
+	}
+	// Handle simple S: photos -> photo, users -> user
+	if strings.HasSuffix(lower, "s") && !strings.HasSuffix(lower, "ss") {
+		return lower[:len(lower)-1]
+	}
+	return lower
 }
 

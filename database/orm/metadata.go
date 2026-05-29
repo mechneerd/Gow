@@ -110,3 +110,13 @@ func getMetadata(typ reflect.Type) *ModelMetadata {
 	return meta
 }
 
+// GetTableName resolves the table name for a model instance using metadata.
+func GetTableName(model any) string {
+	typ := reflect.TypeOf(model)
+	if typ.Kind() == reflect.Ptr {
+		typ = typ.Elem()
+	}
+	meta := getMetadata(typ)
+	return meta.TableName
+}
+
