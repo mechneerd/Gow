@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"github.com/mechneerd/gow/auth"
 	gowhttp "github.com/mechneerd/gow/http"
 	"net/http"
@@ -21,7 +22,8 @@ func Authenticate(authManager *auth.Manager, guardName string) func(http.Handler
 				return
 			}
 
-			next.ServeHTTP(w, r)
+			ctx := context.WithValue(r.Context(), auth.UserContextKey, guard.User())
+			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
 }

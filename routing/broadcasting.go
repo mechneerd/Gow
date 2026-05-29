@@ -66,8 +66,7 @@ func (r *Router) BroadcastRoutes(channelManager *broadcasting.ChannelManager, ap
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(responseData)
-		return nil
+		return json.NewEncoder(w).Encode(responseData)
 	})
 }
 

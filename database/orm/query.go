@@ -320,7 +320,7 @@ func (q *ModelQuery[T]) Get() ([]*T, error) {
 }
 
 // Paginate returns a length-aware paginator (with total count).
-func (q *ModelQuery[T]) Paginate(perPage, page int) *pagination.LengthAwarePaginator[T] {
+func (q *ModelQuery[T]) Paginate(perPage, page int) (*pagination.LengthAwarePaginator[T], error) {
 	if page < 1 {
 		page = 1
 	}
@@ -330,15 +330,20 @@ func (q *ModelQuery[T]) Paginate(perPage, page int) *pagination.LengthAwarePagin
 
 	// Clone for count
 	countQ := q.builder.Clone()
-	total, _ := countQ.Count("*")
+	total, err := countQ.Count("*")
+	if err != nil {
+		return nil, err
+	}
 
 	// Apply pagination
 	offset := (page - 1) * perPage
 	q.builder.Offset(offset).Limit(perPage)
 
-	items, _ := q.Get() // reuse Get which handles soft deletes + eager loading
+	items, err := q.Get()
+	if err != nil {
+		return nil, err
+	}
 
-	// Convert []*T to []T for the paginator (or keep as is)
 	var plainItems []T
 	for _, item := range items {
 		if item != nil {
@@ -346,11 +351,11 @@ func (q *ModelQuery[T]) Paginate(perPage, page int) *pagination.LengthAwarePagin
 		}
 	}
 
-	return pagination.NewLengthAwarePaginator(plainItems, total, perPage, page, "")
+	return pagination.NewLengthAwarePaginator(plainItems, total, perPage, page, ""), nil
 }
 
 // SimplePaginate returns a simple paginator (no total count).
-func (q *ModelQuery[T]) SimplePaginate(perPage, page int) *pagination.SimplePaginator[T] {
+func (q *ModelQuery[T]) SimplePaginate(perPage, page int) (*pagination.SimplePaginator[T], error) {
 	if page < 1 {
 		page = 1
 	}
@@ -359,9 +364,12 @@ func (q *ModelQuery[T]) SimplePaginate(perPage, page int) *pagination.SimplePagi
 	}
 
 	offset := (page - 1) * perPage
-	q.builder.Offset(offset).Limit(perPage + 1) // fetch one extra to detect if there's a next page
+	q.builder.Offset(offset).Limit(perPage + 1)
 
-	items, _ := q.Get()
+	items, err := q.Get()
+	if err != nil {
+		return nil, err
+	}
 
 	hasMore := len(items) > perPage
 	if hasMore {
@@ -375,23 +383,25 @@ func (q *ModelQuery[T]) SimplePaginate(perPage, page int) *pagination.SimplePagi
 		}
 	}
 
-	return pagination.NewSimplePaginator(plainItems, perPage, page, "", hasMore)
+	return pagination.NewSimplePaginator(plainItems, perPage, page, "", hasMore), nil
 }
 
 // CursorPaginate is a basic cursor-based paginator (keyset pagination).
-// For production use, you should pass a proper cursor column (usually `id` or `created_at`).
-func (q *ModelQuery[T]) CursorPaginate(perPage int, after any) *pagination.CursorPaginator[T] {
+func (q *ModelQuery[T]) CursorPaginate(perPage int, after any) (*pagination.CursorPaginator[T], error) {
 	if perPage < 1 {
 		perPage = 15
 	}
 
 	if after != nil {
-		q.builder.Where("id", ">", after) // simplistic cursor on 'id'
+		q.builder.Where("id", ">", after)
 	}
 
 	q.builder.Limit(perPage + 1)
 
-	items, _ := q.Get()
+	items, err := q.Get()
+	if err != nil {
+		return nil, err
+	}
 
 	hasMore := len(items) > perPage
 	if hasMore {
@@ -421,7 +431,7 @@ func (q *ModelQuery[T]) CursorPaginate(perPage int, after any) *pagination.Curso
 		Items:      plainItems,
 		NextCursor: nextCursor,
 		PerPage:    perPage,
-	}
+	}, nil
 }
 
 // LockForUpdate enables pessimistic lock on the query (FOR UPDATE).

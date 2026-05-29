@@ -47,26 +47,30 @@ func AutoDiscover(app *Application) {
 // application's base path using the Publishes() map (src => destRel).
 func PublishAssets(provider PublishableProvider, basePath string) error {
 	for src, dstRel := range provider.Publishes() {
-		dst := filepath.Join(basePath, dstRel)
-		if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
-			return err
-		}
-		srcFile, err := os.Open(src)
-		if err != nil {
-			return fmt.Errorf("publish source not found: %s: %w", src, err)
-		}
-		defer srcFile.Close()
-
-		dstFile, err := os.Create(dst)
-		if err != nil {
-			return err
-		}
-		defer dstFile.Close()
-
-		if _, err := io.Copy(dstFile, srcFile); err != nil {
+		if err := copyFile(src, filepath.Join(basePath, dstRel)); err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+func copyFile(src, dst string) error {
+	if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
+		return err
+	}
+	srcFile, err := os.Open(src)
+	if err != nil {
+		return fmt.Errorf("publish source not found: %s: %w", src, err)
+	}
+	defer srcFile.Close()
+
+	dstFile, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer dstFile.Close()
+
+	_, err = io.Copy(dstFile, srcFile)
+	return err
 }
 

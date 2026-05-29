@@ -52,7 +52,9 @@ func Kebab(s string) string {
 // Random generates a random alphanumeric string.
 func Random(length int) string {
 	bytes := make([]byte, length/2+1)
-	rand.Read(bytes)
+	if _, err := rand.Read(bytes); err != nil {
+		return ""
+	}
 	return hex.EncodeToString(bytes)[:length]
 }
 

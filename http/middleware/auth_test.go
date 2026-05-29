@@ -18,8 +18,8 @@ func (m *MockGuard) Check() bool { return m.authenticated }
 func (m *MockGuard) Guest() bool { return !m.authenticated }
 func (m *MockGuard) User() any   { return m.user }
 func (m *MockGuard) ID() string  { return "1" }
-func (m *MockGuard) Attempt(map[string]any) bool { return false }
-func (m *MockGuard) Login(any) {}
+func (m *MockGuard) Attempt(map[string]any, ...bool) bool { return false }
+func (m *MockGuard) Login(any, ...bool) {}
 func (m *MockGuard) Logout() {}
 
 type TestUser struct {

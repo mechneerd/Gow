@@ -8,12 +8,16 @@ import (
 // JSON writes a JSON response with the given status code.
 func JSON(w http.ResponseWriter, status int, data any) {
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	
-	if err := json.NewEncoder(w).Encode(data); err != nil {
-		// Fallback error if encoding fails
-		http.Error(w, `{"error": "Internal Server Error"}`, http.StatusInternalServerError)
+
+	body, err := json.Marshal(data)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{"error": "Internal Server Error"}`))
+		return
 	}
+
+	w.WriteHeader(status)
+	w.Write(body)
 }
 
 // Ok writes a 200 OK JSON response.

@@ -1,10 +1,12 @@
 package orm
 
 import (
-	"github.com/mechneerd/gow/database/query"
+	"log"
 	"reflect"
-	"sync"
 	"strings"
+	"sync"
+
+	"github.com/mechneerd/gow/database/query"
 )
 
 // MassAssignable allows models to control mass assignment protection,
@@ -122,10 +124,14 @@ func DispatchModelEvent(model any, event string) bool {
 		}
 	case "created":
 		if hook, ok := model.(AfterCreateHook); ok {
-			hook.AfterCreate()
+			if err := hook.AfterCreate(); err != nil {
+				log.Printf("AfterCreate hook error: %v", err)
+			}
 		}
 		if hook, ok := model.(AfterSaveHook); ok {
-			hook.AfterSave()
+			if err := hook.AfterSave(); err != nil {
+				log.Printf("AfterSave hook error: %v", err)
+			}
 		}
 	case "updating":
 		if hook, ok := model.(BeforeUpdateHook); ok {
@@ -140,10 +146,14 @@ func DispatchModelEvent(model any, event string) bool {
 		}
 	case "updated":
 		if hook, ok := model.(AfterUpdateHook); ok {
-			hook.AfterUpdate()
+			if err := hook.AfterUpdate(); err != nil {
+				log.Printf("AfterUpdate hook error: %v", err)
+			}
 		}
 		if hook, ok := model.(AfterSaveHook); ok {
-			hook.AfterSave()
+			if err := hook.AfterSave(); err != nil {
+				log.Printf("AfterSave hook error: %v", err)
+			}
 		}
 	case "deleting":
 		if hook, ok := model.(BeforeDeleteHook); ok {
@@ -153,7 +163,9 @@ func DispatchModelEvent(model any, event string) bool {
 		}
 	case "deleted":
 		if hook, ok := model.(AfterDeleteHook); ok {
-			hook.AfterDelete()
+			if err := hook.AfterDelete(); err != nil {
+				log.Printf("AfterDelete hook error: %v", err)
+			}
 		}
 	case "restoring":
 		if hook, ok := model.(BeforeRestoreHook); ok {
@@ -163,7 +175,9 @@ func DispatchModelEvent(model any, event string) bool {
 		}
 	case "restored":
 		if hook, ok := model.(AfterRestoreHook); ok {
-			hook.AfterRestore()
+			if err := hook.AfterRestore(); err != nil {
+				log.Printf("AfterRestore hook error: %v", err)
+			}
 		}
 	}
 

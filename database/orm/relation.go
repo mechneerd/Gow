@@ -139,7 +139,9 @@ func loadHasThrough[T any](db *DB, models []*T, relationName, gowTag string, isM
 			dummy = append(dummy, new(any))
 			scanArgs[i] = dummy[i]
 		}
-		throughRows.Scan(scanArgs...)
+		if err := throughRows.Scan(scanArgs...); err != nil {
+			return err
+		}
 
 		var fkVal, rkVal any
 		if idx, ok := colMap[foreignKey]; ok {
@@ -203,7 +205,9 @@ func loadHasThrough[T any](db *DB, models []*T, relationName, gowTag string, isM
 				scanArgs[i] = &d
 			}
 		}
-		finalRows.Scan(scanArgs...)
+		if err := finalRows.Scan(scanArgs...); err != nil {
+			return err
+		}
 
 		idStr := ""
 		if idf := val.FieldByName("ID"); idf.IsValid() {

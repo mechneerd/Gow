@@ -40,7 +40,9 @@ func Respond[T any](w http.ResponseWriter, req *http.Request, model T, transform
 		Data: Transform(req, model, transformer),
 	}
 
-	json.NewEncoder(w).Encode(payload)
+	if err := json.NewEncoder(w).Encode(payload); err != nil {
+		http.Error(w, `{"error": "Internal Server Error"}`, http.StatusInternalServerError)
+	}
 }
 
 // RespondCollection writes a collection out as JSON inside a standard envelope.
@@ -52,7 +54,9 @@ func RespondCollection[T any](w http.ResponseWriter, req *http.Request, models [
 		Data: Collection(req, models, transformer),
 	}
 
-	json.NewEncoder(w).Encode(payload)
+	if err := json.NewEncoder(w).Encode(payload); err != nil {
+		http.Error(w, `{"error": "Internal Server Error"}`, http.StatusInternalServerError)
+	}
 }
 
 // RespondWithMeta writes a resource or collection with custom meta and links.
@@ -66,6 +70,8 @@ func RespondWithMeta(w http.ResponseWriter, data any, meta, links map[string]any
 		Links: links,
 	}
 
-	json.NewEncoder(w).Encode(payload)
+	if err := json.NewEncoder(w).Encode(payload); err != nil {
+		http.Error(w, `{"error": "Internal Server Error"}`, http.StatusInternalServerError)
+	}
 }
 
