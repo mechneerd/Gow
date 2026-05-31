@@ -20,8 +20,10 @@ var KeyGenerateCmd = &cobra.Command{
 		// Try to update .env file
 		envPath := ".env"
 		if _, err := os.Stat(envPath); os.IsNotExist(err) {
-			fmt.Println("No .env file found. Please create one manually with:")
-			fmt.Printf("APP_KEY=%s\n", key)
+			fmt.Println("⚠️  No .env file found in current directory.")
+			fmt.Println("   Make sure you are in your project root directory.")
+			fmt.Println("   Or create .env manually with:")
+			fmt.Printf("   APP_KEY=%s\n", key)
 			return
 		}
 

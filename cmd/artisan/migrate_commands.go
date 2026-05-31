@@ -20,6 +20,14 @@ var MigrateCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		cwd, _ := os.Getwd()
 
+		// Check if we're in a Go project directory
+		if _, err := os.Stat(filepath.Join(cwd, "go.mod")); os.IsNotExist(err) {
+			fmt.Println("⚠️  No go.mod found in current directory.")
+			fmt.Println("   Make sure you are in your GoW project root directory.")
+			fmt.Println("   Example: cd myapp && gow migrate")
+			return
+		}
+
 		if err := generateMigrationRegister(); err != nil {
 			fmt.Println("Warning: could not generate migration register:", err)
 		}

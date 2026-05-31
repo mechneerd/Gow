@@ -97,6 +97,13 @@ func fixFileContent(content string, filePath string, moduleName string) string {
 		result = strings.Join(cleaned, "\n")
 	}
 
+	// Fix 9: .env.example — fix DB_DATABASE for SQLite (should be a file path, not just "app")
+	if strings.HasSuffix(filePath, ".env.example") || strings.HasSuffix(filePath, ".env") {
+		if strings.Contains(result, "DB_DATABASE=app") && !strings.Contains(result, "DB_DATABASE=app/") {
+			result = strings.Replace(result, "DB_DATABASE=app", "DB_DATABASE=database/database.sqlite", 1)
+		}
+	}
+
 	return result
 }
 
