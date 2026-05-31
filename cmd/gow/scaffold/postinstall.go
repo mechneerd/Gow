@@ -45,8 +45,12 @@ func RunPostInstall(projectDir string, opts PostInstallOptions) error {
 
 // PrintNextSteps shows a clean, professional message after successful project creation.
 func PrintNextSteps(projectName string) {
+	green := "\033[32m"
+	cyan := "\033[36m"
+	reset := "\033[0m"
+
 	fmt.Printf(`
-\033[32m✅  Project "%s" created successfully!\033[0m
+%s✅  Project "%s" created successfully!%s
 📂  Location: ./%s
 
 ────────────────────────────────────────
@@ -71,6 +75,6 @@ Next steps:
   gow list                  # List all available commands
 
 ────────────────────────────────────────
-\033[36m🎉  Happy coding with GoW!\033[0m
-`, projectName, projectName, projectName)
+%s🎉  Happy coding with GoW!%s
+`, green, projectName, reset, projectName, projectName, cyan, reset)
 }

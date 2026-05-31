@@ -82,10 +82,19 @@ func fixFileContent(content string, filePath string, moduleName string) string {
 		result = fixBootstrapAppGo(result)
 	}
 
-	// Fix 8: go.mod.template — replace invalid "latest" version with v0.0.0
+	// Fix 8: go.mod.template — remove invalid "latest" version, let go mod tidy handle it
 	if strings.HasSuffix(filePath, "go.mod.template") || strings.HasSuffix(filePath, "go.mod") {
-		result = strings.ReplaceAll(result, "@latest", "")
-		result = strings.Replace(result, "require github.com/mechneerd/gow latest", "require github.com/mechneerd/gow v0.0.0", 1)
+		// Remove lines with invalid "latest" version
+		lines := strings.Split(result, "\n")
+		var cleaned []string
+		for _, line := range lines {
+			trimmed := strings.TrimSpace(line)
+			if strings.Contains(trimmed, "github.com/mechneerd/gow") && strings.Contains(trimmed, "latest") {
+				continue // skip this line
+			}
+			cleaned = append(cleaned, line)
+		}
+		result = strings.Join(cleaned, "\n")
 	}
 
 	return result
