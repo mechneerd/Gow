@@ -277,6 +277,11 @@ func scaffoldWithOptions(name string, result scaffoldpkg.PromptResult, force boo
 		return err
 	}
 
+	// Fix known skeleton template bugs (duplicate functions, broken imports, etc.)
+	if err := scaffoldpkg.FixSkeletonBugs(targetDir, ctx.ModulePath); err != nil {
+		fmt.Printf("   ⚠️  Skeleton fixup warning: %v\n", err)
+	}
+
 	// Inject RBAC middleware examples + DB wiring guidance into bootstrap/app.go
 	// for auth-enabled kits (addresses high-priority gap in generated projects).
 	if flags["auth"] {

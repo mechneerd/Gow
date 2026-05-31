@@ -72,6 +72,9 @@ BUG_FIX_SUMMARY.md
 skeleton-patches/
 skeleton-updates/
 
+# Demo / starter project (separate git repo)
+demo/
+
 # =============================================================================
 # Additional Common Ignores (Go + General Development)
 # =============================================================================
