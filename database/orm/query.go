@@ -2,15 +2,18 @@ package orm
 
 import (
 	"context"
+	"crypto/rand"
 	"database/sql"
 	"errors"
 	"fmt"
+	"reflect"
+	"strings"
+	"sync"
+	"time"
+
 	"github.com/mechneerd/gow/database/dialect"
 	"github.com/mechneerd/gow/database/pagination"
 	"github.com/mechneerd/gow/database/query"
-	"reflect"
-	"strings"
-	"time"
 )
 
 var ErrCancelled = errors.New("operation cancelled by model observer")
@@ -893,5 +896,158 @@ func touchRelations(model any) {
 		// Current basic implementation detects FKs; actual parent update can be done via events or manual.
 		_ = now // Extend with real parent update when relation metadata is richer.
 	}
+}
+
+// ==================== PHASE 1: WhereHas / WhereRelation ====================
+
+// WhereHas adds a condition that the relationship has related records.
+func (q *ModelQuery[T]) WhereHas(relation string, callback func(b *query.Builder) *query.Builder) *ModelQuery[T] {
+	// Build subquery table name from relation
+	table := pluralize(relation)
+	subBuilder := q.db.Builder.Clone().Table(table)
+
+	// Apply callback to customize the subquery
+	if callback != nil {
+		callback(subBuilder)
+	}
+
+	// Get current table name from metadata
+	meta := getMetadata(reflect.TypeOf((*T)(nil)))
+	currentTable := meta.TableName
+
+	// Use raw WHERE EXISTS with the subquery
+	q.builder.WhereRaw("EXISTS (SELECT 1 FROM " + table + " WHERE " + table + ".id = " + currentTable + ".id)")
+	return q
+}
+
+// WhereDoesntHave adds a condition that the relationship has NO related records.
+func (q *ModelQuery[T]) WhereDoesntHave(relation string) *ModelQuery[T] {
+	table := pluralize(relation)
+	meta := getMetadata(reflect.TypeOf((*T)(nil)))
+	currentTable := meta.TableName
+	q.builder.WhereRaw("NOT EXISTS (SELECT 1 FROM " + table + " WHERE " + table + ".id = " + currentTable + ".id)")
+	return q
+}
+
+// WhereRelation adds a condition on a related model's column.
+func (q *ModelQuery[T]) WhereRelation(relation, column, operator string, value any) *ModelQuery[T] {
+	table := pluralize(relation)
+	q.builder.Where(table+"."+column, operator, value)
+	return q
+}
+
+// ==================== PHASE 1: UUID Support ====================
+
+// UUID returns a new UUID v4 string.
+func UUID() string {
+	b := make([]byte, 16)
+	_, _ = rand.Read(b)
+	b[6] = (b[6] & 0x0f) | 0x40 // Version 4
+	b[8] = (b[8] & 0x3f) | 0x80 // Variant 10
+	return fmt.Sprintf("%08x-%04x-%04x-%04x-%012x", b[0:4], b[4:6], b[6:8], b[8:10], b[10:16])
+}
+
+// UUIDTrait is an interface for models using UUID primary keys.
+type UUIDTrait interface {
+	GenerateUUID() string
+}
+
+// UUIDModel is a base struct implementing UUIDTrait.
+type UUIDModel struct {
+	ID string `json:"id" db:"id" gow:"uuid"`
+}
+
+// GenerateUUID generates a new UUID v4.
+func (u *UUIDModel) GenerateUUID() string {
+	return UUID()
+}
+
+// ==================== PHASE 1: Lazy Loading Prevention ====================
+
+var (
+	preventLazyLoading bool
+	lazyLoadMu         sync.RWMutex
+)
+
+// SetPreventLazyLoading enables/disables lazy loading prevention.
+func SetPreventLazyLoading(prevent bool) {
+	lazyLoadMu.Lock()
+	defer lazyLoadMu.Unlock()
+	preventLazyLoading = prevent
+}
+
+// IsPreventLazyLoading returns whether lazy loading prevention is enabled.
+func IsPreventLazyLoading() bool {
+	lazyLoadMu.RLock()
+	defer lazyLoadMu.RUnlock()
+	return preventLazyLoading
+}
+
+// ==================== PHASE 1: Model Factories ====================
+
+// Factory defines a model factory for creating test/seed data.
+type Factory[T any] interface {
+	Definition() map[string]any
+}
+
+// Make creates a single model instance with the factory definition.
+func Make[T any](db *DB, factory Factory[T], overrides ...map[string]any) (*T, error) {
+	def := factory.Definition()
+	for _, o := range overrides {
+		for k, v := range o {
+			def[k] = v
+		}
+	}
+
+	model := new(T)
+	val := reflect.ValueOf(model).Elem()
+	typ := val.Type()
+
+	for i := 0; i < val.NumField(); i++ {
+		field := typ.Field(i)
+		dbTag := field.Tag.Get("db")
+		if dbTag == "" || dbTag == "-" {
+			continue
+		}
+		if v, ok := def[dbTag]; ok && val.Field(i).CanSet() {
+			val.Field(i).Set(reflect.ValueOf(v))
+		}
+	}
+
+	values := make(map[string]any)
+	for i := 0; i < val.NumField(); i++ {
+		field := typ.Field(i)
+		dbTag := field.Tag.Get("db")
+		if dbTag == "" || dbTag == "-" {
+			continue
+		}
+		values[dbTag] = val.Field(i).Interface()
+	}
+
+	meta := getMetadata(reflect.TypeOf((*T)(nil)))
+	if _, err := db.Builder.Clone().Table(meta.TableName).Insert(values); err != nil {
+		return nil, err
+	}
+
+	return model, nil
+}
+
+// MakeMany creates multiple model instances.
+func MakeMany[T any](db *DB, factory Factory[T], count int, overrides ...map[string]any) ([]*T, error) {
+	var results []*T
+	for i := 0; i < count; i++ {
+		m, err := Make[T](db, factory, overrides...)
+		if err != nil {
+			return nil, err
+		}
+		results = append(results, m)
+	}
+	return results, nil
+}
+
+// Seed runs multiple factory definitions to seed the database.
+func Seed[T any](db *DB, factory Factory[T], count int) error {
+	_, err := MakeMany[T](db, factory, count)
+	return err
 }
 

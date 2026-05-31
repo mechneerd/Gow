@@ -156,6 +156,17 @@ func (c *Compiler) CompileString(raw string) string {
 	checkedRe := regexp.MustCompile(`@checked\s*\((.*?)\)`)
 	compiled = checkedRe.ReplaceAllString(compiled, `{{ if $1 }}checked="checked"{{ end }}`)
 
+	// @props declaration for components
+	compiled = strings.ReplaceAll(compiled, "@props", "{{/* @props")
+
+	// @aware - access parent component data
+	awareRe := regexp.MustCompile(`@aware\s*\((.*?)\)`)
+	compiled = awareRe.ReplaceAllString(compiled, `{{ /* aware: $1 */ }}`)
+
+	// @json($data) -> JSON encode data
+	jsonRe := regexp.MustCompile(`@json\s*\((.*?)\)`)
+	compiled = jsonRe.ReplaceAllString(compiled, `{{ json $1 }}`)
+
 	// Generate a short hash of the raw template to ensure @once IDs are unique per file
 	fileHash := fmt.Sprintf("%x", sha256.Sum256([]byte(raw)))[:8]
 
