@@ -43,7 +43,7 @@ func ConnectFromEnv() (*sql.DB, dialect.Dialect, error) {
 			getEnv("DB_DATABASE", ""),
 		)
 	case "postgres", "pgsql":
-		dsn = fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+		dsn = fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=require",
 			getEnv("DB_HOST", "127.0.0.1"),
 			getEnv("DB_PORT", "5432"),
 			getEnv("DB_USERNAME", "postgres"),

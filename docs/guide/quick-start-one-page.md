@@ -21,7 +21,7 @@ go version
 ```bash
 mkdir my-gow-app && cd my-gow-app
 go mod init my-gow-app
-go get gow@latest
+go install github.com/mechneerd/gow/cmd/gow@latest
 mkdir -p routes bootstrap resources/views
 ```
 

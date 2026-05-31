@@ -3,6 +3,7 @@ package middleware
 import (
 	"context"
 	"crypto/rand"
+	"crypto/subtle"
 	"encoding/hex"
 	"net/http"
 	"strings"
@@ -68,7 +69,7 @@ func VerifyCsrfToken(opts ...CsrfOptions) func(http.Handler) http.Handler {
 				requestToken = r.FormValue("_token")
 			}
 
-			if requestToken != tokenStr {
+			if subtle.ConstantTimeCompare([]byte(requestToken), []byte(tokenStr)) != 1 {
 				gowhttp.Abort(419, "CSRF token mismatch")
 				return
 			}
@@ -93,7 +94,10 @@ func CsrfTokenFromContext(r *http.Request) string {
 
 func generateToken() string {
 	b := make([]byte, 16)
-	rand.Read(b)
+	if _, err := rand.Read(b); err != nil {
+		// Fallback: use time-based random (should never happen with crypto/rand)
+		panic("failed to generate CSRF token: " + err.Error())
+	}
 	return hex.EncodeToString(b)
 }
 

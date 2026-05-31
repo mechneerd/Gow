@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"bytes"
 	"context"
 	"io"
 	"time"
@@ -52,8 +53,18 @@ func NewS3Driver(bucket, region, accessKey, secretKey string) (*S3Driver, error)
 	}, nil
 }
 
-func (d *S3Driver) Put(path string, contents io.Reader) error {
-	_, err := d.client.PutObject(context.TODO(), &s3.PutObjectInput{
+func (d *S3Driver) Put(path string, contents []byte) error {
+	_, err := d.client.PutObject(context.Background(), &s3.PutObjectInput{
+		Bucket: aws.String(d.bucket),
+		Key:    aws.String(path),
+		Body:   bytes.NewReader(contents),
+	})
+	return err
+}
+
+// PutReader uploads data from an io.Reader to S3.
+func (d *S3Driver) PutReader(path string, contents io.Reader) error {
+	_, err := d.client.PutObject(context.Background(), &s3.PutObjectInput{
 		Bucket: aws.String(d.bucket),
 		Key:    aws.String(path),
 		Body:   contents,
@@ -61,8 +72,21 @@ func (d *S3Driver) Put(path string, contents io.Reader) error {
 	return err
 }
 
-func (d *S3Driver) Get(path string) (io.ReadCloser, error) {
-	output, err := d.client.GetObject(context.TODO(), &s3.GetObjectInput{
+func (d *S3Driver) Get(path string) ([]byte, error) {
+	output, err := d.client.GetObject(context.Background(), &s3.GetObjectInput{
+		Bucket: aws.String(d.bucket),
+		Key:    aws.String(path),
+	})
+	if err != nil {
+		return nil, err
+	}
+	defer output.Body.Close()
+	return io.ReadAll(output.Body)
+}
+
+// GetReader returns an io.ReadCloser for streaming from S3.
+func (d *S3Driver) GetReader(path string) (io.ReadCloser, error) {
+	output, err := d.client.GetObject(context.Background(), &s3.GetObjectInput{
 		Bucket: aws.String(d.bucket),
 		Key:    aws.String(path),
 	})
@@ -73,7 +97,7 @@ func (d *S3Driver) Get(path string) (io.ReadCloser, error) {
 }
 
 func (d *S3Driver) Delete(path string) error {
-	_, err := d.client.DeleteObject(context.TODO(), &s3.DeleteObjectInput{
+	_, err := d.client.DeleteObject(context.Background(), &s3.DeleteObjectInput{
 		Bucket: aws.String(d.bucket),
 		Key:    aws.String(path),
 	})
@@ -81,7 +105,7 @@ func (d *S3Driver) Delete(path string) error {
 }
 
 func (d *S3Driver) Exists(path string) bool {
-	_, err := d.client.HeadObject(context.TODO(), &s3.HeadObjectInput{
+	_, err := d.client.HeadObject(context.Background(), &s3.HeadObjectInput{
 		Bucket: aws.String(d.bucket),
 		Key:    aws.String(path),
 	})
@@ -98,7 +122,7 @@ func (d *S3Driver) URL(path string) string {
 func (d *S3Driver) PresignedURL(path string, expiry time.Duration) (string, error) {
 	presignClient := s3.NewPresignClient(d.client)
 
-	result, err := presignClient.PresignGetObject(context.TODO(), &s3.GetObjectInput{
+	result, err := presignClient.PresignGetObject(context.Background(), &s3.GetObjectInput{
 		Bucket: aws.String(d.bucket),
 		Key:    aws.String(path),
 	}, s3.WithPresignExpires(expiry))

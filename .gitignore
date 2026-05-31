@@ -134,3 +134,16 @@ storage/framework/
 # OS generated (additional)
 Desktop.ini
 $RECYCLE.BIN/
+
+# =============================================================================
+# Markdown files — ignore all except README.md and docs/guide/
+# =============================================================================
+# Ignore all .md files at root level (except README.md)
+/*.md
+
+# Ignore all .md files in docs/ (except docs/guide/)
+docs/*.md
+docs/roadmap/*.md
+docs/whats_new/*.md
+docs/_dev/*.md
+docs-pdfs/*.md

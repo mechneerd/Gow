@@ -180,7 +180,9 @@ func (m *Manager) Old(key string, defaultValue any) any {
 
 func generateID() string {
 	b := make([]byte, 32)
-	rand.Read(b)
+	if _, err := rand.Read(b); err != nil {
+		panic("failed to generate session ID: " + err.Error())
+	}
 	return hex.EncodeToString(b)
 }
 

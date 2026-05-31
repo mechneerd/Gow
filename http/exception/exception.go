@@ -45,7 +45,7 @@ func (e *HttpException) Render(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(e.Code)
 
 	// Professional debug error page (Whoops-style) when in development
-	stack := string(debug.Stack())
+	stack := html.EscapeString(string(debug.Stack()))
 	safeMessage := html.EscapeString(e.Message)
 	debugHTML := fmt.Sprintf(`
 <!DOCTYPE html>

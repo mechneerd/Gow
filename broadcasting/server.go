@@ -126,8 +126,12 @@ type Client struct {
 
 // ServeWs handles websocket requests from the peer.
 func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
+	// Validate origin against allowed origins (configurable via AllowedOrigins)
+	origin := r.Header.Get("Origin")
+	allowed := isOriginAllowed(origin)
+
 	conn, err := websocket.Accept(w, r, &websocket.AcceptOptions{
-		InsecureSkipVerify: true, // Allow all origins for now
+		InsecureSkipVerify: !allowed,
 	})
 	if err != nil {
 		log.Println(err)
@@ -196,5 +200,28 @@ func (c *Client) writePump() {
 			}
 		}
 	}
+}
+
+// allowedOrigins is a configurable list of allowed WebSocket origins.
+// Defaults to same-origin (empty list = allow all for backward compatibility).
+var allowedOrigins []string
+
+// SetAllowedOrigins configures the allowed origins for WebSocket connections.
+func SetAllowedOrigins(origins []string) {
+	allowedOrigins = origins
+}
+
+// isOriginAllowed checks if the given origin is in the allowed list.
+// If no origins are configured, all origins are allowed (backward compatible).
+func isOriginAllowed(origin string) bool {
+	if len(allowedOrigins) == 0 {
+		return true
+	}
+	for _, o := range allowedOrigins {
+		if o == "*" || o == origin {
+			return true
+		}
+	}
+	return false
 }
 

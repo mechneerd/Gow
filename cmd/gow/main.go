@@ -20,9 +20,10 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
 	_ "modernc.org/sqlite"
-	_ "modernc.org/sqlite"
 )
 
+// version is set via ldflags at build time by goreleaser.
+var version = "dev"
 
 var rootCmd = &cobra.Command{
 	Use:   "gow",
@@ -92,7 +93,7 @@ var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Print the framework version",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("GoW Framework version 1.0.0")
+		fmt.Printf("GoW Framework version %s\n", version)
 	},
 }
 
@@ -198,6 +199,14 @@ func init() {
 	rootCmd.AddCommand(artisan.MakeRequestCmd)
 	rootCmd.AddCommand(artisan.MakeSeederCmd)
 	rootCmd.AddCommand(artisan.MakeCommandCmd)
+
+	// Additional useful commands
+	rootCmd.AddCommand(artisan.EnvCmd)
+	rootCmd.AddCommand(artisan.RouteListCmd)
+	rootCmd.AddCommand(artisan.CacheClearCmd)
+	rootCmd.AddCommand(artisan.CacheForgetCmd)
+	rootCmd.AddCommand(artisan.ViewClearCmd)
+	rootCmd.AddCommand(artisan.ScheduleListCmd)
 }
 
 func main() {

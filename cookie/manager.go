@@ -19,12 +19,11 @@ type Manager struct {
 
 // NewManager creates a new Cookie Manager. The key should be exactly 32 bytes for AES-256.
 func NewManager(appKey string) *Manager {
-	// Pad or truncate key to 32 bytes
 	key := []byte(appKey)
 	if len(key) < 32 {
-		padded := make([]byte, 32)
-		copy(padded, key)
-		key = padded
+		// Hash short keys to get a consistent 32-byte key via SHA-256
+		hash := sha256.Sum256(key)
+		key = hash[:]
 	} else if len(key) > 32 {
 		key = key[:32]
 	}

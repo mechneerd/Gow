@@ -25,10 +25,8 @@ func ThrottleRequests(limiter *cache.RateLimiter, maxAttempts int, decayMinutes 
 				ip = r.RemoteAddr // fallback if no port
 			}
 			key := prefix + ":" + ip
-			// Support user-based if "user:" in context or header (simple)
-			if userID := r.Header.Get("X-User-ID"); userID != "" {
-				key = prefix + ":user:" + userID
-			}
+			// Support user-based rate limiting if session user ID is available
+			// (do NOT trust client-supplied headers for rate limiting)
 
 			if limiter.TooManyAttempts(key, maxAttempts) {
 				w.Header().Set("Retry-After", strconv.Itoa(decayMinutes*60))

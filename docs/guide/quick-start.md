@@ -57,7 +57,7 @@ After installation, open your terminal and verify:
 go version
 ```
 
-You should see `go1.26.x` or higher.
+You should see `go1.25.x` or higher.
 
 ---
 
@@ -69,7 +69,7 @@ Open your terminal and run these commands one after another:
 mkdir my-gow-app
 cd my-gow-app
 go mod init my-gow-app
-go get gow@latest
+go install github.com/mechneerd/gow/cmd/gow@latest
 ```
 
 Create the basic folders:

@@ -3,6 +3,7 @@ package artisan
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -45,17 +46,21 @@ var DbSeedCmd = &cobra.Command{
 			fmt.Printf("     - %s\n", f)
 		}
 
-		fmt.Println("\n   To execute (recommended pattern for generated projects):")
-		fmt.Println("     go run main.go seed")
-		fmt.Println("   Or call directly (after wiring DB):")
-		for _, f := range found {
-			fmt.Printf("     seeders.%s(nil)\n", f)
+		// Try to run seeders via the project's main.go with "seed" argument
+		fmt.Println("\n   → Executing seeders...")
+		seedCmd := exec.Command("go", "run", "main.go", "seed")
+		seedCmd.Stdout = os.Stdout
+		seedCmd.Stderr = os.Stderr
+		if err := seedCmd.Run(); err != nil {
+			// Fallback: print manual instructions
+			fmt.Printf("   ⚠️  Auto-execution failed: %v\n", err)
+			fmt.Println("   You can run seeders manually:")
+			for _, f := range found {
+				fmt.Printf("     seeders.%s(nil)\n", f)
+			}
 		}
-		fmt.Println("\n   Example for Super Admin (auth kits):")
-		fmt.Println("     seeders.RoleSeeder(nil)   // creates roles + superadmin user")
 
-		fmt.Println("\n✅ db:seed discovery complete. Run the seeders from your app entrypoint or tinker.")
+		fmt.Println("\n✅ db:seed finished.")
 		fmt.Println("   Expected after RoleSeeder: superadmin / 12345678")
 	},
 }
-

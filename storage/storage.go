@@ -2,8 +2,10 @@ package storage
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 var ErrNotImplemented = errors.New("driver not implemented")
@@ -38,6 +40,9 @@ type LocalDriver struct {
 
 func (d *LocalDriver) Put(path string, contents []byte) error {
 	fullPath := filepath.Join(d.RootPath, path)
+	if err := validatePath(d.RootPath, fullPath); err != nil {
+		return err
+	}
 	if err := os.MkdirAll(filepath.Dir(fullPath), 0755); err != nil {
 		return err
 	}
@@ -45,19 +50,49 @@ func (d *LocalDriver) Put(path string, contents []byte) error {
 }
 
 func (d *LocalDriver) Get(path string) ([]byte, error) {
-	return os.ReadFile(filepath.Join(d.RootPath, path))
+	fullPath := filepath.Join(d.RootPath, path)
+	if err := validatePath(d.RootPath, fullPath); err != nil {
+		return nil, err
+	}
+	return os.ReadFile(fullPath)
 }
 
 func (d *LocalDriver) Delete(path string) error {
-	return os.Remove(filepath.Join(d.RootPath, path))
+	fullPath := filepath.Join(d.RootPath, path)
+	if err := validatePath(d.RootPath, fullPath); err != nil {
+		return err
+	}
+	return os.Remove(fullPath)
 }
 
 func (d *LocalDriver) Exists(path string) bool {
-	_, err := os.Stat(filepath.Join(d.RootPath, path))
+	fullPath := filepath.Join(d.RootPath, path)
+	if err := validatePath(d.RootPath, fullPath); err != nil {
+		return false
+	}
+	_, err := os.Stat(fullPath)
 	return err == nil
 }
 
 func (d *LocalDriver) URL(path string) string {
 	return d.BaseURL + "/" + path
+}
+
+// validatePath ensures the resolved path stays within the root directory.
+func validatePath(root, resolved string) error {
+	absRoot, err := filepath.Abs(root)
+	if err != nil {
+		return fmt.Errorf("invalid root path: %w", err)
+	}
+	absResolved, err := filepath.Abs(resolved)
+	if err != nil {
+		return fmt.Errorf("invalid path: %w", err)
+	}
+	// Ensure the resolved path is within the root or is the root itself
+	rel, err := filepath.Rel(absRoot, absResolved)
+	if err != nil || strings.HasPrefix(rel, "..") {
+		return errors.New("path traversal detected: path escapes root directory")
+	}
+	return nil
 }
 

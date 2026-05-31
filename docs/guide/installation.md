@@ -1,26 +1,49 @@
 # Installation
 
-> **Status**: ?? In Progress (Core working, tests/edge cases pending)
+> **Status**: Stable
 
+To get started with GoW, you will need to have Go version 1.22 or higher installed on your machine.
 
-To get started with GoW, you will need to have Go version 1.24 or higher installed on your machine.
+## Installing the GoW CLI
+
+### One-Line Install (Recommended)
+
+**macOS / Linux**
+```bash
+curl -sSfL https://raw.githubusercontent.com/mechneerd/gow/main/install.sh | sh
+```
+
+**Windows (PowerShell)**
+```powershell
+iwr -useb https://raw.githubusercontent.com/mechneerd/gow/main/install.ps1 | iex
+```
+
+### Go Install
+
+```bash
+go install github.com/mechneerd/gow/cmd/gow@latest
+```
+
+After installation, verify:
+```bash
+gow --version
+```
 
 ## Creating a New Project
 
-The easiest way to scaffold a new GoW project is via our npm initializer. This command will download the latest framework skeleton and configure your environment.
+The easiest way to scaffold a new GoW project is via the GoW CLI. This command will download the latest framework skeleton and configure your environment.
 
 ```bash
-npx gow new my-app
+gow new my-app
 cd my-app
 ```
 
 ## Running the Application
 
-Once your project is scaffolded, you can use the Artisan CLI (or native Go commands) to run your server.
+Once your project is scaffolded, use the GoW CLI to start the development server:
 
 ```bash
-# Start the HTTP server on port 8080
-go run cmd/app/main.go
+gow serve
 ```
 
 ## Environment Configuration

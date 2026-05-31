@@ -1,5 +1,10 @@
 # GoW — Laravel for Go
 
+[![Go Version](https://img.shields.io/badge/go-1.25+-00ADD8?style=flat&logo=go)](https://go.dev/)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![GitHub Release](https://img.shields.io/github/v/release/mechneerd/gow)](https://github.com/mechneerd/gow/releases)
+[![Go Report Card](https://goreportcard.com/badge/github.com/mechneerd/gow)](https://goreportcard.com/report/github.com/mechneerd/gow)
+
 **GoW** is a modern, Laravel-inspired web framework for Go.  
 It delivers the **developer experience** and **productivity** of Laravel while staying 100% native Go.
 
@@ -145,7 +150,7 @@ The Artisan CLI (`gow`) has received major upgrades and is now one of GoW’s st
 
 ## Contributing
 
-We welcome contributions! Please read [CONTRIBUTING.md](.github/CONTRIBUTING.md) (will be added before release).
+We welcome contributions! Please read [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 

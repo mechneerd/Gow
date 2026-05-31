@@ -6,7 +6,8 @@ $binaryName = "gow.exe"
 
 Write-Host "Installing gow from $repo..."
 
-$arch = if ([Environment]::Is64BitOperatingSystem) { "x86_64" } else { "i386" }
+# Detect architecture (x86_64, arm64)
+$arch = if ($env:PROCESSOR_ARCHITECTURE -eq "ARM64") { "arm64" } elseif ([Environment]::Is64BitOperatingSystem) { "x86_64" } else { "i386" }
 
 $url = "https://github.com/$repo/releases/latest/download/gow_Windows_${arch}.zip"
 

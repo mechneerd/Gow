@@ -16,8 +16,20 @@ type CorsConfig struct {
 	AllowCredentials bool
 }
 
-// DefaultCorsConfig provides a permissive default configuration.
+// DefaultCorsConfig provides a safe default configuration.
+// Note: AllowedOrigins defaults to empty (no cross-origin requests allowed).
+// Set explicit origins or use "*" for development only.
 func DefaultCorsConfig() CorsConfig {
+	return CorsConfig{
+		AllowedOrigins: []string{},
+		AllowedMethods: []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowedHeaders: []string{"Origin", "Content-Type", "Accept", "Authorization", "X-CSRF-TOKEN"},
+		MaxAge:         86400,
+	}
+}
+
+// DevCorsConfig provides a permissive configuration for development.
+func DevCorsConfig() CorsConfig {
 	return CorsConfig{
 		AllowedOrigins: []string{"*"},
 		AllowedMethods: []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},

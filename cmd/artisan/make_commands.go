@@ -6,9 +6,24 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/spf13/cobra"
 )
+
+// titleCase capitalizes the first letter of each word (replaces deprecated titleCase).
+func titleCase(s string) string {
+	if s == "" {
+		return s
+	}
+	runes := []rune(s)
+	for i := 0; i < len(runes); i++ {
+		if i == 0 || runes[i-1] == ' ' || runes[i-1] == '_' || runes[i-1] == '-' {
+			runes[i] = unicode.ToUpper(runes[i])
+		}
+	}
+	return string(runes)
+}
 
 // generateFile is a helper for scaffold commands.
 func generateFile(path, content string) {
@@ -133,7 +148,7 @@ func ({Name}) TableName() string {
 			// Automatically generate a basic migration file
 			migrationName := "create_" + strings.ToLower(name) + "s_table"
 			timestamp := time.Now().Format("2006_01_02_150405")
-			className := "Create" + strings.Title(strings.ReplaceAll(migrationName, "_", "")) + "Table"
+			className := "Create" + titleCase(strings.ReplaceAll(migrationName, "_", "")) + "Table"
 			filename := fmt.Sprintf("%s_%s.go", timestamp, migrationName)
 			migPath := fmt.Sprintf("database/migrations/%s", filename)
 
@@ -181,7 +196,7 @@ var MakeMigrationCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		name := args[0]
 		timestamp := time.Now().Format("2006_01_02_150405")
-		className := "Create" + strings.Title(strings.ReplaceAll(name, "_", "")) + "Table"
+		className := "Create" + titleCase(strings.ReplaceAll(name, "_", "")) + "Table"
 		filename := fmt.Sprintf("%s_%s.go", timestamp, name)
 		path := fmt.Sprintf("database/migrations/%s", filename) // Standardized to database/migrations (lowercase)
 

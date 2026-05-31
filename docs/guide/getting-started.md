@@ -99,7 +99,7 @@ GoW is written in Go, so you must install Go first.
 ### 1.1 For Windows Users
 
 1. Open your web browser and go to: https://go.dev/dl
-2. Download the file that says **"Windows"** and ends with `.msi` (example: `go1.26.3.windows-amd64.msi`)
+2. Download the file that says **"Windows"** and ends with `.msi` (example: `go1.22.0.windows-amd64.msi`)
 3. Double-click the downloaded `.msi` file
 4. Click **Next** → **Next** → **Install**
 5. When installation finishes, click **Finish**
@@ -115,7 +115,7 @@ go version
 
 You should see something like:
 ```
-go version go1.26.3 windows/amd64
+go version go1.22.0 windows/amd64
 ```
 
 If you see an error, restart your computer and try again.
@@ -123,7 +123,7 @@ If you see an error, restart your computer and try again.
 ### 1.2 For macOS Users
 
 1. Go to https://go.dev/dl
-2. Download the `.pkg` file for macOS (example: `go1.26.3.darwin-amd64.pkg`)
+2. Download the `.pkg` file for macOS (example: `go1.22.0.darwin-amd64.pkg`)
 3. Double-click the file and follow the installer.
 4. Open **Terminal** (press `Command + Space`, type Terminal).
 
@@ -140,8 +140,8 @@ You should see the version number.
 Open Terminal and run:
 
 ```bash
-wget https://go.dev/dl/go1.26.3.linux-amd64.tar.gz
-sudo tar -C /usr/local -xzf go1.26.3.linux-amd64.tar.gz
+wget https://go.dev/dl/go1.22.0.linux-amd64.tar.gz
+sudo tar -C /usr/local -xzf go1.22.0.linux-amd64.tar.gz
 ```
 
 Add Go to your PATH by editing your shell profile:
@@ -219,7 +219,7 @@ This creates a file called `go.mod`. It tells Go that this folder is a Go projec
 Now install GoW:
 
 ```bash
-go get gow@latest
+go install github.com/mechneerd/gow/cmd/gow@latest
 ```
 
 This may take 30–60 seconds. You will see many lines downloading.
@@ -398,7 +398,7 @@ import (
 	"my-first-gow-app/bootstrap"
 	"my-first-gow-app/routes"
 
-	"gow/http/router"
+	"github.com/mechneerd/gow/routing"
 )
 
 func main() {

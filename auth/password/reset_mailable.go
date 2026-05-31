@@ -1,6 +1,11 @@
 package password
 
-import "github.com/mechneerd/gow/mail"
+import (
+	"net/url"
+	"os"
+
+	"github.com/mechneerd/gow/mail"
+)
 
 // ResetPasswordMailable sends the password reset link.
 type ResetPasswordMailable struct {
@@ -18,7 +23,11 @@ func NewResetPasswordMailable(email, token string) *ResetPasswordMailable {
 }
 
 func (m *ResetPasswordMailable) Build() *mail.Message {
-	resetURL := "http://localhost:8080/reset-password?token=" + m.Token + "&email=" + m.Email
+	appURL := os.Getenv("APP_URL")
+	if appURL == "" {
+		appURL = "http://localhost:8080"
+	}
+	resetURL := appURL + "/reset-password?token=" + url.QueryEscape(m.Token) + "&email=" + url.QueryEscape(m.Email)
 
 	markdown := `
 # Reset Your Password

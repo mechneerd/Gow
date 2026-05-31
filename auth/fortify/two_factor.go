@@ -7,6 +7,7 @@ import (
 	"encoding/base32"
 	"fmt"
 	"math"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -80,6 +81,6 @@ func generateTOTP(secret string, counter int64) string {
 // Example: otpauth://totp/Company:email?secret=XXXX&issuer=Company
 func GetQRCodeURL(issuer, accountName, secret string) string {
 	return fmt.Sprintf("otpauth://totp/%s:%s?secret=%s&issuer=%s&algorithm=SHA1&digits=%d&period=%d",
-		issuer, accountName, secret, issuer, totpDigits, totpPeriod)
+		url.PathEscape(issuer), url.PathEscape(accountName), secret, url.QueryEscape(issuer), totpDigits, totpPeriod)
 }
 

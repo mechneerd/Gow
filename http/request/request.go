@@ -107,7 +107,9 @@ func parseJSONBody(r *http.Request) map[string]any {
 		return jsonMap
 	}
 
-	raw, err := io.ReadAll(r.Body)
+	// Limit body size to 10MB to prevent DoS
+	limitedReader := io.LimitReader(r.Body, 10<<20)
+	raw, err := io.ReadAll(limitedReader)
 	if err != nil || len(raw) == 0 {
 		return jsonMap
 	}

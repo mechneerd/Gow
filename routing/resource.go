@@ -59,10 +59,11 @@ func (r *Router) registerResource(name string, controller any, apiOnly bool, mid
 				for i := len(middleware) - 1; i >= 0; i-- {
 					currentHandler := route.Handler
 					route.Handler = func(w http.ResponseWriter, r *http.Request) error {
+						var handlerErr error
 						middleware[i](http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-							_ = currentHandler(w, r)
+							handlerErr = currentHandler(w, r)
 						})).ServeHTTP(w, r)
-						return nil
+						return handlerErr
 					}
 				}
 			}

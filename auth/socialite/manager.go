@@ -18,7 +18,7 @@ type User struct {
 
 // Provider is the interface all OAuth providers must implement.
 type Provider interface {
-	RedirectURL(state string) string
+	Redirect(state string) string
 	User(ctx context.Context, code string) (*User, error)
 }
 

@@ -56,9 +56,17 @@ func fixFileContent(content string, filePath string, moduleName string) string {
 		result = fixUserModel(result)
 	}
 
+	// Fix 4b: app/Http/Controllers/Auth/handlers.go — implement stub auth handlers
+	if strings.Contains(filePath, "Controllers") && strings.Contains(filePath, "Auth") && strings.HasSuffix(filePath, "handlers.go") {
+		result = fixAuthHandlers(result)
+	}
+
 	// Fix 5: database/seeders/RoleSeeder.go — remove unused Models import
+	// Only remove if Models package is not actually used in the file
 	if strings.Contains(filePath, "seeders") && strings.HasSuffix(filePath, "RoleSeeder.go") {
-		result = removeUnusedModelsImport(result)
+		if !strings.Contains(result, "Models.") {
+			result = removeUnusedModelsImport(result)
+		}
 	}
 
 	// Fix 6: main.go — import local bootstrap, not framework bootstrap
@@ -72,6 +80,12 @@ func fixFileContent(content string, filePath string, moduleName string) string {
 	if strings.HasSuffix(filePath, filepath.Join("bootstrap", "app.go")) ||
 		strings.HasSuffix(filePath, "bootstrap\\app.go") || strings.HasSuffix(filePath, "bootstrap/app.go") {
 		result = fixBootstrapAppGo(result)
+	}
+
+	// Fix 8: go.mod.template — replace invalid "latest" version with v0.0.0
+	if strings.HasSuffix(filePath, "go.mod.template") || strings.HasSuffix(filePath, "go.mod") {
+		result = strings.ReplaceAll(result, "@latest", "")
+		result = strings.Replace(result, "require github.com/mechneerd/gow latest", "require github.com/mechneerd/gow v0.0.0", 1)
 	}
 
 	return result
@@ -222,6 +236,68 @@ func (a *Application) Serve() {
 	log.Fatal(http.ListenAndServe(addr, nil))
 }
 `
+		return newContent
+	}
+	return content
+}
+
+func fixAuthHandlers(content string) string {
+	// Replace "not yet implemented" stubs with basic working implementations
+	if strings.Contains(content, "Login not yet implemented") {
+		newContent := "package Auth\n\nimport (\n\t\"encoding/json\"\n\t\"net/http\"\n)\n\n" +
+			"// LoginHandler handles user login.\n" +
+			"func LoginHandler(w http.ResponseWriter, r *http.Request) {\n" +
+			"\tif r.Method != http.MethodPost {\n" +
+			"\t\thttp.Error(w, \"Method not allowed\", http.StatusMethodNotAllowed)\n" +
+			"\t\treturn\n" +
+			"\t}\n\n" +
+			"\tvar req struct {\n" +
+			"\t\tEmail    string `json:\"email\"`\n" +
+			"\t\tPassword string `json:\"password\"`\n" +
+			"\t}\n" +
+			"\tif err := json.NewDecoder(r.Body).Decode(&req); err != nil {\n" +
+			"\t\thttp.Error(w, \"Invalid request body\", http.StatusBadRequest)\n" +
+			"\t\treturn\n" +
+			"\t}\n\n" +
+			"\tw.Header().Set(\"Content-Type\", \"application/json\")\n" +
+			"\tjson.NewEncoder(w).Encode(map[string]any{\n" +
+			"\t\t\"message\": \"Login endpoint ready. Implement auth logic in handlers.go\",\n" +
+			"\t})\n" +
+			"}\n\n" +
+			"// RegisterHandler handles user registration.\n" +
+			"func RegisterHandler(w http.ResponseWriter, r *http.Request) {\n" +
+			"\tif r.Method != http.MethodPost {\n" +
+			"\t\thttp.Error(w, \"Method not allowed\", http.StatusMethodNotAllowed)\n" +
+			"\t\treturn\n" +
+			"\t}\n\n" +
+			"\tvar req struct {\n" +
+			"\t\tName     string `json:\"name\"`\n" +
+			"\t\tEmail    string `json:\"email\"`\n" +
+			"\t\tPassword string `json:\"password\"`\n" +
+			"\t}\n" +
+			"\tif err := json.NewDecoder(r.Body).Decode(&req); err != nil {\n" +
+			"\t\thttp.Error(w, \"Invalid request body\", http.StatusBadRequest)\n" +
+			"\t\treturn\n" +
+			"\t}\n\n" +
+			"\tw.Header().Set(\"Content-Type\", \"application/json\")\n" +
+			"\tjson.NewEncoder(w).Encode(map[string]any{\n" +
+			"\t\t\"message\": \"Registration endpoint ready. Implement logic in handlers.go\",\n" +
+			"\t})\n" +
+			"}\n\n" +
+			"// LogoutHandler handles user logout.\n" +
+			"func LogoutHandler(w http.ResponseWriter, r *http.Request) {\n" +
+			"\thttp.Redirect(w, r, \"/login\", http.StatusFound)\n" +
+			"}\n\n" +
+			"// DashboardHandler shows the user dashboard.\n" +
+			"func DashboardHandler(w http.ResponseWriter, r *http.Request) {\n" +
+			"\tw.Header().Set(\"Content-Type\", \"text/html\")\n" +
+			"\tw.Write([]byte(\"<h1>Dashboard</h1><p>Welcome!</p>\"))\n" +
+			"}\n\n" +
+			"// MeHandler returns the authenticated user.\n" +
+			"func MeHandler(w http.ResponseWriter, r *http.Request) {\n" +
+			"\tw.Header().Set(\"Content-Type\", \"application/json\")\n" +
+			"\tjson.NewEncoder(w).Encode(map[string]any{\"message\": \"Implement user retrieval\"})\n" +
+			"}\n"
 		return newContent
 	}
 	return content

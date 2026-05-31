@@ -33,8 +33,10 @@ var ListCmd = &cobra.Command{
 			MakeCommandCmd,
 			RouteListCmd,
 			MakeMiddlewareCmd,
-			TinkerCmd,
-			// Add more as they are created
+			CacheClearCmd,
+			CacheForgetCmd,
+			ViewClearCmd,
+			ScheduleListCmd,
 		}
 
 		sort.Slice(commands, func(i, j int) bool {

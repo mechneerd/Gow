@@ -120,6 +120,8 @@ func (k *Kernel) Serve(addr string) error {
 
 // Use adds global middleware to the kernel.
 func (k *Kernel) Use(mw func(http.Handler) http.Handler) {
+	k.mu.Lock()
+	defer k.mu.Unlock()
 	k.middlewares = append(k.middlewares, mw)
 	k.chainDirty = true
 }
@@ -145,8 +147,16 @@ func (k *Kernel) buildChain() {
 // ServeHTTP implements http.Handler. It uses the cached middleware pipeline
 // and runs terminate hooks after the response is sent.
 func (k *Kernel) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if k.chainDirty || k.chain == nil {
-		k.buildChain()
+	k.mu.RLock()
+	dirty := k.chainDirty
+	k.mu.RUnlock()
+
+	if dirty || k.chain == nil {
+		k.mu.Lock()
+		if k.chainDirty || k.chain == nil {
+			k.buildChain()
+		}
+		k.mu.Unlock()
 	}
 
 	// Use a response wrapper to detect when the response is complete

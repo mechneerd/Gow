@@ -1,6 +1,7 @@
 package livewire
 
 import (
+	"crypto/subtle"
 	"encoding/json"
 	"net/http"
 
@@ -18,7 +19,7 @@ func Handler(manager *Manager) http.HandlerFunc {
 			if token != nil {
 				tokenStr, _ := token.(string)
 				requestToken := r.Header.Get("X-CSRF-TOKEN")
-				if tokenStr != "" && requestToken != tokenStr {
+				if tokenStr != "" && subtle.ConstantTimeCompare([]byte(requestToken), []byte(tokenStr)) != 1 {
 					http.Error(w, `{"error": "CSRF token mismatch"}`, 419)
 					return
 				}

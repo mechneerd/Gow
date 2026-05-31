@@ -120,7 +120,9 @@ type Manager struct {
 // generateRememberToken creates a secure random remember token.
 func generateRememberToken() string {
 	b := make([]byte, 32)
-	rand.Read(b) // ignore error for simplicity
+	if _, err := rand.Read(b); err != nil {
+		panic("failed to generate remember token: " + err.Error())
+	}
 	return base64.URLEncoding.EncodeToString(b)
 }
 
