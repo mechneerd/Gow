@@ -61,6 +61,19 @@ func fixFileContent(content string, filePath string, moduleName string) string {
 		result = removeUnusedModelsImport(result)
 	}
 
+	// Fix 6: main.go — import local bootstrap, not framework bootstrap
+	if strings.HasSuffix(filePath, filepath.Join("main.go")) ||
+		strings.HasSuffix(filePath, "main.go") {
+		result = fixMainGoBootstrapImport(result, moduleName)
+	}
+
+	// Fix 7: bootstrap/app.go — replace skeleton-specific config.AppConfig/config.Load
+	// with direct os.Getenv calls (skeleton uses types not in the framework config package)
+	if strings.HasSuffix(filePath, filepath.Join("bootstrap", "app.go")) ||
+		strings.HasSuffix(filePath, "bootstrap\\app.go") || strings.HasSuffix(filePath, "bootstrap/app.go") {
+		result = fixBootstrapAppGo(result)
+	}
+
 	return result
 }
 
@@ -162,4 +175,54 @@ func removeUnusedModelsImport(content string) string {
 		result = append(result, line)
 	}
 	return strings.Join(result, "\n")
+}
+
+func fixMainGoBootstrapImport(content string, moduleName string) string {
+	// The skeleton's main.go imports "github.com/mechneerd/gow/bootstrap" (framework)
+	// but the local bootstrap/app.go defines its own NewApplication() and Serve().
+	// Fix: change import to use the local bootstrap package.
+	frameworkImport := "github.com/mechneerd/gow/bootstrap"
+	localImport := moduleName + "/bootstrap"
+	if strings.Contains(content, frameworkImport) {
+		content = strings.Replace(content, frameworkImport, localImport, 1)
+	}
+	return content
+}
+
+func fixBootstrapAppGo(content string) string {
+	// The skeleton's bootstrap/app.go references config.AppConfig and config.Load
+	// which don't exist in the framework's config package.
+	// Fix: rewrite to use os.Getenv directly for a standalone bootstrap.
+	if strings.Contains(content, "config.AppConfig") || strings.Contains(content, "config.Load()") {
+		newContent := `package bootstrap
+
+import (
+	"fmt"
+	"log"
+	"net/http"
+	"os"
+)
+
+// NewApplication initializes the application.
+func NewApplication() *Application {
+	return &Application{}
+}
+
+// Application holds the application state.
+type Application struct{}
+
+// Serve starts the HTTP server.
+func (a *Application) Serve() {
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	addr := ":" + port
+	fmt.Printf("Server is running on http://localhost%s\n", addr)
+	log.Fatal(http.ListenAndServe(addr, nil))
+}
+`
+		return newContent
+	}
+	return content
 }
