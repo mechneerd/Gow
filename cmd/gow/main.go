@@ -233,6 +233,9 @@ func getStarterKitFromFlags(flags map[string]bool) string {
 // scaffoldWithOptions is the new entry point that uses the gow-skeleton repository.
 // The skeletonURL parameter allows using a custom repository (experimental, for future release).
 func scaffoldWithOptions(name string, result scaffoldpkg.PromptResult, force bool, noGit bool, skeletonURL string) error {
+	// Show GoW banner
+	scaffoldpkg.ShowBanner()
+
 	// Convert prompt result to flags for selector
 	flags := map[string]bool{
 		"minimal": result.StarterKit == "minimal",
@@ -242,15 +245,20 @@ func scaffoldWithOptions(name string, result scaffoldpkg.PromptResult, force boo
 
 	templateRelative := scaffoldpkg.SelectTemplate(flags)
 
+	totalSteps := 7
+	completeStep := scaffoldpkg.ShowProgress(totalSteps)
+
 	fmt.Printf("🚀  Creating GoW project \"%s\"...\n\n", name)
-	fmt.Println("→ Fetching template...")
+
+	// Step 1: Fetch template
+	completeStep("Scaffolding project")
 
 	clonedPath, err := scaffoldpkg.PrepareSkeleton(skeletonURL)
 	if err != nil {
 		return err
 	}
 	defer scaffoldpkg.CleanupTemp(clonedPath)
-	fmt.Println("   ✓ Template ready")
+	completeStep("Fetching template")
 
 	targetDir := name
 
@@ -262,7 +270,6 @@ func scaffoldWithOptions(name string, result scaffoldpkg.PromptResult, force boo
 		if err := os.RemoveAll(targetDir); err != nil {
 			return fmt.Errorf("failed to remove existing directory: %w", err)
 		}
-		fmt.Println("   ✓ Directory cleared")
 	}
 
 	if err := os.MkdirAll(targetDir, 0755); err != nil {
@@ -273,6 +280,7 @@ func scaffoldWithOptions(name string, result scaffoldpkg.PromptResult, force boo
 	if err := scaffoldpkg.CopyTemplate(fullTemplatePath, targetDir); err != nil {
 		return err
 	}
+	completeStep("Configuring project")
 
 	// 3. Replace placeholders and rename .template files
 	ctx := scaffoldpkg.DefaultReplaceContext(name)
@@ -296,6 +304,7 @@ func scaffoldWithOptions(name string, result scaffoldpkg.PromptResult, force boo
 	if flags["auth"] {
 		_ = scaffoldpkg.InjectRBACBootstrapExamples(targetDir)
 	}
+	completeStep("Applying fixes")
 
 	err = scaffoldpkg.RunPostInstall(targetDir, scaffoldpkg.PostInstallOptions{
 		RunGoModTidy: true,
@@ -304,17 +313,20 @@ func scaffoldWithOptions(name string, result scaffoldpkg.PromptResult, force boo
 	if err != nil {
 		return err
 	}
+	completeStep("Installing dependencies")
+	completeStep("Preparing environment")
 
 	// 5. Initialize git (unless --no-git is passed)
 	if !noGit {
-		fmt.Println("→ Initializing git repository...")
 		cmd := exec.Command("git", "init")
 		cmd.Dir = targetDir
 		if err := cmd.Run(); err != nil {
-			fmt.Printf("   ⚠️  Git init skipped (git not found or failed)\n")
+			completeStep("Initializing git (skipped)")
 		} else {
-			fmt.Println("   ✓ Git repository initialized")
+			completeStep("Initializing git")
 		}
+	} else {
+		completeStep("Initializing git (skipped)")
 	}
 
 	scaffoldpkg.PrintNextSteps(name)
