@@ -102,6 +102,22 @@ func (g *SessionGuard) Logout() {
 	g.session.Regenerate()
 }
 
+// RegenerateSession regenerates the session ID (for security after login or privilege changes).
+func (g *SessionGuard) RegenerateSession() {
+	g.session.Regenerate()
+}
+
+// LoginByID logs in a user by their ID string directly.
+func (g *SessionGuard) LoginByID(userID string, remember ...bool) {
+	g.session.Put(g.getName(), userID)
+	g.session.Regenerate()
+}
+
+// SetUser sets the authenticated user directly (useful for testing or manual auth).
+func (g *SessionGuard) SetUser(user any) {
+	g.user = user
+}
+
 func (g *SessionGuard) getName() string {
 	return "login_" + g.name + "_id"
 }

@@ -74,6 +74,9 @@ func (d *MySQLDialect) CompileSelect(query SelectQuery) (string, []any) {
 
 	// SELECT
 	sql.WriteString("SELECT ")
+	if query.Distinct {
+		sql.WriteString("DISTINCT ")
+	}
 	if query.Aggregate != nil {
 		sql.WriteString(fmt.Sprintf("%s(%s)", query.Aggregate.Function, d.QuoteIdentifier(query.Aggregate.Column)))
 	} else if len(query.Columns) == 0 && len(query.RawColumns) == 0 {

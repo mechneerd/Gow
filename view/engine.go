@@ -186,6 +186,35 @@ func (e *Engine) Make(name string, data map[string]any) (string, error) {
 			}
 			return template.HTML(data)
 		},
+		// error(field) returns the first validation error for a field
+		"error": func(field string) string {
+			if errors, ok := data["errors"].(map[string][]string); ok {
+				if errs, ok := errors[field]; ok && len(errs) > 0 {
+					return errs[0]
+				}
+			}
+			return ""
+		},
+		// errors(field) returns all validation errors for a field
+		"errors": func(field string) []string {
+			if errors, ok := data["errors"].(map[string][]string); ok {
+				return errors[field]
+			}
+			return nil
+		},
+		// old(field, default) retrieves old input from flash data
+		"old": func(field string, defaultValue ...string) string {
+			def := ""
+			if len(defaultValue) > 0 {
+				def = defaultValue[0]
+			}
+			if oldInput, ok := data["old"].(map[string]any); ok {
+				if v, exists := oldInput[field]; exists {
+					return fmt.Sprintf("%v", v)
+				}
+			}
+			return def
+		},
 		// Component helper: merges data + attributes + slot content
 		// component helper used by the compiler for <x-*> tags
 		"component": func(name string, data map[string]any, attrStr, slotContent string) (string, error) {

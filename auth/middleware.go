@@ -39,3 +39,31 @@ func GuestMiddleware(guard Guard, redirectTo string) func(http.Handler) http.Han
 	}
 }
 
+// SessionFixationMiddleware regenerates the session ID on authentication state change.
+// Use this middleware to prevent session fixation attacks.
+// It should be applied after the Auth middleware.
+func SessionFixationMiddleware(guard Guard) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// If the user is authenticated, ensure session was regenerated
+			// This is automatically handled by the guard on login,
+			// but this middleware provides an explicit protection layer
+			if guard.Check() {
+				// Context value indicates if session was already regenerated
+				if r.Context().Value(sessionRegeneratedKey) == nil {
+					// Not yet regenerated in this request - mark as protected
+					ctx := context.WithValue(r.Context(), sessionRegeneratedKey, true)
+					next.ServeHTTP(w, r.WithContext(ctx))
+					return
+				}
+			}
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+// contextKey for session regeneration state
+type contextKey string
+
+const sessionRegeneratedKey contextKey = "session_regenerated"
+

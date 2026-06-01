@@ -36,6 +36,8 @@ type Route struct {
 	Handler     HandlerFunc
 	Middlewares []func(http.Handler) http.Handler
 	Name        string
+	constraints map[string]string // regex constraints for route parameters
+	defaults    map[string]string // default values for optional parameters
 }
 
 // NewRouter creates a new router instance.
@@ -435,5 +437,67 @@ func (r *Router) SetFallback(handler HandlerFunc) {
 // GetFallback returns the registered fallback handler.
 func (r *Router) GetFallback() HandlerFunc {
 	return fallbackHandler
+}
+
+// ==================== PHASE 5: URL Generation ====================
+
+// Route generates a URL for a named route with the given parameters.
+// Usage: router.Route("user.show", map[string]string{"id": "1"})
+func (r *Router) Route(name string, params ...map[string]string) string {
+	r.mu.RLock()
+	route, ok := r.namedRoutes[name]
+	r.mu.RUnlock()
+
+	if !ok {
+		return ""
+	}
+
+	url := route.Path
+	if len(params) > 0 {
+		for key, value := range params[0] {
+			url = strings.Replace(url, "{"+key+"}", value, 1)
+		}
+	}
+
+	return url
+}
+
+// ==================== PHASE 5: View Routes ====================
+
+// View registers a route that returns a view without a controller.
+func (r *Router) View(path, viewName string, data ...map[string]any) *Route {
+	return r.Get(path, func(w http.ResponseWriter, req *http.Request) error {
+		// View rendering is handled by the engine
+		// For now, we just pass the view name in context
+		ctx := context.WithValue(req.Context(), "view_name", viewName)
+		if len(data) > 0 {
+			ctx = context.WithValue(ctx, "view_data", data[0])
+		}
+		*req = *req.WithContext(ctx)
+		return nil
+	})
+}
+
+// ==================== PHASE 5: Regex Constraints ====================
+
+// With adds a regex constraint to a route parameter.
+// Usage: route.With("id", `[0-9]+`)
+func (route *Route) With(param, pattern string) *Route {
+	// Store constraint in route for matching during ServeHTTP
+	if route.constraints == nil {
+		route.constraints = make(map[string]string)
+	}
+	route.constraints[param] = pattern
+	return route
+}
+
+// Default sets a default value for an optional route parameter.
+// Usage: route.Default("name", "world")
+func (route *Route) Default(param, value string) *Route {
+	if route.defaults == nil {
+		route.defaults = make(map[string]string)
+	}
+	route.defaults[param] = value
+	return route
 }
 

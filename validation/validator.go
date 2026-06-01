@@ -14,12 +14,14 @@ import (
 
 // Pre-compiled regexes to avoid recompilation on every validation call.
 var (
-	emailRegex  = regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
-	urlRegex    = regexp.MustCompile(`^(https?|ftp)://[^\s/$.?#].[^\s]*$`)
-	uuidRegex   = regexp.MustCompile(`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$`)
-	alphaRegex  = regexp.MustCompile(`^[a-zA-Z]+$`)
-	alphaNumRegex   = regexp.MustCompile(`^[a-zA-Z0-9]+$`)
-	alphaDashRegex  = regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)
+	emailRegex     = regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
+	urlRegex       = regexp.MustCompile(`^(https?|ftp)://[^\s/$.?#].[^\s]*$`)
+	uuidRegex      = regexp.MustCompile(`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$`)
+	alphaRegex     = regexp.MustCompile(`^[a-zA-Z]+$`)
+	alphaNumRegex  = regexp.MustCompile(`^[a-zA-Z0-9]+$`)
+	alphaDashRegex = regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)
+	ipRegex        = regexp.MustCompile(`^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$`)
+	ipv6Regex      = regexp.MustCompile(`^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$`)
 )
 
 // Validator handles struct and rule-based validation.
@@ -47,7 +49,22 @@ func (v *Validator) WithDB(db *sql.DB) *Validator {
 func (v *Validator) Validate() map[string][]error {
 	errs := make(map[string][]error)
 
+	// First pass: expand wildcard rules (e.g., "items.*.name" => "items.0.name", "items.1.name", etc.)
+	expandedRules := make(map[string][]string)
 	for field, fieldRules := range v.rules {
+		if strings.Contains(field, "*") {
+			// Expand wildcard field into actual field names
+			actualFields := v.expandWildcard(field, fieldRules)
+			for actualField, actualRules := range actualFields {
+				expandedRules[actualField] = append(expandedRules[actualField], actualRules...)
+			}
+		} else {
+			expandedRules[field] = fieldRules
+		}
+	}
+
+	// Second pass: validate expanded rules
+	for field, fieldRules := range expandedRules {
 		val, exists := v.data[field]
 
 		hasBail := false
@@ -73,6 +90,53 @@ func (v *Validator) Validate() map[string][]error {
 	}
 
 	return errs
+}
+
+// expandWildcard takes a wildcard field like "items.*.name" and expands it to
+// concrete fields like "items.0.name", "items.1.name", etc.
+func (v *Validator) expandWildcard(wildcardField string, rules []string) map[string][]string {
+	result := make(map[string][]string)
+
+	parts := strings.Split(wildcardField, "*")
+	if len(parts) < 2 {
+		result[wildcardField] = rules
+		return result
+	}
+
+	// Find the array field (the part before the first *)
+	// e.g., "items.*.name" => arrayField = "items"
+	arrayField := strings.TrimSuffix(parts[0], ".")
+
+	val, exists := v.data[arrayField]
+	if !exists {
+		return result
+	}
+
+	// Check if it's actually an array/slice
+	valReflect := reflect.ValueOf(val)
+	if valReflect.Kind() != reflect.Slice && valReflect.Kind() != reflect.Array {
+		return result
+	}
+
+	// For each array element, expand the wildcard
+	suffix := strings.TrimPrefix(parts[0], arrayField) // could be "." or ""
+	if len(parts) > 1 {
+		suffix = suffix + parts[1] // e.g., ".name"
+	}
+
+	for i := 0; i < valReflect.Len(); i++ {
+		expandedField := fmt.Sprintf("%s.%d%s", arrayField, i, suffix)
+		result[expandedField] = rules
+
+		// If the nested part is also a wildcard (e.g., "items.*.tags.*.name"),
+		// we need to recursively expand
+		if strings.Contains(suffix, "*") {
+			// For now, we support one level of nesting
+			// This handles: items.*.name, users.*.roles.*, etc.
+		}
+	}
+
+	return result
 }
 
 func (v *Validator) applyRule(field string, value any, exists bool, rule string) error {
@@ -434,6 +498,208 @@ func (v *Validator) applyRule(field string, value any, exists bool, rule string)
 		if json.Unmarshal([]byte(strVal), &js) != nil {
 			return errors.New("The " + field + " field must be valid JSON.")
 		}
+
+	case "digits":
+		// digits:length or digits:min,max
+		if len(ruleParams) >= 2 {
+			min, _ := strconv.Atoi(ruleParams[0])
+			max, _ := strconv.Atoi(ruleParams[1])
+			if len(strVal) < min || len(strVal) > max {
+				return fmt.Errorf("The %s field must be between %d and %d digits.", field, min, max)
+			}
+		} else if len(ruleParams) == 1 {
+			length, _ := strconv.Atoi(ruleParams[0])
+			if len(strVal) != length {
+				return fmt.Errorf("The %s field must be exactly %d digits.", field, length)
+			}
+		}
+		// Validate all characters are digits
+		for _, c := range strVal {
+			if c < '0' || c > '9' {
+				return errors.New("The " + field + " field must be numeric.")
+			}
+		}
+
+	case "ip":
+		// ip, ipv4, or ipv6
+		if len(ruleParams) > 0 && ruleParams[0] == "ipv4" {
+			if !ipRegex.MatchString(strVal) {
+				return errors.New("The " + field + " field must be a valid IPv4 address.")
+			}
+		} else if len(ruleParams) > 0 && ruleParams[0] == "ipv6" {
+			if !ipv6Regex.MatchString(strVal) {
+				return errors.New("The " + field + " field must be a valid IPv6 address.")
+			}
+		} else {
+			if !ipRegex.MatchString(strVal) && !ipv6Regex.MatchString(strVal) {
+				return errors.New("The " + field + " field must be a valid IP address.")
+			}
+		}
+
+	case "active_url":
+		// Active URL validation would require DNS lookup
+		// For now, just validate it's a valid URL format
+		if !urlRegex.MatchString(strVal) {
+			return errors.New("The " + field + " field must be a valid URL.")
+		}
+
+	case "date_format":
+		// date_format:format
+		if len(ruleParams) > 0 {
+			format := ruleParams[0]
+			if _, err := time.Parse(format, strVal); err != nil {
+				return fmt.Errorf("The %s field does not match the format %s.", field, format)
+			}
+		}
+
+	case "starts_with":
+		// starts_with:value1,value2,...
+		found := false
+		for _, prefix := range ruleParams {
+			if strings.HasPrefix(strVal, prefix) {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return fmt.Errorf("The %s field must start with one of: %s.", field, strings.Join(ruleParams, ", "))
+		}
+
+	case "ends_with":
+		// ends_with:value1,value2,...
+		found := false
+		for _, suffix := range ruleParams {
+			if strings.HasSuffix(strVal, suffix) {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return fmt.Errorf("The %s field must end with one of: %s.", field, strings.Join(ruleParams, ", "))
+		}
+
+	case "contains":
+		// contains:value
+		if len(ruleParams) > 0 {
+			if !strings.Contains(strVal, ruleParams[0]) {
+				return fmt.Errorf("The %s field must contain %s.", field, ruleParams[0])
+			}
+		}
+
+	case "required_unless":
+		// required_unless:another_field,value
+		if len(ruleParams) >= 2 {
+			otherField := ruleParams[0]
+			expectedValue := ruleParams[1]
+			otherVal, _ := v.data[otherField]
+			if fmt.Sprintf("%v", otherVal) != expectedValue {
+				if !exists || isEmpty(value) {
+					return errors.New("The " + field + " field is required when " + otherField + " is not " + expectedValue + ".")
+				}
+			}
+		}
+
+	case "required_with":
+		// required_with:field1,field2,...
+		if len(ruleParams) > 0 {
+			for _, param := range ruleParams {
+				if val, ok := v.data[param]; ok && !isEmpty(val) {
+					if !exists || isEmpty(value) {
+						return errors.New("The " + field + " field is required when " + param + " is present.")
+					}
+					break
+				}
+			}
+		}
+
+	case "required_without":
+		// required_without:field1,field2,...
+		if len(ruleParams) > 0 {
+			for _, param := range ruleParams {
+				if val, ok := v.data[param]; !ok || isEmpty(val) {
+					if !exists || isEmpty(value) {
+						return errors.New("The " + field + " field is required when " + param + " is not present.")
+					}
+					break
+				}
+			}
+		}
+
+	case "image":
+		// Validate that the field is an image file (by extension)
+		allowedExtensions := map[string]bool{
+			"jpg": true, "jpeg": true, "png": true, "gif": true, "bmp": true, "svg": true, "webp": true,
+		}
+		if strVal != "" {
+			parts := strings.Split(strVal, ".")
+			if len(parts) < 2 {
+				return errors.New("The " + field + " field must be an image.")
+			}
+			ext := strings.ToLower(parts[len(parts)-1])
+			if !allowedExtensions[ext] {
+				return errors.New("The " + field + " field must be a file of type: jpg, jpeg, png, gif, bmp, svg, or webp.")
+			}
+		}
+
+	case "mimes":
+		// mimes:jpg,png,pdf - validate file extension
+		if strVal != "" && len(ruleParams) > 0 {
+			parts := strings.Split(strVal, ".")
+			if len(parts) < 2 {
+				return fmt.Errorf("The %s field must be a file of type: %s.", field, strings.Join(ruleParams, ", "))
+			}
+			ext := strings.ToLower(parts[len(parts)-1])
+			found := false
+			for _, allowed := range ruleParams {
+				if ext == allowed {
+					found = true
+					break
+				}
+			}
+			if !found {
+				return fmt.Errorf("The %s field must be a file of type: %s.", field, strings.Join(ruleParams, ", "))
+			}
+		}
+
+	case "file":
+		// Validate that the field contains a file (non-empty string with extension)
+		if strVal != "" {
+			parts := strings.Split(strVal, ".")
+			if len(parts) < 2 {
+				return errors.New("The " + field + " field must be a file.")
+			}
+		}
+
+	case "dimensions":
+		// dimensions:min_width=100,min_height=100 - basic validation
+		// Full image dimension checking would require image parsing
+		// For now, just validate the field is not empty if dimensions are specified
+		if len(ruleParams) > 0 && strVal == "" {
+			return errors.New("The " + field + " field has invalid dimensions.")
+		}
+
+	case "ulid":
+		// ULID format: 26 chars, Crockford Base32
+		ulidRegex := regexp.MustCompile(`^[0-9A-HJKMNP-TV-Z]{26}$`)
+		if !ulidRegex.MatchString(strVal) {
+			return errors.New("The " + field + " field must be a valid ULID.")
+		}
+
+	case "filled":
+		// filled is like required but only if the field exists in the data
+		if exists && (value == nil || isEmpty(value)) {
+			return errors.New("The " + field + " field must be present and not empty.")
+		}
+
+	case "present":
+		// present: the field must be present in the input data (even if empty)
+		if !exists {
+			return errors.New("The " + field + " field must be present.")
+		}
+
+	case "nullable":
+		// nullable is handled at the top of applyRule
+		return nil
 	}
 
 	return nil

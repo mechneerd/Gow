@@ -58,9 +58,9 @@ func TestTokenManager(t *testing.T) {
 	mw := manager.Middleware()
 	
 	handler := mw(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		token := r.Context().Value(TokenKey).(string)
-		if token != plainToken {
-			t.Errorf("Expected context token %s, got %s", plainToken, token)
+		token := r.Context().Value(TokenKey).(*PersonalAccessToken)
+		if token == nil {
+			t.Errorf("Expected token in context, got nil")
 		}
 		w.WriteHeader(http.StatusOK)
 	}))

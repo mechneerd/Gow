@@ -156,6 +156,15 @@ func (c *Compiler) CompileString(raw string) string {
 	checkedRe := regexp.MustCompile(`@checked\s*\((.*?)\)`)
 	compiled = checkedRe.ReplaceAllString(compiled, `{{ if $1 }}checked="checked"{{ end }}`)
 
+	// @method('DELETE') -> <input type="hidden" name="_method" value="DELETE">
+	methodRe := regexp.MustCompile(`@method\s*\(\s*['"](.+?)['"]\s*\)`)
+	compiled = methodRe.ReplaceAllString(compiled, `<input type="hidden" name="_method" value="$1">`)
+
+	// @error('email') ... @enderror -> {{ if error email }}...{{ end }}
+	errorRe := regexp.MustCompile(`@error\s*\(\s*['"](.+?)['"]\s*\)`)
+	compiled = errorRe.ReplaceAllString(compiled, `{{ if error "$1" }}`)
+	compiled = strings.ReplaceAll(compiled, "@enderror", "{{ end }}")
+
 	// @props declaration for components
 	compiled = strings.ReplaceAll(compiled, "@props", "{{/* @props")
 

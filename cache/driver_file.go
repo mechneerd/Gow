@@ -108,3 +108,20 @@ func (d *FileDriver) filePath(key string) string {
 	safe = strings.ReplaceAll(safe, "\\", "_")
 	return filepath.Join(d.directory, safe+".cache")
 }
+
+// Has checks if a cache entry exists and is not expired.
+func (d *FileDriver) Has(key string) bool {
+	data, err := os.ReadFile(d.filePath(key))
+	if err != nil {
+		return false
+	}
+	var entry fileEntry
+	if err := json.Unmarshal(data, &entry); err != nil {
+		return false
+	}
+	if !entry.Expiration.IsZero() && time.Now().After(entry.Expiration) {
+		d.Forget(key)
+		return false
+	}
+	return true
+}

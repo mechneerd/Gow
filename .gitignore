@@ -142,6 +142,9 @@ $RECYCLE.BIN/
 # Ignore all .md files at root level (except README.md)
 /*.md
 
+# Exception: Feature tracker files (named with timestamp)
+!FEATURE_TRACKER_*.md
+
 # Ignore all .md files in docs/ (except docs/guide/)
 docs/*.md
 docs/roadmap/*.md

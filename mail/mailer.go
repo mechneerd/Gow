@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/smtp"
 	"strings"
+	"sync"
 
 	"github.com/mechneerd/gow/queue"
 )
@@ -152,6 +153,8 @@ type Mailer struct {
 	driver       Driver
 	from         string
 	queueManager *queue.Manager
+	mu           sync.RWMutex
+	fakes        []*MailFake
 }
 
 // NewMailer creates a new Mailer instance.
@@ -175,6 +178,18 @@ func (m *Mailer) Send(mailable Mailable) error {
 	if msg.From == "" && m.from != "" {
 		msg.From = m.from
 	}
+
+	// Check for fakes (testing mode)
+	m.mu.RLock()
+	if len(m.fakes) > 0 {
+		for _, fake := range m.fakes {
+			fake.Send(mailable)
+		}
+		m.mu.RUnlock()
+		return nil
+	}
+	m.mu.RUnlock()
+
 	return m.driver.Send(msg)
 }
 

@@ -8,8 +8,8 @@ import (
 )
 
 const (
-	maxRetries  = 3
-	baseBackoff = 1 * time.Second
+	defaultMaxRetries  = 3
+	defaultBaseBackoff = 1 * time.Second
 )
 
 // Worker processes jobs from a queue connection.
@@ -69,19 +69,71 @@ func (w *Worker) Work(ctx context.Context, connectionName string) {
 	}
 }
 
-func (w *Worker) processJobWithRetry(job Job) {
-	var lastErr error
-	for attempt := 0; attempt <= maxRetries; attempt++ {
-		if err := job.Handle(); err != nil {
-			lastErr = err
-			backoff := time.Duration(math.Pow(2, float64(attempt))) * baseBackoff
-			log.Printf("Job failed (attempt %d/%d): %v, retrying in %v", attempt+1, maxRetries+1, err, backoff)
-			time.Sleep(backoff)
-			continue
-		}
-		return // success
+func (w *Worker) getMaxRetries(job Job) int {
+	if hj, ok := job.(HasMaxRetries); ok {
+		return hj.MaxRetries()
 	}
+	if hj, ok := job.(HasMaxAttempts); ok {
+		return hj.MaxAttempts() - 1 // MaxAttempts includes the first attempt
+	}
+	return defaultMaxRetries
+}
+
+func (w *Worker) getBackoff(job Job, attempt int) time.Duration {
+	if hj, ok := job.(HasBackoff); ok {
+		return hj.Backoff()
+	}
+	return time.Duration(math.Pow(2, float64(attempt))) * defaultBaseBackoff
+}
+
+func (w *Worker) getTimeout(job Job) time.Duration {
+	if hj, ok := job.(HasTimeout); ok {
+		return hj.Timeout()
+	}
+	return 0 // no timeout by default
+}
+
+func (w *Worker) processJobWithRetry(job Job) {
+	maxRetries := w.getMaxRetries(job)
+	timeout := w.getTimeout(job)
+	var lastErr error
+
+	for attempt := 0; attempt <= maxRetries; attempt++ {
+		var err error
+		if timeout > 0 {
+			err = w.executeWithTimeout(job, timeout)
+		} else {
+			err = job.Handle()
+		}
+
+		if err == nil {
+			return // success
+		}
+
+		lastErr = err
+		if attempt < maxRetries {
+			backoff := w.getBackoff(job, attempt)
+			log.Printf("Job %T failed (attempt %d/%d): %v, retrying in %v", job, attempt+1, maxRetries+1, err, backoff)
+			time.Sleep(backoff)
+		}
+	}
+
+	log.Printf("Job %T failed after %d attempts: %v", job, maxRetries+1, lastErr)
 	job.Failed(lastErr)
+}
+
+func (w *Worker) executeWithTimeout(job Job, timeout time.Duration) error {
+	done := make(chan error, 1)
+	go func() {
+		done <- job.Handle()
+	}()
+
+	select {
+	case err := <-done:
+		return err
+	case <-time.After(timeout):
+		return context.DeadlineExceeded
+	}
 }
 
 func (w *Worker) processJob(job Job) {

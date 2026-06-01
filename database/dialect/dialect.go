@@ -63,6 +63,7 @@ type SelectQuery struct {
 	GroupBys   []string
 	Havings    []WhereClause
 	Lock       string // e.g. "FOR UPDATE", "FOR SHARE" for pessimistic locking
+	Distinct   bool   // SELECT DISTINCT
 }
 
 // JoinClause represents a table JOIN condition.

@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"reflect"
@@ -546,6 +547,211 @@ func (q *ModelQuery[T]) Find(id any) (*T, error) {
 	// Assume primary key is always 'id' for now, later we can check struct tags
 	q.builder.Where("id", "=", id)
 	return q.First()
+}
+
+// FindOrFail fetches a model by its primary key or returns an error if not found.
+func (q *ModelQuery[T]) FindOrFail(id any) (*T, error) {
+	model, err := q.Find(id)
+	if err != nil || model == nil {
+		return nil, fmt.Errorf("model not found with ID: %v", id)
+	}
+	return model, nil
+}
+
+// FirstOrCreate returns the first record matching the attributes, or creates it if not found.
+func (q *ModelQuery[T]) FirstOrCreate(attributes map[string]any, values ...map[string]any) (*T, bool, error) {
+	// Try to find existing record
+	for key, value := range attributes {
+		q.builder.Where(key, "=", value)
+	}
+	
+	existing, err := q.First()
+	if err == nil && existing != nil {
+		return existing, false, nil
+	}
+	
+	// Create new record
+	model := new(T)
+	val := reflect.ValueOf(model).Elem()
+	
+	// Set attributes on the model
+	for key, value := range attributes {
+		field := val.FieldByNameFunc(func(n string) bool {
+			return strings.EqualFold(n, key) || strings.EqualFold(n, toSnakeCase(key))
+		})
+		if field.IsValid() && field.CanSet() {
+			field.Set(reflect.ValueOf(value))
+		}
+	}
+	
+	// Set any additional values
+	if len(values) > 0 {
+		for key, value := range values[0] {
+			field := val.FieldByNameFunc(func(n string) bool {
+				return strings.EqualFold(n, key) || strings.EqualFold(n, toSnakeCase(key))
+			})
+			if field.IsValid() && field.CanSet() {
+				field.Set(reflect.ValueOf(value))
+			}
+		}
+	}
+	
+	// Insert the record
+	err = q.Insert(model)
+	if err != nil {
+		return nil, false, err
+	}
+	
+	return model, true, nil
+}
+
+// FirstOrNew returns the first record matching the attributes, or creates a new instance (not saved).
+func (q *ModelQuery[T]) FirstOrNew(attributes map[string]any, values ...map[string]any) (*T, bool, error) {
+	// Try to find existing record
+	for key, value := range attributes {
+		q.builder.Where(key, "=", value)
+	}
+	
+	existing, err := q.First()
+	if err == nil && existing != nil {
+		return existing, false, nil
+	}
+	
+	// Create new instance (not saved)
+	model := new(T)
+	val := reflect.ValueOf(model).Elem()
+	
+	// Set attributes on the model
+	for key, value := range attributes {
+		field := val.FieldByNameFunc(func(n string) bool {
+			return strings.EqualFold(n, key) || strings.EqualFold(n, toSnakeCase(key))
+		})
+		if field.IsValid() && field.CanSet() {
+			field.Set(reflect.ValueOf(value))
+		}
+	}
+	
+	// Set any additional values
+	if len(values) > 0 {
+		for key, value := range values[0] {
+			field := val.FieldByNameFunc(func(n string) bool {
+				return strings.EqualFold(n, key) || strings.EqualFold(n, toSnakeCase(key))
+			})
+			if field.IsValid() && field.CanSet() {
+				field.Set(reflect.ValueOf(value))
+			}
+		}
+	}
+	
+	return model, true, nil
+}
+
+// Distinct adds a DISTINCT clause to the query.
+func (q *ModelQuery[T]) Distinct() *ModelQuery[T] {
+	q.builder.Distinct()
+	return q
+}
+
+// ToJSON serializes the model to a JSON string.
+func (q *ModelQuery[T]) ToJSON(model *T) (string, error) {
+	if model == nil {
+		return "null", nil
+	}
+	
+	data := ToArray(model)
+	jsonBytes, err := json.Marshal(data)
+	if err != nil {
+		return "", err
+	}
+	
+	return string(jsonBytes), nil
+}
+
+// ToArray converts a model to a map for serialization.
+func ToArray[T any](model *T) map[string]any {
+	if model == nil {
+		return nil
+	}
+	
+	result := make(map[string]any)
+	val := reflect.ValueOf(model).Elem()
+	typ := val.Type()
+	
+	// Check for SerializesAttributes interface
+	if serializable, ok := any(model).(SerializesAttributes); ok {
+		hidden := serializable.Hidden()
+		hiddenMap := make(map[string]bool)
+		for _, h := range hidden {
+			hiddenMap[h] = true
+		}
+		
+		for i := 0; i < val.NumField(); i++ {
+			field := typ.Field(i)
+			fieldVal := val.Field(i)
+			
+			// Skip hidden fields
+			if hiddenMap[field.Name] || hiddenMap[strings.ToLower(field.Name)] {
+				continue
+			}
+			
+			// Skip unexported fields
+			if !field.IsExported() {
+				continue
+			}
+			
+			// Use db tag as key, fallback to field name
+			key := field.Tag.Get("db")
+			if key == "" || key == "-" {
+				key = strings.ToLower(field.Name)
+			}
+			
+			result[key] = fieldVal.Interface()
+		}
+		
+		// Add appended attributes
+		for _, app := range serializable.Appends() {
+			// Try to call getter method
+			methodName := "Get" + toCamel(app) + "Attribute"
+			if method := val.MethodByName(methodName); method.IsValid() {
+				if method.Type().NumIn() == 0 && method.Type().NumOut() > 0 {
+					results := method.Call(nil)
+					result[app] = results[0].Interface()
+				}
+			}
+		}
+	} else {
+		for i := 0; i < val.NumField(); i++ {
+			field := typ.Field(i)
+			fieldVal := val.Field(i)
+			
+			// Skip unexported fields
+			if !field.IsExported() {
+				continue
+			}
+			
+			// Use db tag as key, fallback to field name
+			key := field.Tag.Get("db")
+			if key == "" || key == "-" {
+				key = strings.ToLower(field.Name)
+			}
+			
+			result[key] = fieldVal.Interface()
+		}
+	}
+	
+	return result
+}
+
+// toSnakeCase converts CamelCase to snake_case.
+func toSnakeCase(s string) string {
+	var result []byte
+	for i, r := range s {
+		if i > 0 && r >= 'A' && r <= 'Z' {
+			result = append(result, '_')
+		}
+		result = append(result, byte(r))
+	}
+	return strings.ToLower(string(result))
 }
 
 // Update updates an existing model.

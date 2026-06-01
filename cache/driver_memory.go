@@ -94,3 +94,18 @@ func (d *MemoryDriver) Flush() error {
 	return nil
 }
 
+func (d *MemoryDriver) Has(key string) bool {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
+	item, exists := d.items[key]
+	if !exists {
+		return false
+	}
+	if item.expires > 0 && time.Now().UnixNano() > item.expires {
+		delete(d.items, key)
+		return false
+	}
+	return true
+}
+

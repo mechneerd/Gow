@@ -68,3 +68,9 @@ func (s *RedisStore) Flush() error {
 	return s.client.RawClient().FlushDB(s.ctx).Err()
 }
 
+// Has checks if a key exists in the cache.
+func (s *RedisStore) Has(key string) bool {
+	val, err := s.client.Get(s.ctx, s.itemKey(key))
+	return err == nil && val != ""
+}
+

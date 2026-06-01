@@ -125,6 +125,12 @@ func (b *Builder) Select(columns ...string) *Builder {
 	return b
 }
 
+// Distinct adds a DISTINCT clause to the query.
+func (b *Builder) Distinct() *Builder {
+	b.query.Distinct = true
+	return b
+}
+
 // Where adds a basic where clause.
 func (b *Builder) Where(column, operator string, value any) *Builder {
 	b.query.Wheres = append(b.query.Wheres, dialect.WhereClause{

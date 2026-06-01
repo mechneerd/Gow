@@ -10,6 +10,7 @@ type Store interface {
 	Decrement(key string, value int) (int, error)
 	Forever(key string, value any) error
 	Forget(key string) error
+	Has(key string) bool
 	Flush() error
 }
 

@@ -30,6 +30,41 @@ func Query(r *http.Request, key string) string {
 	return r.URL.Query().Get(key)
 }
 
+// Post gets a value from the POST body (form data only, not JSON).
+func Post(r *http.Request, key string) string {
+	if err := r.ParseForm(); err == nil {
+		if val := r.PostForm.Get(key); val != "" {
+			return val
+		}
+	}
+	return ""
+}
+
+// HasFile checks if a file was uploaded with the given key.
+func HasFile(r *http.Request, key string) bool {
+	if r.MultipartForm == nil {
+		_ = r.ParseMultipartForm(32 << 20) // 32MB max
+	}
+	if r.MultipartForm != nil {
+		_, ok := r.MultipartForm.File[key]
+		return ok
+	}
+	return false
+}
+
+// File returns the uploaded file for the given key.
+func File(r *http.Request, key string) (any, error) {
+	if r.MultipartForm == nil {
+		_ = r.ParseMultipartForm(32 << 20)
+	}
+	if r.MultipartForm != nil {
+		if files, ok := r.MultipartForm.File[key]; ok && len(files) > 0 {
+			return files[0], nil
+		}
+	}
+	return nil, fmt.Errorf("no file uploaded for key: %s", key)
+}
+
 // Input gets an input value from JSON body, form body, or query string (in that priority order).
 func Input(r *http.Request, key string) string {
 	all := All(r)

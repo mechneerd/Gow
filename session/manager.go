@@ -178,6 +178,82 @@ func (m *Manager) Old(key string, defaultValue any) any {
 	return defaultValue
 }
 
+// PreviousURL stores the URL the user came from (typically set by middleware).
+func (m *Manager) PreviousURL() string {
+	val := m.Get("_previous_url")
+	if val == nil {
+		return ""
+	}
+	if url, ok := val.(string); ok {
+		return url
+	}
+	return ""
+}
+
+// SetPreviousURL stores the previous URL in the session.
+func (m *Manager) SetPreviousURL(url string) {
+	m.Put("_previous_url", url)
+}
+
+// Intended stores the intended URL the user was trying to access.
+// After login, call Intended() to get the stored URL and redirect there.
+func (m *Manager) Intended(defaultURL ...string) string {
+	val := m.Get("_intended_url")
+	if val == nil {
+		if len(defaultURL) > 0 {
+			return defaultURL[0]
+		}
+		return ""
+	}
+	if url, ok := val.(string); ok {
+		return url
+	}
+	if len(defaultURL) > 0 {
+		return defaultURL[0]
+	}
+	return ""
+}
+
+// SetIntendedURL stores the intended URL for post-login redirect.
+func (m *Manager) SetIntendedURL(url string) {
+	m.Put("_intended_url", url)
+}
+
+// Flush clears all session data.
+func (m *Manager) Flush() {
+	m.data = make(map[string]any)
+}
+
+// Pull removes a value from the session and returns it.
+func (m *Manager) Pull(key string, defaultValue any) any {
+	val := m.Get(key)
+	if val == nil {
+		return defaultValue
+	}
+	m.Forget(key)
+	return val
+}
+
+// Forget removes a value from the session.
+func (m *Manager) Forget(key string) {
+	delete(m.data, key)
+}
+
+// Has checks if a key exists in the session.
+func (m *Manager) Has(key string) bool {
+	_, exists := m.data[key]
+	return exists
+}
+
+// All returns all session data.
+func (m *Manager) All() map[string]any {
+	result := make(map[string]any, len(m.data))
+	for k, v := range m.data {
+		result[k] = v
+	}
+	return result
+}
+
 func generateID() string {
 	b := make([]byte, 32)
 	if _, err := rand.Read(b); err != nil {

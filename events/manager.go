@@ -11,6 +11,25 @@ type Event any
 // Listener is a function that handles an event.
 type Listener func(Event)
 
+// StoppableEvent is an event that can stop propagation to subsequent listeners.
+type StoppableEvent interface {
+	StopPropagation()
+	IsPropagationStopped() bool
+}
+
+// eventStoppable is a base struct that implements StoppableEvent.
+type eventStoppable struct {
+	propagationStopped bool
+}
+
+func (e *eventStoppable) StopPropagation() {
+	e.propagationStopped = true
+}
+
+func (e *eventStoppable) IsPropagationStopped() bool {
+	return e.propagationStopped
+}
+
 // Subscriber represents a class that subscribes to multiple events.
 type Subscriber interface {
 	Subscribe(dispatcher *Manager)
@@ -75,6 +94,7 @@ func (m *Manager) Subscribe(subscriber Subscriber) {
 }
 
 // Dispatch triggers all registered listeners for the given event.
+// If the event implements StoppableEvent, propagation stops when StopPropagation() is called.
 func (m *Manager) Dispatch(event Event) {
 	m.mu.RLock()
 	broadcaster := m.broadcaster
@@ -96,12 +116,103 @@ func (m *Manager) Dispatch(event Event) {
 	// Execute wildcard listeners
 	for _, listener := range wildcards {
 		listener(event)
+		if stopEvent, ok := event.(StoppableEvent); ok && stopEvent.IsPropagationStopped() {
+			return
+		}
 	}
 
 	// Execute specific listeners
 	for _, listener := range specificListeners {
 		listener(event)
+		if stopEvent, ok := event.(StoppableEvent); ok && stopEvent.IsPropagationStopped() {
+			return
+		}
 	}
+}
+
+// Until dispatches an event and stops as soon as a listener returns a non-nil value.
+func (m *Manager) Until(event Event) any {
+	m.mu.RLock()
+	wildcards := make([]Listener, len(m.wildcards))
+	copy(wildcards, m.wildcards)
+	eventType := reflect.TypeOf(event)
+	if eventType.Kind() == reflect.Ptr {
+		eventType = eventType.Elem()
+	}
+	specificListeners := make([]Listener, len(m.listeners[eventType]))
+	copy(specificListeners, m.listeners[eventType])
+	m.mu.RUnlock()
+
+	for _, listener := range wildcards {
+		listener(event)
+		if stopEvent, ok := event.(StoppableEvent); ok && stopEvent.IsPropagationStopped() {
+			return nil
+		}
+	}
+
+	for _, listener := range specificListeners {
+		listener(event)
+		if stopEvent, ok := event.(StoppableEvent); ok && stopEvent.IsPropagationStopped() {
+			return nil
+		}
+	}
+
+	return nil
+}
+
+// Forget removes all listeners for a specific event type.
+func (m *Manager) Forget(event Event) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	eventType := reflect.TypeOf(event)
+	if eventType.Kind() == reflect.Ptr {
+		eventType = eventType.Elem()
+	}
+	delete(m.listeners, eventType)
+}
+
+// ForgetListener removes a specific listener from an event type.
+func (m *Manager) ForgetListener(event Event, listener Listener) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	eventType := reflect.TypeOf(event)
+	if eventType.Kind() == reflect.Ptr {
+		eventType = eventType.Elem()
+	}
+
+	listeners := m.listeners[eventType]
+	for i, l := range listeners {
+		if reflect.ValueOf(l).Pointer() == reflect.ValueOf(listener).Pointer() {
+			m.listeners[eventType] = append(listeners[:i], listeners[i+1:]...)
+			return
+		}
+	}
+}
+
+// HasListeners checks if there are any listeners registered for the given event type.
+func (m *Manager) HasListeners(event Event) bool {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	eventType := reflect.TypeOf(event)
+	if eventType.Kind() == reflect.Ptr {
+		eventType = eventType.Elem()
+	}
+
+	return len(m.listeners[eventType]) > 0 || len(m.wildcards) > 0
+}
+
+// ListenerCount returns the number of listeners registered for the given event type.
+func (m *Manager) ListenerCount(event Event) int {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	eventType := reflect.TypeOf(event)
+	if eventType.Kind() == reflect.Ptr {
+		eventType = eventType.Elem()
+	}
+
+	return len(m.listeners[eventType]) + len(m.wildcards)
 }
 
 // QueueListen registers a listener that should be queued.
@@ -112,4 +223,3 @@ func (m *Manager) QueueListen(event Event, listener Listener) {
 		listener(e)
 	})
 }
-
