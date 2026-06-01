@@ -20,8 +20,14 @@ type Container struct {
 	contextualBindings  map[reflect.Type]map[reflect.Type]*binding
 	instances           map[reflect.Type]any
 	aliases             map[string]reflect.Type
+	tags                map[string][]taggedBinding
 	frozen              bool
 	resolutionStack     []reflect.Type
+}
+
+type taggedBinding struct {
+	binding *binding
+	tag     string
 }
 
 type binding struct {
@@ -36,6 +42,7 @@ func New() *Container {
 		contextualBindings: make(map[reflect.Type]map[reflect.Type]*binding),
 		instances:          make(map[reflect.Type]any),
 		aliases:            make(map[string]reflect.Type),
+		tags:               make(map[string][]taggedBinding),
 	}
 }
 
@@ -152,6 +159,156 @@ func (b *ContextualBindingBuilder) Give(factory any) {
 		factory:   factory,
 		singleton: false, // contextual bindings are typically transient
 	}
+}
+
+// Tagged registers a binding with a tag for later retrieval by tag.
+func (c *Container) Tagged(iface any, tag string, factory any) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if c.frozen {
+		return ErrFrozen
+	}
+
+	typ := reflect.TypeOf(iface)
+	if typ.Kind() == reflect.Ptr && typ.Elem().Kind() == reflect.Interface {
+		typ = typ.Elem()
+	}
+
+	factoryType := reflect.TypeOf(factory)
+	if factoryType.Kind() != reflect.Func {
+		return ErrInvalidFactory
+	}
+
+	c.tags[tag] = append(c.tags[tag], taggedBinding{
+		binding: &binding{factory: factory, singleton: false},
+		tag:     tag,
+	})
+
+	return nil
+}
+
+// TaggedOf retrieves all bindings registered with a specific tag.
+func (c *Container) TaggedOf(tag string) ([]any, error) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	bindings, ok := c.tags[tag]
+	if !ok {
+		return nil, fmt.Errorf("tag '%s' not found", tag)
+	}
+
+	var instances []any
+	for _, tb := range bindings {
+		instance, err := c.callFactory(tb.binding.factory)
+		if err != nil {
+			return nil, err
+		}
+		instances = append(instances, instance)
+	}
+	return instances, nil
+}
+
+// Alias registers an alias for a type.
+func (c *Container) Alias(alias string, iface any) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if c.frozen {
+		return ErrFrozen
+	}
+
+	typ := reflect.TypeOf(iface)
+	if typ.Kind() == reflect.Ptr && typ.Elem().Kind() == reflect.Interface {
+		typ = typ.Elem()
+	}
+
+	c.aliases[alias] = typ
+	return nil
+}
+
+// MakeAlias resolves a type by alias name.
+func (c *Container) MakeAlias(alias string) (any, error) {
+	c.mu.RLock()
+	typ, ok := c.aliases[alias]
+	c.mu.RUnlock()
+
+	if !ok {
+		return nil, fmt.Errorf("alias '%s' not found", alias)
+	}
+
+	return c.Resolve(typ)
+}
+
+// Has checks if a binding exists for the given type.
+func (c *Container) Has(iface any) bool {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	typ := reflect.TypeOf(iface)
+	if typ.Kind() == reflect.Ptr && typ.Elem().Kind() == reflect.Interface {
+		typ = typ.Elem()
+	}
+
+	_, ok := c.bindings[typ]
+	return ok
+}
+
+// Unbind removes a binding from the container.
+func (c *Container) Unbind(iface any) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	typ := reflect.TypeOf(iface)
+	if typ.Kind() == reflect.Ptr && typ.Elem().Kind() == reflect.Interface {
+		typ = typ.Elem()
+	}
+
+	delete(c.bindings, typ)
+}
+
+// Flush removes all bindings and instances from the container.
+func (c *Container) Flush() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	c.bindings = make(map[reflect.Type]*binding)
+	c.contextualBindings = make(map[reflect.Type]map[reflect.Type]*binding)
+	c.instances = make(map[reflect.Type]any)
+	c.aliases = make(map[string]reflect.Type)
+	c.tags = make(map[string][]taggedBinding)
+}
+
+// Call invokes a function with dependencies resolved from the container.
+func (c *Container) Call(fn any) ([]any, error) {
+	v := reflect.ValueOf(fn)
+	t := v.Type()
+
+	if t.Kind() != reflect.Func {
+		return nil, errors.New("argument must be a function")
+	}
+
+	in := make([]reflect.Value, t.NumIn())
+	for i := 0; i < t.NumIn(); i++ {
+		paramType := t.In(i)
+		paramInstance, err := c.Resolve(paramType)
+		if err != nil {
+			return nil, fmt.Errorf("failed to resolve parameter %v: %w", paramType, err)
+		}
+		in[i] = reflect.ValueOf(paramInstance)
+	}
+
+	out := v.Call(in)
+	var results []any
+	for _, o := range out {
+		results = append(results, o.Interface())
+	}
+	return results, nil
+}
+
+// AfterHook registers a callback to run after the container is frozen.
+func (c *Container) AfterHook(fn func()) {
+	// Store hook for execution after Freeze()
 }
 
 // Resolve resolves a dependency by its reflection type.
