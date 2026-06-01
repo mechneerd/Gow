@@ -23,8 +23,6 @@ func (d *DatabaseDriver) Read(id string) (map[string]any, error) {
 	if err != nil {
 		return make(map[string]any), nil
 	}
-
-	// Deserialize JSON data
 	var sessionData map[string]any
 	if err := json.Unmarshal([]byte(data), &sessionData); err != nil {
 		return make(map[string]any), nil
@@ -38,7 +36,6 @@ func (d *DatabaseDriver) Write(id string, data map[string]any) error {
 	if err != nil {
 		return err
 	}
-
 	expiration := time.Now().Add(24 * time.Hour)
 	_, err = d.db.Exec(
 		"INSERT OR REPLACE INTO sessions (id, data, expiration) VALUES (?, ?, ?)",

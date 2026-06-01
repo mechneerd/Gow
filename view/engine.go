@@ -2,6 +2,7 @@ package view
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"os"
@@ -176,6 +177,14 @@ func (e *Engine) Make(name string, data map[string]any) (string, error) {
 		// $loop support for @foreach
 		"mkloop": func(index, total int) *Loop {
 			return newLoop(index, total)
+		},
+		// json encodes data as JSON: @json($items)
+		"json": func(v any) template.HTML {
+			data, err := json.Marshal(v)
+			if err != nil {
+				return template.HTML("null")
+			}
+			return template.HTML(data)
 		},
 		// Component helper: merges data + attributes + slot content
 		// component helper used by the compiler for <x-*> tags

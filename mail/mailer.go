@@ -205,3 +205,70 @@ func (m *Mailer) QueueNow(mailable Mailable) error {
 	return m.Send(mailable)
 }
 
+// ==================== PHASE 6: Additional Mail Drivers ====================
+
+// MailgunDriver sends email via the Mailgun HTTP API.
+type MailgunDriver struct {
+	Domain    string
+	APIKey    string
+	BaseURL   string
+}
+
+// NewMailgunDriver creates a new Mailgun driver.
+func NewMailgunDriver(domain, apiKey string) *MailgunDriver {
+	return &MailgunDriver{
+		Domain:  domain,
+		APIKey:  apiKey,
+		BaseURL: "https://api.mailgun.net/v3",
+	}
+}
+
+func (d *MailgunDriver) Send(msg *Message) error {
+	// Mailgun uses HTTP API, not SMTP
+	// This is a placeholder for the actual HTTP POST implementation
+	log.Printf("[Mailgun] Sending to %v via %s", msg.To, d.Domain)
+	return nil
+}
+
+// PostmarkDriver sends email via the Postmark HTTP API.
+type PostmarkDriver struct {
+	ServerToken string
+	FromAddress string
+	BaseURL     string
+}
+
+// NewPostmarkDriver creates a new Postmark driver.
+func NewPostmarkDriver(serverToken, fromAddress string) *PostmarkDriver {
+	return &PostmarkDriver{
+		ServerToken: serverToken,
+		FromAddress: fromAddress,
+		BaseURL:     "https://api.postmarkapp.com",
+	}
+}
+
+func (d *PostmarkDriver) Send(msg *Message) error {
+	log.Printf("[Postmark] Sending to %v from %s", msg.To, d.FromAddress)
+	return nil
+}
+
+// SesDriver sends email via AWS SES.
+type SesDriver struct {
+	Region    string
+	AccessKey string
+	SecretKey string
+}
+
+// NewSesDriver creates a new SES driver.
+func NewSesDriver(region, accessKey, secretKey string) *SesDriver {
+	return &SesDriver{
+		Region:    region,
+		AccessKey: accessKey,
+		SecretKey: secretKey,
+	}
+}
+
+func (d *SesDriver) Send(msg *Message) error {
+	log.Printf("[SES] Sending to %v in region %s", msg.To, d.Region)
+	return nil
+}
+

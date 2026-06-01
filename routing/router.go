@@ -384,7 +384,8 @@ func Binding(r *http.Request, key string) (any, bool) {
 
 // Model is a generic helper to retrieve a strongly-typed bound model from the route.
 // Usage:
-//   user, ok := routing.Model[models.User](req, "user")
+//
+//	user, ok := routing.Model[models.User](req, "user")
 func Model[T any](r *http.Request, key string) (T, bool) {
 	var zero T
 	val, ok := Binding(r, key)
@@ -395,5 +396,44 @@ func Model[T any](r *http.Request, key string) (T, bool) {
 		return typed, true
 	}
 	return zero, false
+}
+
+// ==================== PHASE 4: Redirect Routes ====================
+
+// Redirect registers a route that redirects from one URL to another.
+func (r *Router) Redirect(from, to string, statusCode ...int) {
+	code := http.StatusMovedPermanently
+	if len(statusCode) > 0 {
+		code = statusCode[0]
+	}
+	r.Get(from, func(w http.ResponseWriter, req *http.Request) error {
+		http.Redirect(w, req, to, code)
+		return nil
+	})
+}
+
+// PermanentRedirect registers a route that sends a 301 permanent redirect.
+func (r *Router) PermanentRedirect(from, to string) {
+	r.Redirect(from, to, http.StatusMovedPermanently)
+}
+
+// TemporaryRedirect registers a route that sends a 307 temporary redirect.
+func (r *Router) TemporaryRedirect(from, to string) {
+	r.Redirect(from, to, http.StatusTemporaryRedirect)
+}
+
+// ==================== PHASE 4: Fallback Routes ====================
+
+// fallbackHandler stores the catch-all handler.
+var fallbackHandler HandlerFunc
+
+// SetFallback registers a catch-all route that handles any request not matched.
+func (r *Router) SetFallback(handler HandlerFunc) {
+	fallbackHandler = handler
+}
+
+// GetFallback returns the registered fallback handler.
+func (r *Router) GetFallback() HandlerFunc {
+	return fallbackHandler
 }
 

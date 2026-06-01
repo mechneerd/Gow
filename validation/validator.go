@@ -467,3 +467,294 @@ func isValidIdentifier(s string) bool {
 	return true
 }
 
+// ==================== PHASE 2: Rule Objects ====================
+
+// Rule is an interface for reusable validation rules.
+type Rule interface {
+	Validate(value any) error
+	RuleName() string
+}
+
+// RequiredRule validates that a value is not empty.
+type RequiredRule struct{}
+
+func (r *RequiredRule) Validate(value any) error {
+	if value == nil || isEmpty(value) {
+		return errors.New("field is required")
+	}
+	return nil
+}
+func (r *RequiredRule) RuleName() string { return "required" }
+
+// MinRule validates minimum length (strings) or value (numbers).
+type MinRule struct{ Min float64 }
+
+func (r *MinRule) Validate(value any) error {
+	strVal := fmt.Sprintf("%v", value)
+	if n, err := strconv.ParseFloat(strVal, 64); err == nil {
+		if n < r.Min {
+			return fmt.Errorf("must be at least %v", r.Min)
+		}
+	} else if float64(len(strVal)) < r.Min {
+		return fmt.Errorf("must be at least %v characters", r.Min)
+	}
+	return nil
+}
+func (r *MinRule) RuleName() string { return "min" }
+
+// MaxRule validates maximum length (strings) or value (numbers).
+type MaxRule struct{ Max float64 }
+
+func (r *MaxRule) Validate(value any) error {
+	strVal := fmt.Sprintf("%v", value)
+	if n, err := strconv.ParseFloat(strVal, 64); err == nil {
+		if n > r.Max {
+			return fmt.Errorf("must not exceed %v", r.Max)
+		}
+	} else if float64(len(strVal)) > r.Max {
+		return fmt.Errorf("must not exceed %v characters", r.Max)
+	}
+	return nil
+}
+func (r *MaxRule) RuleName() string { return "max" }
+
+// EmailRule validates email format.
+type EmailRule struct{}
+
+func (r *EmailRule) Validate(value any) error {
+	s, ok := value.(string)
+	if !ok {
+		return nil
+	}
+	if !emailRegex.MatchString(s) {
+		return errors.New("must be a valid email address")
+	}
+	return nil
+}
+func (r *EmailRule) RuleName() string { return "email" }
+
+// RegexRule validates against a regex pattern.
+type RegexRule struct{ Pattern string }
+
+func (r *RegexRule) Validate(value any) error {
+	s, ok := value.(string)
+	if !ok {
+		return nil
+	}
+	matched, _ := regexp.MatchString(r.Pattern, s)
+	if !matched {
+		return errors.New("does not match the required format")
+	}
+	return nil
+}
+func (r *RegexRule) RuleName() string { return "regex" }
+
+// InRule validates that the value is in a list of allowed values.
+type InRule struct{ Allowed []string }
+
+func (r *InRule) Validate(value any) error {
+	strVal := fmt.Sprintf("%v", value)
+	for _, a := range r.Allowed {
+		if strVal == a {
+			return nil
+		}
+	}
+	return errors.New("must be one of the allowed values")
+}
+func (r *InRule) RuleName() string { return "in" }
+
+// BooleanRule validates boolean values.
+type BooleanRule struct{}
+
+func (r *BooleanRule) Validate(value any) error {
+	if _, ok := value.(bool); ok {
+		return nil
+	}
+	lower := strings.ToLower(fmt.Sprintf("%v", value))
+	valid := map[string]bool{"true": true, "false": true, "1": true, "0": true, "yes": true, "no": true}
+	if !valid[lower] {
+		return errors.New("must be a valid boolean")
+	}
+	return nil
+}
+func (r *BooleanRule) RuleName() string { return "boolean" }
+
+// URLRule validates URL format.
+type URLRule struct{}
+
+func (r *URLRule) Validate(value any) error {
+	s, ok := value.(string)
+	if !ok {
+		return nil
+	}
+	if !urlRegex.MatchString(s) {
+		return errors.New("must be a valid URL")
+	}
+	return nil
+}
+func (r *URLRule) RuleName() string { return "url" }
+
+// UUIDRule validates UUID format.
+type UUIDRule struct{}
+
+func (r *UUIDRule) Validate(value any) error {
+	s, ok := value.(string)
+	if !ok {
+		return nil
+	}
+	if !uuidRegex.MatchString(s) {
+		return errors.New("must be a valid UUID")
+	}
+	return nil
+}
+func (r *UUIDRule) RuleName() string { return "uuid" }
+
+// IntegerRule validates integer values.
+type IntegerRule struct{}
+
+func (r *IntegerRule) Validate(value any) error {
+	if _, ok := value.(int); ok {
+		return nil
+	}
+	if _, ok := value.(int64); ok {
+		return nil
+	}
+	s, ok := value.(string)
+	if !ok {
+		return nil
+	}
+	if _, err := strconv.Atoi(s); err != nil {
+		return errors.New("must be a valid integer")
+	}
+	return nil
+}
+func (r *IntegerRule) RuleName() string { return "integer" }
+
+// ValidateWithRules validates using Rule objects instead of string rules.
+func ValidateWithRules(data map[string]any, fieldRules map[string][]Rule) map[string][]error {
+	errs := make(map[string][]error)
+	for field, rules := range fieldRules {
+		for _, rule := range rules {
+			val, exists := data[field]
+			if !exists && rule.RuleName() != "required" {
+				continue
+			}
+			if err := rule.Validate(val); err != nil {
+				errs[field] = append(errs[field], err)
+			}
+		}
+	}
+	return errs
+}
+
+// ==================== PHASE 2: After Validation Hooks ====================
+
+// AfterValidationFunc is a callback that runs after validation passes.
+type AfterValidationFunc func(data map[string]any) error
+
+// BeforeValidationFunc is a callback that runs before validation.
+type BeforeValidationFunc func(data map[string]any) error
+
+// ValidateWithHooks executes validation with optional lifecycle hooks.
+func ValidateWithHooks(data map[string]any, rules map[string][]string, db *sql.DB, before BeforeValidationFunc, after AfterValidationFunc) map[string][]error {
+	// Run before hook
+	if before != nil {
+		if err := before(data); err != nil {
+			return map[string][]error{"_hook": {err}}
+		}
+	}
+
+	v := NewValidator(data, rules)
+	if db != nil {
+		v.WithDB(db)
+	}
+	errs := v.Validate()
+
+	// Run after hook only if no validation errors
+	if after != nil && len(errs) == 0 {
+		if err := after(data); err != nil {
+			errs["_hook"] = []error{err}
+		}
+	}
+
+	return errs
+}
+
+// ==================== PHASE 2: Sometimes Validation ====================
+
+// SometimesCondition defines when a rule should be applied.
+type SometimesCondition struct {
+	Field    string
+	Operator string // "filled", "not_filled", "equals", "not_equals"
+	Value    any
+}
+
+// When creates a SometimesCondition for use with Sometimes.
+func When(field, operator string, value any) SometimesCondition {
+	return SometimesCondition{
+		Field:    field,
+		Operator: operator,
+		Value:    value,
+	}
+}
+
+// ValidateSometimes validates with conditional (sometimes) rules.
+// Usage: ValidateSometimes(data, rules, Sometimes("role", "equals", "admin", "bio", "required"))
+func ValidateSometimes(data map[string]any, rules map[string][]string, conditions ...struct {
+	Field    string
+	When     SometimesCondition
+	RuleStr  string
+}) map[string][]error {
+	// Evaluate conditions and add conditional rules
+	for _, cond := range conditions {
+		if evaluateCondition(cond.When, data) {
+			existing := rules[cond.Field]
+			rules[cond.Field] = append(existing, cond.RuleStr)
+		}
+	}
+
+	v := NewValidator(data, rules)
+	return v.Validate()
+}
+
+// evaluateCondition checks if a sometimes condition is met.
+func evaluateCondition(cond SometimesCondition, data map[string]any) bool {
+	val, exists := data[cond.Field]
+	switch cond.Operator {
+	case "filled":
+		return exists && val != nil && fmt.Sprintf("%v", val) != ""
+	case "not_filled":
+		return !exists || val == nil || fmt.Sprintf("%v", val) == ""
+	case "equals":
+		return fmt.Sprintf("%v", val) == fmt.Sprintf("%v", cond.Value)
+	case "not_equals":
+		return fmt.Sprintf("%v", val) != fmt.Sprintf("%v", cond.Value)
+	}
+	return false
+}
+
+// ==================== PHASE 2: Implicit Field Attributes ====================
+
+// AttributeNames maps field names to human-readable names for error messages.
+var attributeNames = map[string]string{}
+
+// SetAttributeName registers a human-readable name for a field.
+func SetAttributeName(field, name string) {
+	attributeNames[field] = name
+}
+
+// GetAttributeName returns the human-readable name for a field.
+func GetAttributeName(field string) string {
+	if name, ok := attributeNames[field]; ok {
+		return name
+	}
+	return field
+}
+
+// SetAttributeNames registers multiple field names at once.
+func SetAttributeNames(names map[string]string) {
+	for k, v := range names {
+		attributeNames[k] = v
+	}
+}
+
