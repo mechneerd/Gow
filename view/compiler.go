@@ -176,6 +176,10 @@ func (c *Compiler) CompileString(raw string) string {
 	jsonRe := regexp.MustCompile(`@json\s*\((.*?)\)`)
 	compiled = jsonRe.ReplaceAllString(compiled, `{{ json $1 }}`)
 
+	// @vite(['resources/css/app.css', 'resources/js/app.js']) -> Vite asset tags
+	viteRe := regexp.MustCompile(`@vite\s*\((.*?)\)`)
+	compiled = viteRe.ReplaceAllString(compiled, `{{ vite $1 }}`)
+
 	// Generate a short hash of the raw template to ensure @once IDs are unique per file
 	fileHash := fmt.Sprintf("%x", sha256.Sum256([]byte(raw)))[:8]
 

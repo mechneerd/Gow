@@ -7,6 +7,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -429,5 +430,77 @@ func (tc *TestCase) AssertDatabaseHasColumns(table string, columns ...string) {
 	if err != nil {
 		tc.Errorf("Failed asserting that table [%s] has columns %v: %v", table, columns, err)
 	}
+}
+
+// ArtisanTestCase provides testing utilities for artisan commands.
+type ArtisanTestCase struct {
+	*testing.T
+	output     bytes.Buffer
+	args       []string
+	exitCode   int
+}
+
+// NewArtisanTestCase creates a new artisan test case.
+func NewArtisanTestCase(t *testing.T, args ...string) *ArtisanTestCase {
+	return &ArtisanTestCase{
+		T:    t,
+		args: args,
+	}
+}
+
+// Args sets the command arguments.
+func (atc *ArtisanTestCase) Args(args ...string) *ArtisanTestCase {
+	atc.args = args
+	return atc
+}
+
+// AssertExitCode asserts the command exited with the given code.
+func (atc *ArtisanTestCase) AssertExitCode(code int) *ArtisanTestCase {
+	atc.Helper()
+	if atc.exitCode != code {
+		atc.Errorf("Expected exit code %d, got %d", code, atc.exitCode)
+	}
+	return atc
+}
+
+// AssertSuccessful asserts the command was successful (exit code 0).
+func (atc *ArtisanTestCase) AssertSuccessful() *ArtisanTestCase {
+	atc.Helper()
+	return atc.AssertExitCode(0)
+}
+
+// AssertOutputContains asserts the output contains the given string.
+func (atc *ArtisanTestCase) AssertOutputContains(str string) *ArtisanTestCase {
+	atc.Helper()
+	output := atc.output.String()
+	if !strings.Contains(output, str) {
+		atc.Errorf("Expected output to contain [%s], got [%s]", str, output)
+	}
+	return atc
+}
+
+// AssertOutputNotContains asserts the output does not contain the given string.
+func (atc *ArtisanTestCase) AssertOutputNotContains(str string) *ArtisanTestCase {
+	atc.Helper()
+	output := atc.output.String()
+	if strings.Contains(output, str) {
+		atc.Errorf("Expected output not to contain [%s], got [%s]", str, output)
+	}
+	return atc
+}
+
+// AssertOutputIs asserts the output is exactly the given string.
+func (atc *ArtisanTestCase) AssertOutputIs(expected string) *ArtisanTestCase {
+	atc.Helper()
+	output := atc.output.String()
+	if output != expected {
+		atc.Errorf("Expected output [%s], got [%s]", expected, output)
+	}
+	return atc
+}
+
+// Output returns the command output.
+func (atc *ArtisanTestCase) Output() string {
+	return atc.output.String()
 }
 

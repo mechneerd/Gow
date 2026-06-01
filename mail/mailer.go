@@ -172,6 +172,42 @@ func (m *Mailer) SetFrom(from string) {
 	m.from = from
 }
 
+// Preview generates an HTML preview of the email without sending it.
+func (m *Mailer) Preview(mailable Mailable) (string, error) {
+	msg := mailable.Build()
+	if msg.From == "" && m.from != "" {
+		msg.From = m.from
+	}
+
+	var html strings.Builder
+	html.WriteString("<!DOCTYPE html><html><head><title>Email Preview</title>")
+	html.WriteString("<style>")
+	html.WriteString("body{font-family:Arial,sans-serif;margin:20px;}")
+	html.WriteString("table{border-collapse:collapse;width:100%;margin-bottom:20px;}")
+	html.WriteString("td,th{border:1px solid #ddd;padding:8px;text-align:left;}")
+	html.WriteString("th{background-color:#f5f5f5;}")
+	html.WriteString("</style></head><body>")
+	html.WriteString("<h1>Email Preview</h1>")
+	html.WriteString("<table>")
+	html.WriteString("<tr><th>From</th><td>" + msg.From + "</td></tr>")
+	html.WriteString("<tr><th>To</th><td>" + strings.Join(msg.To, ", ") + "</td></tr>")
+	if len(msg.Cc) > 0 {
+		html.WriteString("<tr><th>CC</th><td>" + strings.Join(msg.Cc, ", ") + "</td></tr>")
+	}
+	if len(msg.Bcc) > 0 {
+		html.WriteString("<tr><th>BCC</th><td>" + strings.Join(msg.Bcc, ", ") + "</td></tr>")
+	}
+	html.WriteString("<tr><th>Subject</th><td>" + msg.Subject + "</td></tr>")
+	html.WriteString("</table>")
+	html.WriteString("<h2>HTML Content</h2>")
+	html.WriteString("<div style='border:1px solid #ccc;padding:20px;'>" + msg.HTML + "</div>")
+	html.WriteString("<h2>Plain Text</h2>")
+	html.WriteString("<pre style='border:1px solid #ccc;padding:20px;background:#f9f9f9;'>" + msg.Text + "</pre>")
+	html.WriteString("</body></html>")
+
+	return html.String(), nil
+}
+
 // Send dispatches a mailable using the active driver.
 func (m *Mailer) Send(mailable Mailable) error {
 	msg := mailable.Build()

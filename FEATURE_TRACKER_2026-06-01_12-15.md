@@ -2,7 +2,7 @@
 
 > **Created**: 2026-06-01 12:15
 > **Purpose**: Track implementation progress of missing Laravel features
-> **Last Updated**: 2026-06-01 17:45
+> **Last Updated**: 2026-06-01 19:45
 
 ---
 
@@ -12,9 +12,9 @@
 |----------|-------|-----------|-------------|---------|
 | Critical Bugs | 6 | 6 | 0 | 0 |
 | Critical Missing | 30 | 30 | 0 | 0 |
-| Important Missing | 130 | 68 | 0 | 62 |
-| Nice to Have | 84 | 24 | 0 | 60 |
-| **Total** | **250** | **128** | **0** | **122** |
+| Important Missing | 130 | 72 | 0 | 58 |
+| Nice to Have | 84 | 32 | 0 | 52 |
+| **Total** | **250** | **140** | **0** | **110** |
 
 ---
 
@@ -212,7 +212,7 @@
 | # | Feature | Status | Assigned | Target Date | Date Fixed |
 |---|---------|--------|----------|-------------|------------|
 | 1 | Array driver (testing) | ✅ Done | — | — | 2026-06-01 | session/driver_array.go ArrayDriver |
-| 2 | Session encryption | Pending | — | — | — |
+| 2 | Session encryption | ✅ Done | — | — | 2026-06-01 | session/encrypted.go EncryptedStore/NewEncryptedStore |
 | 3 | Previous URL storage (intended()) | ✅ Done | — | — | 2026-06-01 | session/manager.go PreviousURL/SetPreviousURL/Intended/SetIntendedURL |
 
 ### Queue
@@ -243,7 +243,7 @@
 | 3 | Attachments (files, raw data, from storage) | ✅ Done | — | — | 2026-06-01 | mail/message.go Attach/AttachFile/AttachRaw |
 | 4 | CC, BCC, Reply-To | ✅ Done | — | — | 2026-06-01 | mail/message.go Cc/Bcc/ReplyTo |
 | 5 | Mail queuing (ShouldQueue) | ✅ Done | — | — | 2026-05-22 | mail/mailer.go Queue/QueueNow |
-| 6 | Mail preview in browser | Pending | — | — | — |
+| 6 | Mail preview in browser | ✅ Done | — | — | 2026-06-01 | mail/mailer.go Preview method |
 | 7 | Mail fake for testing | ✅ Done | — | — | 2026-06-01 | mail/fake.go MailFake |
 
 ### Notifications
@@ -252,9 +252,9 @@
 |---|---------|--------|----------|-------------|------------|
 | 1 | Mail channel implementation | ✅ Done | — | — | 2026-05-22 | notifications/channel_mail.go |
 | 2 | Slack channel | ✅ Done | — | — | 2026-05-22 | notifications/channel_slack.go |
-| 3 | On-demand notifications | Pending | — | — | — |
+| 3 | On-demand notifications | ✅ Done | — | — | 2026-06-01 | notifications/manager.go OnDemand/SendNow |
 | 4 | Mark as read/unread | ✅ Done | — | — | 2026-06-01 | notifications/channel_database.go MarkAsRead/MarkAsUnread/MarkAllAsRead |
-| 5 | Queued notifications | Pending | — | — | — |
+| 5 | Queued notifications | ✅ Done | — | — | 2026-06-01 | notifications/manager.go SendQueued/NotifyQueued/QueueManager interface |
 
 ### Broadcasting
 
@@ -345,12 +345,12 @@
 | 15 | make:factory | ✅ Done | — | — | 2026-06-01 | cmd/artisan/make_more.go MakeFactoryCmd |
 | 16 | make:test | ✅ Done | — | — | 2026-05-22 | cmd/artisan/make_more.go MakeTestCmd |
 | 17 | make:observer | ✅ Done | — | — | 2026-06-01 | cmd/artisan/make_more.go MakeObserverCmd |
-| 18 | serve (dev server) | Pending | — | — | — |
+| 18 | serve (dev server) | ✅ Done | — | — | 2026-06-01 | cmd/artisan/serve_command.go ServeCmd |
 | 19 | route:list | ✅ Done | — | — | 2026-05-22 | cmd/artisan/route_list.go RouteListCmd |
 | 20 | route:cache / route:clear | ✅ Done | — | — | 2026-06-01 | cmd/artisan/route_cache.go RouteCacheCmd/RouteClearCmd |
 | 21 | key:generate | ✅ Done | — | — | 2026-05-22 | cmd/artisan/key_generate.go KeyGenerateCmd |
 | 22 | tinker / REPL | ✅ Done | — | — | 2026-05-22 | cmd/artisan/tinker.go |
-| 23 | optimize / optimize:clear | Pending | — | — | — |
+| 23 | optimize / optimize:clear | ✅ Done | — | — | 2026-06-01 | cmd/artisan/optimize_commands.go OptimizeCmd/OptimizeClearCmd |
 | 24 | down / up (maintenance mode) | ✅ Done | — | — | 2026-05-22 | cmd/artisan/maintenance_commands.go |
 | 25 | event:list | ✅ Done | — | — | 2026-06-01 | cmd/artisan/maintenance_commands.go EventListCmd |
 | 26 | db:show / db:table | ✅ Done | — | — | 2026-06-01 | cmd/artisan/db_commands.go DbShowCmd/DbTableCmd |
@@ -366,10 +366,10 @@
 | 2 | AssertDatabaseCount | ✅ Done | — | — | 2026-05-22 | testing/testing.go AssertDatabaseCount/HasNoRecords/HasExactly |
 | 3 | AssertSoftDeleted | ✅ Done | — | — | 2026-06-01 | testing/testing.go AssertSoftDeleted/AssertNotSoftDeleted/AssertDatabaseTable |
 | 4 | ActingAs() auth helper | ✅ Done | — | — | 2026-05-22 | testing/testing.go ActingAs |
-| 5 | Time travel (Travel, FreezeTime) | Pending | — | — | — |
+| 5 | Time travel (Travel, FreezeTime) | ✅ Done | — | — | 2026-06-01 | testing/time_travel.go TimeTravel/FreezeTime/TravelTime |
 | 6 | RefreshDatabase (transaction rollback) | ✅ Done | — | — | 2026-05-22 | testing/db.go RefreshDatabase |
 | 7 | View assertions (AssertViewHas, AssertViewIs) | ✅ Done | — | — | 2026-06-01 | testing/testing.go AssertViewIs/AssertViewHas/AssertViewHasValue |
-| 8 | Command testing (ExpectsOutput) | Pending | — | — | — |
+| 8 | Command testing (ExpectsOutput) | ✅ Done | — | — | 2026-06-01 | testing/testing.go ArtisanTestCase/AssertOutputContains/AssertExitCode |
 | 9 | Mail fake (Mail.AssertSent) | ✅ Done | — | — | 2026-06-01 | mail/fake.go MailFake with AssertSent |
 | 10 | Notification fake | ✅ Done | — | — | 2026-06-01 | notifications/fake.go Fake/Send/AssertSent |
 | 11 | Event fake | ✅ Done | — | — | 2026-06-01 | events/fake.go Fake/Dispatch/AssertDispatched |
@@ -388,9 +388,9 @@
 | 5 | Socialite Apple provider | Pending | — | — | — |
 | 6 | Route group name prefixes | ✅ Done | — | — | 2026-06-01 | routing/router.go NameGroup/AsGroup |
 | 7 | Controller middleware assignment | ✅ Done | — | — | 2026-05-22 | routing/router.go |
-| 8 | Maintenance mode bypass IPs | Pending | — | — | — |
-| 9 | TrustHosts middleware | Pending | — | — | — |
-| 10 | Blade @vite directive | Pending | — | — | — |
+| 8 | Maintenance mode bypass IPs | ✅ Done | — | — | 2026-06-01 | cmd/artisan/maintenance_commands.go IsAllowedIP/GetRetryAfter/allow flag |
+| 9 | TrustHosts middleware | ✅ Done | — | — | 2026-06-01 | http/middleware/trust_hosts.go TrustHostsMiddleware |
+| 10 | Blade @vite directive | ✅ Done | — | — | 2026-06-01 | view/compiler.go @vite directive |
 | 11 | HTTP Client retry with backoff | ✅ Done | — | — | 2026-06-01 | http/client/client.go WithRetry + exponential backoff |
 | 12 | HTTP Client fake for testing | ✅ Done | — | — | 2026-06-01 | http/client/fake.go Fake/When/AssertSent |
 | 13 | Pipeline class (generic) | ✅ Done | — | — | 2026-05-22 | support/pipeline/pipeline.go |
@@ -400,7 +400,7 @@
 | 17 | Once helper | ✅ Done | — | — | 2026-06-01 | support/helpers.go Once |
 | 18 | Defer helper | ✅ Done | — | — | 2026-06-01 | support/helpers.go Defer |
 | 19 | Concurrency helper | ✅ Done | — | — | 2026-06-01 | support/helpers.go Parallel/Collect/LimitConcurrency/Retry |
-| 20 | Context propagation | Pending | — | — | — |
+| 20 | Context propagation | ✅ Done | — | — | 2026-06-01 | support/context.go ContextPropagator/ContextWith* helpers |
 | 21 | Parallel testing | Pending | — | — | — |
 
 ---

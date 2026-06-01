@@ -1,21 +1,50 @@
 package artisan
 
 import (
+	"encoding/json"
 	"fmt"
+	"net"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
+
+type maintenancePayload struct {
+	Message  string   `json:"message"`
+	Allowed  []string `json:"allowed,omitempty"`
+	Retry    int      `json:"retry,omitempty"`
+}
 
 var DownCmd = &cobra.Command{
 	Use:   "down",
 	Short: "Put the application into maintenance mode",
 	Run: func(cmd *cobra.Command, args []string) {
+		msg, _ := cmd.Flags().GetString("message")
+		retry, _ := cmd.Flags().GetInt("retry")
+		allowIPs, _ := cmd.Flags().GetStringSlice("allow")
+
+		if msg == "" {
+			msg = "Service Unavailable"
+		}
+
 		path := filepath.Join("storage", "framework", "down")
 		os.MkdirAll(filepath.Dir(path), 0755)
-		
-		err := os.WriteFile(path, []byte(`{"message": "Service Unavailable"}`), 0644)
+
+		payload := maintenancePayload{
+			Message: msg,
+			Allowed: allowIPs,
+			Retry:   retry,
+		}
+
+		data, err := json.MarshalIndent(payload, "", "  ")
+		if err != nil {
+			fmt.Println("Error creating maintenance payload:", err)
+			return
+		}
+
+		err = os.WriteFile(path, data, 0644)
 		if err != nil {
 			fmt.Println("Error putting application into maintenance mode:", err)
 			return
@@ -38,6 +67,65 @@ var UpCmd = &cobra.Command{
 		}
 		fmt.Println("Application is now live.")
 	},
+}
+
+// IsDown checks if the application is in maintenance mode.
+func IsDown() bool {
+	path := filepath.Join("storage", "framework", "down")
+	_, err := os.Stat(path)
+	return err == nil
+}
+
+// IsAllowedIP checks if an IP is allowed to bypass maintenance mode.
+func IsAllowedIP(ip string) bool {
+	path := filepath.Join("storage", "framework", "down")
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return false
+	}
+
+	var payload maintenancePayload
+	if err := json.Unmarshal(data, &payload); err != nil {
+		return false
+	}
+
+	if len(payload.Allowed) == 0 {
+		return false
+	}
+
+	for _, allowed := range payload.Allowed {
+		if allowed == ip || allowed == "*" {
+			return true
+		}
+		// Check CIDR ranges
+		if strings.Contains(allowed, "/") {
+			_, cidr, err := net.ParseCIDR(allowed)
+			if err != nil {
+				continue
+			}
+			parsedIP := net.ParseIP(ip)
+			if parsedIP != nil && cidr.Contains(parsedIP) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// GetRetryAfter returns the retry-after header value from the maintenance file.
+func GetRetryAfter() int {
+	path := filepath.Join("storage", "framework", "down")
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return 0
+	}
+
+	var payload maintenancePayload
+	if err := json.Unmarshal(data, &payload); err != nil {
+		return 0
+	}
+
+	return payload.Retry
 }
 
 var StorageLinkCmd = &cobra.Command{
@@ -77,5 +165,11 @@ var EventListCmd = &cobra.Command{
 		fmt.Println("Event listing requires application context.")
 		fmt.Println("Use event.ListEvents() in your application code.")
 	},
+}
+
+func init() {
+	DownCmd.Flags().StringP("message", "m", "", "The message to display during maintenance")
+	DownCmd.Flags().IntP("retry", "r", 0, "The number of seconds to wait before retrying (Retry-After header)")
+	DownCmd.Flags().StringSlice("allow", nil, "IP addresses or CIDR ranges allowed to bypass maintenance")
 }
 
