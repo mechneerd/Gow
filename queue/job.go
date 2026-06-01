@@ -54,3 +54,9 @@ type ChainableJob interface {
 	Chain() []JobMiddleware
 }
 
+// HasPriority allows a job to specify its priority (0 = highest, 10 = lowest).
+// Jobs with lower priority numbers are processed first.
+type HasPriority interface {
+	Priority() int
+}
+

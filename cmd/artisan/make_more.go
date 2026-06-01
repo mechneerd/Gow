@@ -2,6 +2,7 @@ package artisan
 
 import (
 	"fmt"
+	"strings"
 	"github.com/spf13/cobra"
 )
 
@@ -158,6 +159,105 @@ func Test` + name + `(t *testing.T) {
 }
 `
 		path := "tests/" + name + "_test.go"
+		generateFile(path, stub)
+	},
+}
+
+var MakeRuleCmd = &cobra.Command{
+	Use:   "make:rule [name]",
+	Short: "Create a new validation rule",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		name := args[0]
+		stub := `package rules
+
+import (
+	"github.com/mechneerd/gow/validation"
+)
+
+type ` + name + ` struct{}
+
+func (r *` + name + `) Validate(value any, field string) bool {
+	// Implement your validation logic here
+	return true
+}
+
+func (r *` + name + `) Message() string {
+	return "The :attribute field is invalid."
+}
+`
+		path := "app/Rules/" + name + ".go"
+		generateFile(path, stub)
+	},
+}
+
+var MakeFactoryCmd = &cobra.Command{
+	Use:   "make:factory [name]",
+	Short: "Create a new model factory",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		name := args[0]
+		if !strings.HasSuffix(name, "Factory") {
+			name += "Factory"
+		}
+		stub := `package factories
+
+import (
+	"github.com/mechneerd/gow/database/factory"
+)
+
+type ` + name + ` struct{}
+
+func (f *` + name + `) Definition() map[string]any {
+	return map[string]any{
+		// "name": factory.Name(),
+		// "email": factory.Email(),
+	}
+}
+`
+		path := "database/factories/" + name + ".go"
+		generateFile(path, stub)
+	},
+}
+
+var MakeObserverCmd = &cobra.Command{
+	Use:   "make:observer [name]",
+	Short: "Create a new model observer",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		name := args[0]
+		if !strings.HasSuffix(name, "Observer") {
+			name += "Observer"
+		}
+		stub := `package observers
+
+type ` + name + ` struct{}
+
+func (o *` + name + `) Creating(model any) error {
+	return nil
+}
+
+func (o *` + name + `) Created(model any) error {
+	return nil
+}
+
+func (o *` + name + `) Updating(model any) error {
+	return nil
+}
+
+func (o *` + name + `) Updated(model any) error {
+	return nil
+}
+
+func (o *` + name + `) Deleting(model any) error {
+	return nil
+}
+
+func (o *` + name + `) Deleted(model any) error {
+	return nil
+}
+`
+		path := "app/Observers/" + name + ".go"
 		generateFile(path, stub)
 	},
 }

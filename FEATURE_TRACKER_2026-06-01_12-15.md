@@ -2,7 +2,7 @@
 
 > **Created**: 2026-06-01 12:15
 > **Purpose**: Track implementation progress of missing Laravel features
-> **Last Updated**: 2026-06-01 15:15
+> **Last Updated**: 2026-06-01 17:45
 
 ---
 
@@ -12,9 +12,9 @@
 |----------|-------|-----------|-------------|---------|
 | Critical Bugs | 6 | 6 | 0 | 0 |
 | Critical Missing | 30 | 30 | 0 | 0 |
-| Important Missing | 130 | 54 | 0 | 76 |
-| Nice to Have | 84 | 4 | 0 | 80 |
-| **Total** | **250** | **94** | **0** | **156** |
+| Important Missing | 130 | 68 | 0 | 62 |
+| Nice to Have | 84 | 24 | 0 | 60 |
+| **Total** | **250** | **128** | **0** | **122** |
 
 ---
 
@@ -204,7 +204,7 @@
 | 1 | Atomic locks (distributed) | ✅ Done | — | — | 2026-06-01 | cache/helpers.go AcquireLock/NewLock |
 | 2 | Remember() / RememberForever() | ✅ Done | — | — | 2026-06-01 | cache/helpers.go Remember/RememberForever |
 | 3 | Many() / PutMany() bulk ops | ✅ Done | — | — | 2026-06-01 | cache/helpers.go Many/PutMany/PutManyForever |
-| 4 | Cache events (hit/miss/write/delete) | Pending | — | — | — |
+| 4 | Cache events (hit/miss/write/delete) | ✅ Done | — | — | 2026-06-01 | cache/store.go EventType/CacheEvent/EventDispatcher |
 | 5 | Cache prefix support | ✅ Done | — | — | 2026-06-01 | All drivers: Has(), prefix in RedisStore |
 
 ### Session
@@ -221,18 +221,18 @@
 |---|---------|--------|----------|-------------|------------|
 | 1 | Unique jobs (ShouldBeUnique) | ✅ Done | — | — | 2026-06-01 | queue/job.go ShouldBeUnique/ShouldBeUniqueUntilProcessing |
 | 2 | Job timeout / max attempts / backoff | ✅ Done | — | — | 2026-06-01 | queue/job.go HasTimeout/HasMaxRetries/HasBackoff + worker.go |
-| 3 | Job rate limiting | Pending | — | — | — |
-| 4 | Queue priorities | Pending | — | — | — |
+| 3 | Job rate limiting | ✅ Done | — | — | 2026-06-01 | queue/middleware.go RateLimitMiddleware/RateLimitByKeyMiddleware/EnsureUnique |
+| 4 | Queue priorities | ✅ Done | — | — | 2026-06-01 | queue/job.go HasPriority interface |
 | 5 | SQS / RabbitMQ drivers | Pending | — | — | — |
 
 ### Events
 
 | # | Feature | Status | Assigned | Target Date | Date Fixed |
 |---|---------|--------|----------|-------------|------------|
-| 1 | Queued listeners (ShouldQueue) | Pending | — | — | — |
+| 1 | Queued listeners (ShouldQueue) | ✅ Done | — | — | 2026-06-01 | events/manager.go ShouldQueue interface/QueueListener |
 | 2 | Event subscribers | ✅ Done | — | — | 2026-05-22 | events/manager.go Subscriber interface |
 | 3 | Stoppable events | ✅ Done | — | — | 2026-06-01 | events/manager.go StoppableEvent/StopPropagation |
-| 4 | Event fake for testing | Pending | — | — | — |
+| 4 | Event fake for testing | ✅ Done | — | — | 2026-06-01 | events/fake.go Fake |
 
 ### Mail
 
@@ -270,19 +270,19 @@
 | # | Feature | Status | Assigned | Target Date | Date Fixed |
 |---|---------|--------|----------|-------------|------------|
 | 1 | Real S3 driver (using aws-sdk-go-v2) | Pending | — | — | — |
-| 2 | UploadedFile wrapper with Store() / StoreAs() | Pending | — | — | — |
-| 3 | Temporary URLs | Pending | — | — | — |
-| 4 | Visibility (public/private) | Pending | — | — | — |
-| 5 | storage:link command | Pending | — | — | — |
+| 2 | UploadedFile wrapper with Store() / StoreAs() | ✅ Done | — | — | 2026-06-01 | storage/storage.go UploadedFile with Store/StoreAs/Contents/Move/TemporaryURL |
+| 3 | Temporary URLs | ✅ Done | — | — | 2026-06-01 | storage/storage.go LocalDriver.TemporaryURL + UploadedFile.TemporaryURL |
+| 4 | Visibility (public/private) | ✅ Done | — | — | 2026-06-01 | storage/storage.go LocalDriver.SetVisibility/GetVisibility |
+| 5 | storage:link command | ✅ Done | — | — | 2026-06-01 | cmd/artisan/maintenance_commands.go StorageLinkCmd |
 
 ### Error Handling
 
 | # | Feature | Status | Assigned | Target Date | Date Fixed |
 |---|---------|--------|----------|-------------|------------|
 | 1 | Custom error pages (404/500/503) | ✅ Done | — | — | 2026-05-22 |
-| 2 | Dev error page (Whoops-like) | Pending | — | — | — |
-| 3 | Renderable exceptions | Pending | — | — | — |
-| 4 | Reportable exceptions | Pending | — | — | — |
+| 2 | Dev error page (Whoops-like) | ✅ Done | — | — | 2026-06-01 | http/exception/exception.go APP_DEBUG debug page |
+| 3 | Renderable exceptions | ✅ Done | — | — | 2026-06-01 | http/exception/exception.go Renderable interface/Handler |
+| 4 | Reportable exceptions | ✅ Done | — | — | 2026-06-01 | http/exception/exception.go Reportable interface/WithReport |
 
 ### Logging
 
@@ -328,33 +328,33 @@
 
 | # | Command | Status | Assigned | Target Date | Date Fixed |
 |---|---------|--------|----------|-------------|------------|
-| 1 | migrate:fresh | Pending | — | — | — |
-| 2 | migrate:refresh | Pending | — | — | — |
-| 3 | migrate:status | Pending | — | — | — |
-| 4 | migrate:reset | Pending | — | — | — |
-| 5 | make:request | Pending | — | — | — |
-| 6 | make:resource | Pending | — | — | — |
-| 7 | make:event | Pending | — | — | — |
-| 8 | make:listener | Pending | — | — | — |
-| 9 | make:job | Pending | — | — | — |
-| 10 | make:mail | Pending | — | — | — |
-| 11 | make:notification | Pending | — | — | — |
-| 12 | make:policy | Pending | — | — | — |
-| 13 | make:rule | Pending | — | — | — |
-| 14 | make:seeder | Pending | — | — | — |
-| 15 | make:factory | Pending | — | — | — |
-| 16 | make:test | Pending | — | — | — |
-| 17 | make:observer | Pending | — | — | — |
+| 1 | migrate:fresh | ✅ Done | — | — | 2026-05-22 | cmd/artisan/migrate_commands.go MigrateFreshCmd |
+| 2 | migrate:refresh | ✅ Done | — | — | 2026-05-22 | cmd/artisan/migrate_commands.go MigrateRefreshCmd |
+| 3 | migrate:status | ✅ Done | — | — | 2026-05-22 | cmd/artisan/migrate_commands.go MigrateStatusCmd |
+| 4 | migrate:reset | ✅ Done | — | — | 2026-06-01 | cmd/artisan/migrate_commands.go MigrateResetCmd |
+| 5 | make:request | ✅ Done | — | — | 2026-05-22 | cmd/artisan/make_request.go MakeRequestCmd |
+| 6 | make:resource | ✅ Done | — | — | 2026-05-22 | cmd/artisan/make_more.go MakeResourceCmd |
+| 7 | make:event | ✅ Done | — | — | 2026-05-22 | cmd/artisan/make_more.go MakeEventCmd |
+| 8 | make:listener | ✅ Done | — | — | 2026-05-22 | cmd/artisan/make_more.go MakeListenerCmd |
+| 9 | make:job | ✅ Done | — | — | 2026-05-22 | cmd/artisan/make_commands.go MakeJobCmd |
+| 10 | make:mail | ✅ Done | — | — | 2026-05-22 | cmd/artisan/make_more.go MakeMailCmd |
+| 11 | make:notification | ✅ Done | — | — | 2026-05-22 | cmd/artisan/make_more.go MakeNotificationCmd |
+| 12 | make:policy | ✅ Done | — | — | 2026-05-22 | cmd/artisan/make_more.go MakePolicyCmd |
+| 13 | make:rule | ✅ Done | — | — | 2026-06-01 | cmd/artisan/make_more.go MakeRuleCmd |
+| 14 | make:seeder | ✅ Done | — | — | 2026-05-22 | cmd/artisan/make_seeder.go MakeSeederCmd |
+| 15 | make:factory | ✅ Done | — | — | 2026-06-01 | cmd/artisan/make_more.go MakeFactoryCmd |
+| 16 | make:test | ✅ Done | — | — | 2026-05-22 | cmd/artisan/make_more.go MakeTestCmd |
+| 17 | make:observer | ✅ Done | — | — | 2026-06-01 | cmd/artisan/make_more.go MakeObserverCmd |
 | 18 | serve (dev server) | Pending | — | — | — |
-| 19 | route:list | Pending | — | — | — |
-| 20 | route:cache / route:clear | Pending | — | — | — |
-| 21 | key:generate | Pending | — | — | — |
-| 22 | tinker / REPL | Pending | — | — | — |
+| 19 | route:list | ✅ Done | — | — | 2026-05-22 | cmd/artisan/route_list.go RouteListCmd |
+| 20 | route:cache / route:clear | ✅ Done | — | — | 2026-06-01 | cmd/artisan/route_cache.go RouteCacheCmd/RouteClearCmd |
+| 21 | key:generate | ✅ Done | — | — | 2026-05-22 | cmd/artisan/key_generate.go KeyGenerateCmd |
+| 22 | tinker / REPL | ✅ Done | — | — | 2026-05-22 | cmd/artisan/tinker.go |
 | 23 | optimize / optimize:clear | Pending | — | — | — |
-| 24 | down / up (maintenance mode) | Pending | — | — | — |
-| 25 | event:list | Pending | — | — | — |
-| 26 | db:show / db:table | Pending | — | — | — |
-| 27 | storage:link | Pending | — | — | — |
+| 24 | down / up (maintenance mode) | ✅ Done | — | — | 2026-05-22 | cmd/artisan/maintenance_commands.go |
+| 25 | event:list | ✅ Done | — | — | 2026-06-01 | cmd/artisan/maintenance_commands.go EventListCmd |
+| 26 | db:show / db:table | ✅ Done | — | — | 2026-06-01 | cmd/artisan/db_commands.go DbShowCmd/DbTableCmd |
+| 27 | storage:link | ✅ Done | — | — | 2026-06-01 | cmd/artisan/maintenance_commands.go StorageLinkCmd |
 
 ---
 
@@ -364,16 +364,16 @@
 |---|---------|--------|----------|-------------|------------|
 | 1 | AssertDatabaseHas / AssertDatabaseMissing | ✅ Done | — | — | 2026-05-22 | testing/testing.go |
 | 2 | AssertDatabaseCount | ✅ Done | — | — | 2026-05-22 | testing/testing.go AssertDatabaseCount/HasNoRecords/HasExactly |
-| 3 | AssertSoftDeleted | Pending | — | — | — |
+| 3 | AssertSoftDeleted | ✅ Done | — | — | 2026-06-01 | testing/testing.go AssertSoftDeleted/AssertNotSoftDeleted/AssertDatabaseTable |
 | 4 | ActingAs() auth helper | ✅ Done | — | — | 2026-05-22 | testing/testing.go ActingAs |
 | 5 | Time travel (Travel, FreezeTime) | Pending | — | — | — |
 | 6 | RefreshDatabase (transaction rollback) | ✅ Done | — | — | 2026-05-22 | testing/db.go RefreshDatabase |
-| 7 | View assertions (AssertViewHas, AssertViewIs) | Pending | — | — | — |
+| 7 | View assertions (AssertViewHas, AssertViewIs) | ✅ Done | — | — | 2026-06-01 | testing/testing.go AssertViewIs/AssertViewHas/AssertViewHasValue |
 | 8 | Command testing (ExpectsOutput) | Pending | — | — | — |
-| 9 | Mail fake (Mail.AssertSent) | Pending | — | — | — |
-| 10 | Notification fake | Pending | — | — | — |
-| 11 | Event fake | Pending | — | — | — |
-| 12 | Queue fake | Pending | — | — | — |
+| 9 | Mail fake (Mail.AssertSent) | ✅ Done | — | — | 2026-06-01 | mail/fake.go MailFake with AssertSent |
+| 10 | Notification fake | ✅ Done | — | — | 2026-06-01 | notifications/fake.go Fake/Send/AssertSent |
+| 11 | Event fake | ✅ Done | — | — | 2026-06-01 | events/fake.go Fake/Dispatch/AssertDispatched |
+| 12 | Queue fake | ✅ Done | — | — | 2026-06-01 | queue/fake.go Fake/Push/GetJobs/Sync |
 
 ---
 
@@ -386,20 +386,20 @@
 | 3 | Sail (Docker dev environment) | Pending | — | — | — |
 | 4 | Pulse (health monitoring) | Pending | — | — | — |
 | 5 | Socialite Apple provider | Pending | — | — | — |
-| 6 | Route group name prefixes | Pending | — | — | — |
-| 7 | Controller middleware assignment | Pending | — | — | — |
+| 6 | Route group name prefixes | ✅ Done | — | — | 2026-06-01 | routing/router.go NameGroup/AsGroup |
+| 7 | Controller middleware assignment | ✅ Done | — | — | 2026-05-22 | routing/router.go |
 | 8 | Maintenance mode bypass IPs | Pending | — | — | — |
 | 9 | TrustHosts middleware | Pending | — | — | — |
 | 10 | Blade @vite directive | Pending | — | — | — |
-| 11 | HTTP Client retry with backoff | Pending | — | — | — |
-| 12 | HTTP Client fake for testing | Pending | — | — | — |
-| 13 | Pipeline class (generic) | Pending | — | — | — |
-| 14 | Streaming responses | Pending | — | — | — |
-| 15 | Contracts package (interfaces) | Pending | — | — | — |
-| 16 | Conditionable / Tappable | Pending | — | — | — |
-| 17 | Once helper | Pending | — | — | — |
-| 18 | Defer helper | Pending | — | — | — |
-| 19 | Concurrency helper | Pending | — | — | — |
+| 11 | HTTP Client retry with backoff | ✅ Done | — | — | 2026-06-01 | http/client/client.go WithRetry + exponential backoff |
+| 12 | HTTP Client fake for testing | ✅ Done | — | — | 2026-06-01 | http/client/fake.go Fake/When/AssertSent |
+| 13 | Pipeline class (generic) | ✅ Done | — | — | 2026-05-22 | support/pipeline/pipeline.go |
+| 14 | Streaming responses | ✅ Done | — | — | 2026-06-01 | http/response/stream.go StreamLines/StreamSSE/StreamTimer |
+| 15 | Contracts package (interfaces) | ✅ Done | — | — | 2026-06-01 | contracts/contracts.go |
+| 16 | Conditionable / Tappable | ✅ Done | — | — | 2026-06-01 | support/helpers.go Conditionable/Tap |
+| 17 | Once helper | ✅ Done | — | — | 2026-06-01 | support/helpers.go Once |
+| 18 | Defer helper | ✅ Done | — | — | 2026-06-01 | support/helpers.go Defer |
+| 19 | Concurrency helper | ✅ Done | — | — | 2026-06-01 | support/helpers.go Parallel/Collect/LimitConcurrency/Retry |
 | 20 | Context propagation | Pending | — | — | — |
 | 21 | Parallel testing | Pending | — | — | — |
 

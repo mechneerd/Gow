@@ -142,6 +142,115 @@ func (tr *TestResponse) AssertHeader(key, value string) *TestResponse {
 	return tr
 }
 
+// AssertViewIs asserts the response was rendered with the given view name.
+func (tr *TestResponse) AssertViewIs(view string) *TestResponse {
+	tr.T.Helper()
+	// View name is typically set in the response context or header
+	viewHeader := tr.Recorder.Header().Get("X-View")
+	if viewHeader == "" {
+		tr.T.Errorf("Expected view [%s], but no view was set", view)
+	} else if viewHeader != view {
+		tr.T.Errorf("Expected view [%s], got [%s]", view, viewHeader)
+	}
+	return tr
+}
+
+// AssertViewHas asserts the view data contains the given key.
+func (tr *TestResponse) AssertViewHas(key string) *TestResponse {
+	tr.T.Helper()
+	viewData := tr.Recorder.Header().Get("X-View-Data-" + key)
+	if viewData == "" {
+		tr.T.Errorf("Expected view data to contain key [%s]", key)
+	}
+	return tr
+}
+
+// AssertViewHasValue asserts the view data contains the given key with the expected value.
+func (tr *TestResponse) AssertViewHasValue(key string, value string) *TestResponse {
+	tr.T.Helper()
+	viewData := tr.Recorder.Header().Get("X-View-Data-" + key)
+	if viewData != value {
+		tr.T.Errorf("Expected view data [%s] to be [%s], got [%s]", key, value, viewData)
+	}
+	return tr
+}
+
+// AssertCookie asserts the response contains a cookie with the given name.
+func (tr *TestResponse) AssertCookie(name string) *TestResponse {
+	tr.T.Helper()
+	for _, cookie := range tr.Recorder.Result().Cookies() {
+		if cookie.Name == name {
+			return tr
+		}
+	}
+	tr.T.Errorf("Expected cookie [%s] not found", name)
+	return tr
+}
+
+// AssertCookieValue asserts the response contains a cookie with the given value.
+func (tr *TestResponse) AssertCookieValue(name, value string) *TestResponse {
+	tr.T.Helper()
+	for _, cookie := range tr.Recorder.Result().Cookies() {
+		if cookie.Name == name && cookie.Value == value {
+			return tr
+		}
+	}
+	tr.T.Errorf("Expected cookie [%s] with value [%s] not found", name, value)
+	return tr
+}
+
+// AssertDontSee asserts the response body does NOT contain the given text.
+func (tr *TestResponse) AssertDontSee(text string) *TestResponse {
+	tr.T.Helper()
+	assert.NotContains(tr.T, tr.Recorder.Body.String(), text, "Response should not contain text")
+	return tr
+}
+
+// AssertSeeText asserts the response body contains the given text (as plain text).
+func (tr *TestResponse) AssertSeeText(text string) *TestResponse {
+	tr.T.Helper()
+	assert.Contains(tr.T, tr.Recorder.Body.String(), text, "Response did not contain expected text")
+	return tr
+}
+
+// AssertJsonCount asserts the response JSON array has the given count.
+func (tr *TestResponse) AssertJsonCount(key string, count int) *TestResponse {
+	tr.T.Helper()
+	var data map[string]any
+	json.Unmarshal(tr.Recorder.Body.Bytes(), &data)
+
+	if arr, ok := data[key].([]any); ok {
+		assert.Equal(tr.T, count, len(arr), "JSON array count mismatch")
+	} else {
+		tr.T.Errorf("Expected key [%s] to be an array", key)
+	}
+	return tr
+}
+
+// AssertSuccessful asserts the response status is 2xx.
+func (tr *TestResponse) AssertSuccessful() *TestResponse {
+	tr.T.Helper()
+	assert.True(tr.T, tr.Recorder.Code >= 200 && tr.Recorder.Code < 300,
+		"Expected successful status code, got %d", tr.Recorder.Code)
+	return tr
+}
+
+// AssertClientError asserts the response status is 4xx.
+func (tr *TestResponse) AssertClientError() *TestResponse {
+	tr.T.Helper()
+	assert.True(tr.T, tr.Recorder.Code >= 400 && tr.Recorder.Code < 500,
+		"Expected client error status code, got %d", tr.Recorder.Code)
+	return tr
+}
+
+// AssertServerError asserts the response status is 5xx.
+func (tr *TestResponse) AssertServerError() *TestResponse {
+	tr.T.Helper()
+	assert.True(tr.T, tr.Recorder.Code >= 500,
+		"Expected server error status code, got %d", tr.Recorder.Code)
+	return tr
+}
+
 // AssertDatabaseHas asserts that a database table contains a row matching the given constraints.
 func (tc *TestCase) AssertDatabaseHas(table string, conditions map[string]any) {
 	tc.Helper()
@@ -232,6 +341,93 @@ func (tc *TestCase) AssertDatabaseHasExactly(table string, conditions map[string
 	}
 	if count != 1 {
 		tc.Errorf("Failed asserting that table [%s] has exactly 1 row matching %v. Found %d", table, conditions, count)
+	}
+}
+
+// AssertSoftDeleted asserts that a row has been soft-deleted (deleted_at is not null).
+func (tc *TestCase) AssertSoftDeleted(table string, conditions map[string]any) {
+	tc.Helper()
+	d, err := tc.DB.Dialect()
+	if err != nil {
+		tc.Fatalf("Dialect not configured: %v", err)
+	}
+	builder := query.NewBuilder(tc.DB.RawDB(), d)
+	builder.Table(table)
+	
+	for k, v := range conditions {
+		builder.Where(k, "=", v)
+	}
+	builder.Where("deleted_at", "IS NOT", nil)
+	
+	count, err := builder.Count("*")
+	if err != nil {
+		tc.Fatalf("Error querying database: %v", err)
+	}
+	if count == 0 {
+		tc.Errorf("Failed asserting that table [%s] has soft-deleted row matching %v", table, conditions)
+	}
+}
+
+// AssertNotSoftDeleted asserts that a row has NOT been soft-deleted.
+func (tc *TestCase) AssertNotSoftDeleted(table string, conditions map[string]any) {
+	tc.Helper()
+	d, err := tc.DB.Dialect()
+	if err != nil {
+		tc.Fatalf("Dialect not configured: %v", err)
+	}
+	builder := query.NewBuilder(tc.DB.RawDB(), d)
+	builder.Table(table)
+	
+	for k, v := range conditions {
+		builder.Where(k, "=", v)
+	}
+	builder.Where("deleted_at", "IS", nil)
+	
+	count, err := builder.Count("*")
+	if err != nil {
+		tc.Fatalf("Error querying database: %v", err)
+	}
+	if count == 0 {
+		tc.Errorf("Failed asserting that table [%s] has non-soft-deleted row matching %v", table, conditions)
+	}
+}
+
+// AssertDatabaseTable asserts that a database table exists.
+func (tc *TestCase) AssertDatabaseTable(table string) {
+	tc.Helper()
+	d, err := tc.DB.Dialect()
+	if err != nil {
+		tc.Fatalf("Dialect not configured: %v", err)
+	}
+	builder := query.NewBuilder(tc.DB.RawDB(), d)
+	builder.Table(table)
+	
+	_, err = builder.Count("*")
+	if err != nil {
+		tc.Errorf("Failed asserting that table [%s] exists: %v", table, err)
+	}
+}
+
+// AssertDatabaseHasColumns asserts that a table has the given columns.
+func (tc *TestCase) AssertDatabaseHasColumns(table string, columns ...string) {
+	tc.Helper()
+	// This is a basic check - in production we'd query information_schema
+	// For now, just check that we can query the table
+	d, err := tc.DB.Dialect()
+	if err != nil {
+		tc.Fatalf("Dialect not configured: %v", err)
+	}
+	builder := query.NewBuilder(tc.DB.RawDB(), d)
+	builder.Table(table)
+	
+	// Try to select the columns
+	for _, col := range columns {
+		builder.Select(col)
+	}
+	
+	_, err = builder.Get()
+	if err != nil {
+		tc.Errorf("Failed asserting that table [%s] has columns %v: %v", table, columns, err)
 	}
 }
 

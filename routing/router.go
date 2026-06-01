@@ -305,6 +305,27 @@ func (r *Router) Group(prefix string, callback func(*Router)) {
 	r.mu.Unlock()
 }
 
+// NameGroup creates a route group with a name prefix for named routes.
+// All routes registered within the group will have the name prefix prepended.
+func (r *Router) NameGroup(prefix string, callback func(*Router)) {
+	r.mu.Lock()
+	oldPrefix := r.groupPrefix
+	r.groupPrefix = oldPrefix + prefix
+	r.mu.Unlock()
+	
+	callback(r)
+	
+	r.mu.Lock()
+	r.groupPrefix = oldPrefix
+	r.mu.Unlock()
+}
+
+// AsGroup creates a route group with a name prefix using the "as" syntax.
+// Usage: router.AsGroup("api.", func(r *Router) { r.Get("users", handler).Name("users.index") })
+func (r *Router) AsGroup(namePrefix string, callback func(*Router)) {
+	r.NameGroup(namePrefix, callback)
+}
+
 // Use adds a middleware to the router for subsequent routes
 func (r *Router) Use(mw func(http.Handler) http.Handler) {
 	r.mu.Lock()

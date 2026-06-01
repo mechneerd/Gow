@@ -363,6 +363,68 @@ func main() {
 	},
 }
 
+var MigrateResetCmd = &cobra.Command{
+	Use:   "migrate:reset",
+	Short: "Rollback all database migrations",
+	Run: func(cmd *cobra.Command, args []string) {
+		cwd, _ := os.Getwd()
+
+		if err := generateMigrationRegister(); err != nil {
+			fmt.Println("Warning:", err)
+		}
+
+		runnerFile := filepath.Join(cwd, ".gow", "migrate_runner.go")
+		if err := os.MkdirAll(filepath.Dir(runnerFile), 0755); err != nil {
+			fmt.Println("Warning:", err)
+		}
+
+		modulePath := readModulePath(filepath.Join(cwd, "go.mod"))
+		if modulePath == "" {
+			modulePath = "unknown"
+		}
+
+		runnerCode := fmt.Sprintf(`package main
+
+import (
+	_ "%s/database/migrations"
+	_ "modernc.org/sqlite"
+	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/lib/pq"
+	"log"
+
+	"github.com/mechneerd/gow/database/migration"
+)
+
+func main() {
+	db, dialect, err := migration.ConnectFromEnv()
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err := migration.Rollback(db, dialect, 0); err != nil {
+		log.Fatal(err)
+	}
+}
+`, modulePath)
+
+		_ = os.WriteFile(runnerFile, []byte(runnerCode), 0644)
+
+		ensureDriverDeps(cwd)
+
+		execCmd := exec.Command("go", "run", "-C", cwd, runnerFile)
+		execCmd.Stdout = os.Stdout
+		execCmd.Stderr = os.Stderr
+
+		fmt.Println("→ Running migrate:reset with auto-discovered files...")
+		if err := execCmd.Run(); err != nil {
+			fmt.Println("migrate:reset failed:", err)
+			return
+		}
+
+		_ = os.Remove(runnerFile)
+		_ = os.Remove(filepath.Dir(runnerFile))
+	},
+}
+
 func init() {
 	// These commands are meant to be registered with the console kernel
 	// that has access to the Migrator instance.

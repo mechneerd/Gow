@@ -30,6 +30,11 @@ func (e *eventStoppable) IsPropagationStopped() bool {
 	return e.propagationStopped
 }
 
+// ShouldQueue indicates that an event listener should be queued for async processing.
+type ShouldQueue interface {
+	HandleQueued(event Event) error
+}
+
 // Subscriber represents a class that subscribes to multiple events.
 type Subscriber interface {
 	Subscribe(dispatcher *Manager)
@@ -47,19 +52,28 @@ type Broadcaster interface {
 	Broadcast(channels []string, eventName string, payload map[string]any) error
 }
 
+// QueueDispatcher is an interface for dispatching events to a queue.
+type QueueDispatcher interface {
+	DispatchToQueue(event Event, handler ShouldQueue) error
+}
+
 // Manager orchestrates application events.
 type Manager struct {
-	mu          sync.RWMutex
-	listeners   map[reflect.Type][]Listener
-	wildcards   []Listener
-	broadcaster Broadcaster
+	mu             sync.RWMutex
+	listeners      map[reflect.Type][]Listener
+	queuedListeners map[reflect.Type][]ShouldQueue
+	wildcards      []Listener
+	broadcaster    Broadcaster
+	queueDispatcher QueueDispatcher
+	fakes          []*Fake
 }
 
 // NewManager creates a new event manager.
 func NewManager() *Manager {
 	return &Manager{
-		listeners: make(map[reflect.Type][]Listener),
-		wildcards: make([]Listener, 0),
+		listeners:       make(map[reflect.Type][]Listener),
+		queuedListeners: make(map[reflect.Type][]ShouldQueue),
+		wildcards:       make([]Listener, 0),
 	}
 }
 
@@ -68,6 +82,13 @@ func (m *Manager) SetBroadcaster(b Broadcaster) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.broadcaster = b
+}
+
+// SetQueueDispatcher sets the queue dispatcher for queued listeners.
+func (m *Manager) SetQueueDispatcher(qd QueueDispatcher) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.queueDispatcher = qd
 }
 
 // Listen registers a listener for a specific event type.
@@ -88,6 +109,17 @@ func (m *Manager) ListenAny(listener Listener) {
 	m.wildcards = append(m.wildcards, listener)
 }
 
+// QueueListener registers a queued listener for a specific event type.
+func (m *Manager) QueueListener(event Event, handler ShouldQueue) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	eventType := reflect.TypeOf(event)
+	if eventType.Kind() == reflect.Ptr {
+		eventType = eventType.Elem()
+	}
+	m.queuedListeners[eventType] = append(m.queuedListeners[eventType], handler)
+}
+
 // Subscribe registers an event subscriber.
 func (m *Manager) Subscribe(subscriber Subscriber) {
 	subscriber.Subscribe(m)
@@ -96,8 +128,20 @@ func (m *Manager) Subscribe(subscriber Subscriber) {
 // Dispatch triggers all registered listeners for the given event.
 // If the event implements StoppableEvent, propagation stops when StopPropagation() is called.
 func (m *Manager) Dispatch(event Event) {
+	// Check for fakes
+	m.mu.RLock()
+	if len(m.fakes) > 0 {
+		for _, fake := range m.fakes {
+			fake.Dispatch(event)
+		}
+		m.mu.RUnlock()
+		return
+	}
+	m.mu.RUnlock()
+
 	m.mu.RLock()
 	broadcaster := m.broadcaster
+	queueDispatcher := m.queueDispatcher
 	wildcards := make([]Listener, len(m.wildcards))
 	copy(wildcards, m.wildcards)
 	eventType := reflect.TypeOf(event)
@@ -106,6 +150,8 @@ func (m *Manager) Dispatch(event Event) {
 	}
 	specificListeners := make([]Listener, len(m.listeners[eventType]))
 	copy(specificListeners, m.listeners[eventType])
+	queuedListeners := make([]ShouldQueue, len(m.queuedListeners[eventType]))
+	copy(queuedListeners, m.queuedListeners[eventType])
 	m.mu.RUnlock()
 
 	// Handle ShouldBroadcast
@@ -126,6 +172,16 @@ func (m *Manager) Dispatch(event Event) {
 		listener(event)
 		if stopEvent, ok := event.(StoppableEvent); ok && stopEvent.IsPropagationStopped() {
 			return
+		}
+	}
+
+	// Execute queued listeners
+	for _, handler := range queuedListeners {
+		if queueDispatcher != nil {
+			queueDispatcher.DispatchToQueue(event, handler)
+		} else {
+			// Fallback to synchronous execution
+			handler.HandleQueued(event)
 		}
 	}
 }
@@ -169,6 +225,7 @@ func (m *Manager) Forget(event Event) {
 		eventType = eventType.Elem()
 	}
 	delete(m.listeners, eventType)
+	delete(m.queuedListeners, eventType)
 }
 
 // ForgetListener removes a specific listener from an event type.
@@ -199,7 +256,7 @@ func (m *Manager) HasListeners(event Event) bool {
 		eventType = eventType.Elem()
 	}
 
-	return len(m.listeners[eventType]) > 0 || len(m.wildcards) > 0
+	return len(m.listeners[eventType]) > 0 || len(m.wildcards) > 0 || len(m.queuedListeners[eventType]) > 0
 }
 
 // ListenerCount returns the number of listeners registered for the given event type.
@@ -212,12 +269,18 @@ func (m *Manager) ListenerCount(event Event) int {
 		eventType = eventType.Elem()
 	}
 
-	return len(m.listeners[eventType]) + len(m.wildcards)
+	return len(m.listeners[eventType]) + len(m.wildcards) + len(m.queuedListeners[eventType])
+}
+
+// Fake sets a fake event dispatcher for testing.
+func (m *Manager) Fake(fake *Fake) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.fakes = append(m.fakes, fake)
 }
 
 // QueueListen registers a listener that should be queued.
-// Deprecated: This currently runs synchronously. For actual queue support,
-// dispatch the event through the queue system in your listener implementation.
+// Deprecated: Use QueueListener instead.
 func (m *Manager) QueueListen(event Event, listener Listener) {
 	m.Listen(event, func(e Event) {
 		listener(e)

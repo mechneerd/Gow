@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"sync"
 
 	authaccess "github.com/mechneerd/gow/auth/access"
 	"github.com/mechneerd/gow/localization"
@@ -18,6 +19,9 @@ import (
 type Engine struct {
 	ViewPaths []string
 	Compiler  *Compiler
+	shared    map[string]any
+	stacks    map[string][]string
+	mu        sync.RWMutex
 }
 
 // NewEngine creates a new view engine.
@@ -297,6 +301,20 @@ func (e *Engine) Make(name string, data map[string]any) (string, error) {
 		}
 	}
 
+	// Merge shared data into the template data
+	e.mu.RLock()
+	if e.shared != nil {
+		if data == nil {
+			data = make(map[string]any)
+		}
+		for k, v := range e.shared {
+			if _, exists := data[k]; !exists {
+				data[k] = v
+			}
+		}
+	}
+	e.mu.RUnlock()
+
 	var buf bytes.Buffer
 	// Execute using the root layout's full path as template name
 	rootPath := filepath.ToSlash(filesToParse[len(filesToParse)-1])
@@ -305,5 +323,96 @@ func (e *Engine) Make(name string, data map[string]any) (string, error) {
 	}
 
 	return buf.String(), nil
+}
+
+// Share shares a piece of data across all views.
+func (e *Engine) Share(key string, value any) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	if e.shared == nil {
+		e.shared = make(map[string]any)
+	}
+	e.shared[key] = value
+}
+
+// ShareMany shares multiple pieces of data across all views.
+func (e *Engine) ShareMany(data map[string]any) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	if e.shared == nil {
+		e.shared = make(map[string]any)
+	}
+	for k, v := range data {
+		e.shared[k] = v
+	}
+}
+
+// GetShared returns all shared data.
+func (e *Engine) GetShared() map[string]any {
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+	result := make(map[string]any)
+	for k, v := range e.shared {
+		result[k] = v
+	}
+	return result
+}
+
+// Push adds content to a named stack.
+func (e *Engine) Push(name string, content string) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	if e.stacks == nil {
+		e.stacks = make(map[string][]string)
+	}
+	e.stacks[name] = append(e.stacks[name], content)
+}
+
+// Stack returns all content in a named stack.
+func (e *Engine) Stack(name string) []string {
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+	if e.stacks == nil {
+		return nil
+	}
+	return e.stacks[name]
+}
+
+// ClearStack clears a named stack.
+func (e *Engine) ClearStack(name string) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	if e.stacks != nil {
+		delete(e.stacks, name)
+	}
+}
+
+// ClearAllStacks clears all stacks.
+func (e *Engine) ClearAllStacks() {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	e.stacks = make(map[string][]string)
+}
+
+// Each iterates over a collection and renders a template for each item.
+func (e *Engine) Each(collection []any, templateName string, data map[string]any) (string, error) {
+	var result strings.Builder
+	for i, item := range collection {
+		itemData := make(map[string]any)
+		for k, v := range data {
+			itemData[k] = v
+		}
+		itemData["item"] = item
+		itemData["index"] = i
+		itemData["first"] = i == 0
+		itemData["last"] = i == len(collection)-1
+
+		rendered, err := e.Make(templateName, itemData)
+		if err != nil {
+			return "", err
+		}
+		result.WriteString(rendered)
+	}
+	return result.String(), nil
 }
 
