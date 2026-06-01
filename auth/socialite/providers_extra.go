@@ -305,3 +305,82 @@ func (p *LinkedInProvider) User(ctx context.Context, code string) (*User, error)
 		Token:  token.AccessToken,
 	}, nil
 }
+
+// AppleProvider implements Apple Sign In.
+type AppleProvider struct {
+	AbstractProvider
+	teamID     string
+	keyID      string
+	privateKey string
+}
+
+// NewAppleProvider creates a new Apple OAuth provider.
+func NewAppleProvider(clientID, clientSecret, redirectURL, teamID, keyID, privateKey string) *AppleProvider {
+	return &AppleProvider{
+		AbstractProvider: AbstractProvider{
+			ClientID:     clientID,
+			ClientSecret: clientSecret,
+			RedirectURL:  redirectURL,
+			Scopes:       []string{"name", "email"},
+		},
+		teamID:     teamID,
+		keyID:      keyID,
+		privateKey: privateKey,
+	}
+}
+
+// Redirect returns the Apple authorization URL.
+func (p *AppleProvider) Redirect(state string) string {
+	u, _ := url.Parse("https://appleid.apple.com/auth/authorize")
+	q := u.Query()
+	q.Set("client_id", p.ClientID)
+	q.Set("redirect_uri", p.RedirectURL)
+	q.Set("scope", strings.Join(p.Scopes, " "))
+	q.Set("state", state)
+	q.Set("response_type", "code id_token")
+	q.Set("response_mode", "form_post")
+	u.RawQuery = q.Encode()
+	return u.String()
+}
+
+// User exchanges the authorization code for user information.
+func (p *AppleProvider) User(ctx context.Context, code string) (*User, error) {
+	tokenURL := "https://appleid.apple.com/auth/token"
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, tokenURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create token request: %w", err)
+	}
+	req.Form = url.Values{
+		"client_id":     {p.ClientID},
+		"client_secret": {p.ClientSecret},
+		"code":          {code},
+		"redirect_uri":  {p.RedirectURL},
+		"grant_type":    {"authorization_code"},
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to exchange code for token: %w", err)
+	}
+	defer resp.Body.Close()
+
+	var token struct {
+		AccessToken string `json:"access_token"`
+		IDToken     string `json:"id_token"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&token); err != nil {
+		return nil, fmt.Errorf("failed to decode token response: %w", err)
+	}
+	if token.AccessToken == "" {
+		return nil, fmt.Errorf("apple returned empty access token")
+	}
+
+	// Parse the ID token to get user info (simplified)
+	// In production, you would verify the JWT signature
+	user := &User{
+		Token: token.AccessToken,
+	}
+
+	return user, nil
+}

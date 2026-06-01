@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/mechneerd/gow/database/orm"
@@ -502,5 +503,160 @@ func (atc *ArtisanTestCase) AssertOutputIs(expected string) *ArtisanTestCase {
 // Output returns the command output.
 func (atc *ArtisanTestCase) Output() string {
 	return atc.output.String()
+}
+
+// ParallelTestCase provides parallel test execution support.
+type ParallelTestCase struct {
+	*testing.T
+	workers int
+}
+
+// NewParallelTestCase creates a new parallel test case.
+func NewParallelTestCase(t *testing.T, workers int) *ParallelTestCase {
+	if workers <= 0 {
+		workers = 4
+	}
+	return &ParallelTestCase{
+		T:       t,
+		workers: workers,
+	}
+}
+
+// Run runs the given function in parallel with multiple workers.
+func (ptc *ParallelTestCase) Run(fn func(workerID int)) {
+	ptc.Helper()
+
+	if ptc.workers <= 1 {
+		fn(0)
+		return
+	}
+
+	done := make(chan struct{}, ptc.workers)
+
+	for i := 0; i < ptc.workers; i++ {
+		go func(workerID int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ptc.Errorf("Worker %d panicked: %v", workerID, r)
+				}
+				done <- struct{}{}
+			}()
+			fn(workerID)
+		}(i)
+	}
+
+	for i := 0; i < ptc.workers; i++ {
+		<-done
+	}
+}
+
+// RunParallel runs multiple test functions in parallel.
+func (ptc *ParallelTestCase) RunParallel(fns ...func(workerID int)) {
+	ptc.Helper()
+
+	if len(fns) == 0 {
+		return
+	}
+
+	done := make(chan struct{}, len(fns))
+
+	for _, fn := range fns {
+		go func(f func(workerID int)) {
+			defer func() {
+				if r := recover(); r != nil {
+					ptc.Errorf("Parallel test panicked: %v", r)
+				}
+				done <- struct{}{}
+			}()
+			f(0)
+		}(fn)
+	}
+
+	for i := 0; i < len(fns); i++ {
+		<-done
+	}
+}
+
+// ConcurrentTestCase manages concurrent test execution with shared state.
+type ConcurrentTestCase struct {
+	*testing.T
+	results   chan TestResult
+	errors    chan error
+	timeout   time.Duration
+}
+
+// TestResult represents the result of a concurrent test.
+type TestResult struct {
+	WorkerID  int
+	Duration  time.Duration
+	Error     error
+}
+
+// NewConcurrentTestCase creates a new concurrent test case.
+func NewConcurrentTestCase(t *testing.T, workers int, timeout time.Duration) *ConcurrentTestCase {
+	if timeout == 0 {
+		timeout = 30 * time.Second
+	}
+	return &ConcurrentTestCase{
+		T:       t,
+		results: make(chan TestResult, workers),
+		errors:  make(chan error, workers),
+		timeout: timeout,
+	}
+}
+
+// Run runs a function concurrently with the specified number of workers.
+func (ctc *ConcurrentTestCase) Run(workers int, fn func(workerID int) error) {
+	ctc.Helper()
+
+	done := make(chan error, workers)
+
+	for i := 0; i < workers; i++ {
+		go func(workerID int) {
+			done <- fn(workerID)
+		}(i)
+	}
+
+	timer := time.NewTimer(ctc.timeout)
+	defer timer.Stop()
+
+	for i := 0; i < workers; i++ {
+		select {
+		case err := <-done:
+			if err != nil {
+				ctc.Errorf("Worker %d failed: %v", i, err)
+			}
+		case <-timer.C:
+			ctc.Fatalf("Test timed out after %v", ctc.timeout)
+		}
+	}
+}
+
+// RunWithTimeout runs a function with a timeout.
+func (ctc *ConcurrentTestCase) RunWithTimeout(timeout time.Duration, fn func() error) {
+	ctc.Helper()
+
+	done := make(chan error, 1)
+	go func() {
+		done <- fn()
+	}()
+
+	select {
+	case err := <-done:
+		if err != nil {
+			ctc.Errorf("Test failed: %v", err)
+		}
+	case <-time.After(timeout):
+		ctc.Fatalf("Test timed out after %v", timeout)
+	}
+}
+
+// AssertNoErrors asserts that no errors occurred in the error channel.
+func (ctc *ConcurrentTestCase) AssertNoErrors() {
+	ctc.Helper()
+	close(ctc.errors)
+	for err := range ctc.errors {
+		ctc.Errorf("Unexpected error: %v", err)
+	}
 }
 

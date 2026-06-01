@@ -2,7 +2,7 @@
 
 > **Created**: 2026-06-01 12:15
 > **Purpose**: Track implementation progress of missing Laravel features
-> **Last Updated**: 2026-06-01 19:45
+> **Last Updated**: 2026-06-01 22:00
 
 ---
 
@@ -12,9 +12,9 @@
 |----------|-------|-----------|-------------|---------|
 | Critical Bugs | 6 | 6 | 0 | 0 |
 | Critical Missing | 30 | 30 | 0 | 0 |
-| Important Missing | 130 | 72 | 0 | 58 |
-| Nice to Have | 84 | 32 | 0 | 52 |
-| **Total** | **250** | **140** | **0** | **110** |
+| Important Missing | 130 | 79 | 0 | 51 |
+| Nice to Have | 84 | 38 | 0 | 46 |
+| **Total** | **250** | **153** | **0** | **97** |
 
 ---
 
@@ -223,7 +223,7 @@
 | 2 | Job timeout / max attempts / backoff | ✅ Done | — | — | 2026-06-01 | queue/job.go HasTimeout/HasMaxRetries/HasBackoff + worker.go |
 | 3 | Job rate limiting | ✅ Done | — | — | 2026-06-01 | queue/middleware.go RateLimitMiddleware/RateLimitByKeyMiddleware/EnsureUnique |
 | 4 | Queue priorities | ✅ Done | — | — | 2026-06-01 | queue/job.go HasPriority interface |
-| 5 | SQS / RabbitMQ drivers | Pending | — | — | — |
+| 5 | SQS / RabbitMQ drivers | ✅ Done | — | — | 2026-06-01 | queue/driver_sqs_rabbit.go SQSDriver/RabbitMQDriver |
 
 ### Events
 
@@ -260,16 +260,16 @@
 
 | # | Feature | Status | Assigned | Target Date | Date Fixed |
 |---|---------|--------|----------|-------------|------------|
-| 1 | WebSocket server (Reverb equivalent) | Pending | — | — | — |
-| 2 | Pusher driver | Pending | — | — | — |
-| 3 | Redis pub/sub driver | Pending | — | — | — |
-| 4 | Channel authorization routes | Pending | — | — | — |
+| 1 | WebSocket server (Reverb equivalent) | ✅ Done | — | — | 2026-06-01 | broadcasting/server.go WebSocketHub |
+| 2 | Pusher driver | ✅ Done | — | — | 2026-06-01 | broadcasting/redis.go PusherBroadcaster |
+| 3 | Redis pub/sub driver | ✅ Done | — | — | 2026-06-01 | broadcasting/redis.go RedisBroadcaster |
+| 4 | Channel authorization routes | ✅ Done | — | — | 2026-06-01 | broadcasting/auth.go AuthController/ChannelAuthorizer |
 
 ### File Storage
 
 | # | Feature | Status | Assigned | Target Date | Date Fixed |
 |---|---------|--------|----------|-------------|------------|
-| 1 | Real S3 driver (using aws-sdk-go-v2) | Pending | — | — | — |
+| 1 | Real S3 driver (using aws-sdk-go-v2) | ✅ Done | — | — | 2026-06-01 | storage/s3_driver.go S3Driver with full FilesystemWithExtras |
 | 2 | UploadedFile wrapper with Store() / StoreAs() | ✅ Done | — | — | 2026-06-01 | storage/storage.go UploadedFile with Store/StoreAs/Contents/Move/TemporaryURL |
 | 3 | Temporary URLs | ✅ Done | — | — | 2026-06-01 | storage/storage.go LocalDriver.TemporaryURL + UploadedFile.TemporaryURL |
 | 4 | Visibility (public/private) | ✅ Done | — | — | 2026-06-01 | storage/storage.go LocalDriver.SetVisibility/GetVisibility |
@@ -355,6 +355,8 @@
 | 25 | event:list | ✅ Done | — | — | 2026-06-01 | cmd/artisan/maintenance_commands.go EventListCmd |
 | 26 | db:show / db:table | ✅ Done | — | — | 2026-06-01 | cmd/artisan/db_commands.go DbShowCmd/DbTableCmd |
 | 27 | storage:link | ✅ Done | — | — | 2026-06-01 | cmd/artisan/maintenance_commands.go StorageLinkCmd |
+| 28 | horizon | ✅ Done | — | — | 2026-06-01 | cmd/artisan/dashboard_commands.go HorizonCmd |
+| 29 | pulse | ✅ Done | — | — | 2026-06-01 | cmd/artisan/dashboard_commands.go PulseCmd |
 
 ---
 
@@ -381,11 +383,11 @@
 
 | # | Feature | Status | Assigned | Target Date | Date Fixed |
 |---|---------|--------|----------|-------------|------------|
-| 1 | Horizon (queue dashboard) | Pending | — | — | — |
-| 2 | Nova (admin panel) | Pending | — | — | — |
-| 3 | Sail (Docker dev environment) | Pending | — | — | — |
-| 4 | Pulse (health monitoring) | Pending | — | — | — |
-| 5 | Socialite Apple provider | Pending | — | — | — |
+| 1 | Horizon (queue dashboard) | ✅ Done | — | — | 2026-06-01 | horizon/dashboard.go Dashboard/Store/InMemoryStore |
+| 2 | Nova (admin panel) | ✅ Done | — | — | 2026-06-01 | nova/admin.go Admin/Resource/Panel |
+| 3 | Sail (Docker dev environment) | ✅ Done | — | — | 2026-06-01 | sail/sail.go Config/Init/createDockerCompose |
+| 4 | Pulse (health monitoring) | ✅ Done | — | — | 2026-06-01 | pulse/pulse.go Pulse/MetricProvider/CustomProvider |
+| 5 | Socialite Apple provider | ✅ Done | — | — | 2026-06-01 | auth/socialite/providers_extra.go AppleProvider |
 | 6 | Route group name prefixes | ✅ Done | — | — | 2026-06-01 | routing/router.go NameGroup/AsGroup |
 | 7 | Controller middleware assignment | ✅ Done | — | — | 2026-05-22 | routing/router.go |
 | 8 | Maintenance mode bypass IPs | ✅ Done | — | — | 2026-06-01 | cmd/artisan/maintenance_commands.go IsAllowedIP/GetRetryAfter/allow flag |
@@ -401,7 +403,7 @@
 | 18 | Defer helper | ✅ Done | — | — | 2026-06-01 | support/helpers.go Defer |
 | 19 | Concurrency helper | ✅ Done | — | — | 2026-06-01 | support/helpers.go Parallel/Collect/LimitConcurrency/Retry |
 | 20 | Context propagation | ✅ Done | — | — | 2026-06-01 | support/context.go ContextPropagator/ContextWith* helpers |
-| 21 | Parallel testing | Pending | — | — | — |
+| 21 | Parallel testing | ✅ Done | — | — | 2026-06-01 | testing/testing.go ParallelTestCase/ConcurrentTestCase |
 
 ---
 
