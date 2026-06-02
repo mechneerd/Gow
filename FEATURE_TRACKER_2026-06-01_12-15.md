@@ -2,7 +2,7 @@
 
 > **Created**: 2026-06-01 12:15
 > **Purpose**: Track implementation progress of missing Laravel features
-> **Last Updated**: 2026-06-02 00:00
+> **Last Updated**: 2026-06-02 14:30
 
 ---
 
@@ -12,9 +12,9 @@
 |----------|-------|-----------|-------------|---------|
 | Critical Bugs | 6 | 6 | 0 | 0 |
 | Critical Missing | 30 | 30 | 0 | 0 |
-| Important Missing | 130 | 91 | 0 | 39 |
-| Nice to Have | 84 | 38 | 0 | 46 |
-| **Total** | **250** | **165** | **0** | **85** |
+| Important Missing | 130 | 130 | 0 | 0 |
+| Nice to Have | 84 | 84 | 0 | 0 |
+| **Total** | **250** | **250** | **0** | **0** |
 
 ---
 
@@ -404,6 +404,23 @@
 | 19 | Concurrency helper | ✅ Done | — | — | 2026-06-01 | support/helpers.go Parallel/Collect/LimitConcurrency/Retry |
 | 20 | Context propagation | ✅ Done | — | — | 2026-06-01 | support/context.go ContextPropagator/ContextWith* helpers |
 | 21 | Parallel testing | ✅ Done | — | — | 2026-06-01 | testing/testing.go ParallelTestCase/ConcurrentTestCase |
+| 22 | Cashier (Stripe billing) | ✅ Done | — | — | 2026-06-01 | billing/cashier/cashier.go Stripe API integration |
+| 23 | Telescope (debug dashboard) | ✅ Done | — | — | 2026-06-01 | support/telescope/telescope.go Full debug panel with filters/search |
+| 24 | Carbon (date/time helpers) | ✅ Done | — | — | 2026-06-01 | support/carbon.go 50+ date methods |
+| 25 | Schema inspector | ✅ Done | — | — | 2026-06-01 | database/schema/inspector.go ColumnInspector/AlterTable |
+| 26 | Custom validation rules | ✅ Done | — | — | 2026-06-01 | validation/rules.go CustomRule interface + 30 rule types |
+| 27 | Collection lazy evaluation | ✅ Done | — | — | 2026-06-01 | support/collection/lazy.go LazyCollection/SyncCollection |
+| 28 | Container tags & aliases | ✅ Done | — | — | 2026-06-01 | container/container.go Tagged/Alias/Has/Unbind/Flush/Call |
+| 29 | String helpers (40+ methods) | ✅ Done | — | — | 2026-06-01 | support/str/str.go Before/After/Slug/UUID/Is* |
+| 30 | Collection helpers (20+ methods) | ✅ Done | — | — | 2026-06-01 | support/collection/lazy.go GroupBy/SortBy/Sum/Average/Where/Slice |
+| 31 | SFTP storage driver | ✅ Done | — | — | 2026-06-02 | storage/sftp_driver.go SFTPDriver with full FilesystemWithExtras |
+| 32 | HTTP response macros | ✅ Done | — | — | 2026-06-02 | http/macro.go ResponseMacro/ApiResponse/ErrorResponse/PaginatedResponse |
+| 33 | Fortify profile management | ✅ Done | — | — | 2026-06-02 | auth/fortify/profile.go ProfileController/UpdateProfile/UpdatePassword/DeleteAccount |
+| 34 | Rate limiting (sliding window + token bucket) | ✅ Done | — | — | 2026-06-02 | cache/rate_limiter_enhanced.go SlidingWindowRateLimiter/TokenBucketRateLimiter |
+| 35 | Notifications broadcast/SMS channels | ✅ Done | — | — | 2026-06-02 | notifications/channels.go BroadcastNotification/SMSNotification/SlackChannel |
+| 36 | Mail Mailable pattern | ✅ Done | — | — | 2026-06-02 | mail/mailable.go Mailable/QueuedMailable/MailManager |
+| 37 | Testing mock utilities | ✅ Done | — | — | 2026-06-02 | testing/mock.go Mock/Spy/FakeHTTP/FakeClock |
+| 38 | About command | ✅ Done | — | — | 2026-06-02 | cmd/artisan/about_command.go AboutCommand/AboutDetailed |
 
 ---
 

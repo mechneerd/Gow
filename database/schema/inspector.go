@@ -236,7 +236,7 @@ func (ci *ColumnInspector) GetColumns(tableName string) ([]ColumnDefinition, err
 		return nil, fmt.Errorf("unsupported dialect: %s", ci.dialect)
 	}
 
-	rows, err := ci.db.Query(queryStr)
+	rows, err := ci.db.QueryContext(context.Background(), queryStr)
 	if err != nil {
 		return nil, err
 	}
