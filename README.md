@@ -1,6 +1,6 @@
 # GoW — Laravel for Go
 
-[![Go Version](https://img.shields.io/badge/go-1.25+-00ADD8?style=flat&logo=go)](https://go.dev/)
+[![Go Version](https://img.shields.io/badge/go-1.22+-00ADD8?style=flat&logo=go)](https://go.dev/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![GitHub Release](https://img.shields.io/github/v/release/mechneerd/gow)](https://github.com/mechneerd/gow/releases)
 [![Go Report Card](https://goreportcard.com/badge/github.com/mechneerd/gow)](https://goreportcard.com/report/github.com/mechneerd/gow)
@@ -145,6 +145,210 @@ The Artisan CLI (`gow`) has received major upgrades and is now one of GoW’s st
 - Native WebSocket broadcasting
 - Clean, modern Go codebase
 - Laravel-like developer experience in Go
+
+---
+
+## Code Examples
+
+### Routing
+
+```go
+import "github.com/mechneerd/gow/routing"
+
+router := routing.NewRouter()
+
+// Basic routes
+router.Get("/users", ListUsers)
+router.Post("/users", CreateUser)
+router.Get("/users/{id}", GetUser)
+
+// Route groups with middleware
+router.Group("/api", func(r *routing.Router) {
+    r.Get("/profile", GetProfile)
+    r.Put("/profile", UpdateProfile)
+}, authMiddleware)
+
+// Resource routes (RESTful)
+router.Resource("/posts", PostController{})
+
+// Named routes & URL generation
+router.Get("/dashboard", Dashboard).Name("dashboard")
+url := router.Route("dashboard", map[string]string{"id": "1"})
+```
+
+### ORM (Eloquent-style)
+
+```go
+import "github.com/mechneerd/gow/database/orm"
+
+type User struct {
+    orm.Model
+    Name  string `json:"name"`
+    Email string `json:"email" gorm:"unique"`
+}
+
+// Find
+user, err := orm.Find[User](db, 1)
+
+// Query with scopes
+users, err := orm.NewQuery[User](db).
+    Where("active", true).
+    With("Posts").
+    OrderBy("created_at", "desc").
+    Paginate(1, 15)
+
+// Create
+user = &User{Name: "John", Email: "john@example.com"}
+err = orm.Create(db, user)
+
+// Relationships
+type Post struct {
+    orm.Model
+    Title    string
+    AuthorID uint
+    Author   User `gorm:"foreignKey:AuthorID"`
+}
+
+// Eager load
+posts, _ := orm.NewQuery[Post](db).With("Author").Get()
+```
+
+### Authentication
+
+```go
+import (
+    "github.com/mechneerd/gow/auth"
+    "github.com/mechneerd/gow/auth/sanctum"
+)
+
+// Session-based auth
+manager := auth.NewManager()
+guard := auth.NewSessionGuard("web", provider, sessionManager)
+guard.Login(user)
+
+// Sanctum API tokens
+token, _ := sanctum.CreateToken(user, []string{"server:update"})
+if token.Can("server:update") {
+    // Authorized
+}
+
+// Middleware
+router.Get("/admin", AdminDashboard, auth.Authenticate(manager, "web"))
+```
+
+### Blade-like Views
+
+```blade
+{{-- resources/views/users/show.html --}}
+@extends("layouts.app")
+
+@section("content")
+    <h1>{{ user.Name }}</h1>
+
+    @if(len(user.Posts) > 0)
+        @foreach(user.Posts as post)
+            <article>
+                <h2>{{ post.Title }}</h2>
+                <p>{!! post.Body !!}</p>
+            </article>
+        @endforeach
+    @else
+        <p>No posts yet.</p>
+    @endif
+@endsection
+```
+
+### Validation
+
+```go
+import "github.com/mechneerd/gow/validation"
+
+rules := map[string][]string{
+    "name":  {"required", "string", "min:2", "max:255"},
+    "email": {"required", "email", "unique:users,email"},
+    "age":   {"required", "integer", "gte:18"},
+}
+
+errors := validation.Validate(data, rules)
+if errors.HasErrors() {
+    return response.JSON(422, errors.Errors())
+}
+```
+
+### Queue Jobs
+
+```go
+import "github.com/mechneerd/gow/queue"
+
+type SendEmailJob struct {
+    queue.Job
+    To      string
+    Subject string
+}
+
+func (j *SendEmailJob) Handle() error {
+    // Send the email
+    return mail.Send(j.To, j.Subject, j.Body)
+}
+
+func (j *SendEmailJob) RetryAfter() int { return 60 }
+func (j *SendEmailJob) MaxRetries() int { return 3 }
+
+// Dispatch
+queue.Dispatch(&SendEmailJob{To: "user@example.com", Subject: "Welcome!"})
+
+// Dispatch with delay
+queue.DispatchLater(&SendEmailJob{To: "user@example.com"}, 5*time.Minute)
+```
+
+### Testing
+
+```go
+import (
+    "testing"
+    "github.com/mechneerd/gow/testing/assert"
+)
+
+func TestCreateUser(t *testing.T) {
+    // Acting as authenticated user
+    assert.ActingAs(t, user, func() {
+        resp := http.Get("/api/profile")
+        assert.Equal(t, 200, resp.StatusCode)
+    })
+
+    // Database assertions
+    assert.DatabaseHas(t, "users", map[string]any{"email": "test@example.com"})
+    assert.DatabaseCount(t, "users", 1)
+
+    // Mail assertions
+    assert.MailSent(t, 1)
+    assert.MailSentTo(t, "user@example.com")
+}
+```
+
+### Artisan CLI
+
+```bash
+# Scaffolding
+gow make:model User --migration
+gow make:controller UserController --resource
+gow make:request StoreUserRequest
+gow make:seeder RoleSeeder
+
+# Database
+gow migrate
+gow migrate:fresh --seed
+gow db:seed
+
+# Development
+gow serve
+gow route:list
+gow about
+
+# Queue
+gow queue:work
+gow queue:failed
+```
 
 ---
 

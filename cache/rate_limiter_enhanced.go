@@ -10,6 +10,8 @@ type SlidingWindowRateLimiter struct {
 	store    Store
 	mu       sync.RWMutex
 	windows  map[string]*slidingWindow
+	window   time.Duration
+	limit    int
 }
 
 type slidingWindow struct {
@@ -23,6 +25,8 @@ func NewSlidingWindowRateLimiter(store Store, window time.Duration, limit int) *
 	return &SlidingWindowRateLimiter{
 		store:   store,
 		windows: make(map[string]*slidingWindow),
+		window:  window,
+		limit:   limit,
 	}
 }
 
@@ -37,8 +41,8 @@ func (sw *SlidingWindowRateLimiter) Allow(key string) bool {
 	if !exists {
 		sw.windows[key] = &slidingWindow{
 			events:  []time.Time{now},
-			window:  1 * time.Minute,
-			limit:   10,
+			window:  sw.window,
+			limit:   sw.limit,
 		}
 		return true
 	}
@@ -139,7 +143,7 @@ func (tb *TokenBucketRateLimiter) Allow(key string) bool {
 
 	// Calculate tokens to add based on elapsed time
 	elapsed := now.Sub(bucket.lastTime)
-	tokensToAdd := int(elapsed.Seconds()) * bucket.rate
+	tokensToAdd := int(elapsed.Seconds() * float64(bucket.rate))
 
 	bucket.tokens += tokensToAdd
 	if bucket.tokens > bucket.capacity {
