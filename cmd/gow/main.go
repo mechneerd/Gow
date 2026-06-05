@@ -107,8 +107,16 @@ var newCmd = &cobra.Command{
 		yes := cmd.Flag("yes").Changed
 
 		hasStarterKit := cmd.Flag("minimal").Changed ||
+			cmd.Flag("minimal-api").Changed ||
 			cmd.Flag("api").Changed ||
-			cmd.Flag("auth").Changed
+			cmd.Flag("web").Changed ||
+			cmd.Flag("auth").Changed ||
+			cmd.Flag("full").Changed ||
+			cmd.Flag("admin-panel").Changed ||
+			cmd.Flag("with-docker").Changed ||
+			cmd.Flag("inertia-react").Changed ||
+			cmd.Flag("inertia-vue").Changed ||
+			cmd.Flag("livewire").Changed
 
 		var result scaffoldpkg.PromptResult
 
@@ -123,9 +131,17 @@ var newCmd = &cobra.Command{
 		} else {
 			// Non-interactive mode (flags provided or --yes used)
 			flags := map[string]bool{
-				"minimal": cmd.Flag("minimal").Changed,
-				"api":     cmd.Flag("api").Changed,
-				"auth":    cmd.Flag("auth").Changed,
+				"minimal":       cmd.Flag("minimal").Changed,
+				"minimal-api":   cmd.Flag("minimal-api").Changed,
+				"api":           cmd.Flag("api").Changed,
+				"web":           cmd.Flag("web").Changed,
+				"auth":          cmd.Flag("auth").Changed,
+				"full":          cmd.Flag("full").Changed,
+				"admin-panel":   cmd.Flag("admin-panel").Changed,
+				"with-docker":   cmd.Flag("with-docker").Changed,
+				"inertia-react": cmd.Flag("inertia-react").Changed,
+				"inertia-vue":   cmd.Flag("inertia-vue").Changed,
+				"livewire":      cmd.Flag("livewire").Changed,
 			}
 
 			result.StarterKit = getStarterKitFromFlags(flags)
@@ -164,9 +180,17 @@ var newCmd = &cobra.Command{
 
 func init() {
 	// Add flags to newCmd
-	newCmd.Flags().Bool("minimal", false, "Create a minimal project")
+	newCmd.Flags().Bool("minimal", false, "Create a minimal project (basic routing + views)")
+	newCmd.Flags().Bool("minimal-api", false, "Create an ultra-light API project")
 	newCmd.Flags().Bool("api", false, "Create an API-only project (with Sanctum)")
-	newCmd.Flags().Bool("auth", false, "Create a full web app with authentication")
+	newCmd.Flags().Bool("web", false, "Create a full web app with Blade views")
+	newCmd.Flags().Bool("auth", false, "Create a full web app with authentication + RBAC")
+	newCmd.Flags().Bool("full", false, "Create a full-stack project (web + API + auth + RBAC)")
+	newCmd.Flags().Bool("admin-panel", false, "Create an admin panel project (planned)")
+	newCmd.Flags().Bool("with-docker", false, "Create a Dockerized project (planned)")
+	newCmd.Flags().Bool("inertia-react", false, "Create an Inertia.js + React project (planned)")
+	newCmd.Flags().Bool("inertia-vue", false, "Create an Inertia.js + Vue 3 project (planned)")
+	newCmd.Flags().Bool("livewire", false, "Create a Livewire-focused project (planned)")
 	newCmd.Flags().String("module", "", "Module path for go.mod (e.g. github.com/username/myapp)")
 	newCmd.Flags().String("db", "sqlite", "Database driver: sqlite, mysql, postgres")
 	newCmd.Flags().Bool("force", false, "Overwrite existing directory if it already exists")
@@ -221,13 +245,37 @@ func getStarterKitFromFlags(flags map[string]bool) string {
 	if flags["minimal"] {
 		return "minimal"
 	}
+	if flags["minimal-api"] {
+		return "minimal-api"
+	}
 	if flags["api"] {
 		return "api"
+	}
+	if flags["web"] {
+		return "web"
 	}
 	if flags["auth"] {
 		return "auth"
 	}
-	return "web"
+	if flags["full"] {
+		return "full"
+	}
+	if flags["admin-panel"] {
+		return "admin-panel"
+	}
+	if flags["with-docker"] {
+		return "with-docker"
+	}
+	if flags["inertia-react"] {
+		return "inertia-react"
+	}
+	if flags["inertia-vue"] {
+		return "inertia-vue"
+	}
+	if flags["livewire"] {
+		return "livewire"
+	}
+	return "auth" // default
 }
 
 // scaffoldWithOptions is the new entry point that uses the gow-skeleton repository.
@@ -238,9 +286,17 @@ func scaffoldWithOptions(name string, result scaffoldpkg.PromptResult, force boo
 
 	// Convert prompt result to flags for selector
 	flags := map[string]bool{
-		"minimal": result.StarterKit == "minimal",
-		"api":     result.StarterKit == "api",
-		"auth":    result.StarterKit == "auth",
+		"minimal":       result.StarterKit == "minimal",
+		"minimal-api":   result.StarterKit == "minimal-api",
+		"api":           result.StarterKit == "api",
+		"web":           result.StarterKit == "web",
+		"auth":          result.StarterKit == "auth",
+		"full":          result.StarterKit == "full",
+		"admin-panel":   result.StarterKit == "admin-panel",
+		"with-docker":   result.StarterKit == "with-docker",
+		"inertia-react": result.StarterKit == "inertia-react",
+		"inertia-vue":   result.StarterKit == "inertia-vue",
+		"livewire":      result.StarterKit == "livewire",
 	}
 
 	templateRelative := scaffoldpkg.SelectTemplate(flags)
@@ -301,7 +357,7 @@ func scaffoldWithOptions(name string, result scaffoldpkg.PromptResult, force boo
 
 	// Inject RBAC middleware examples + DB wiring guidance into bootstrap/app.go
 	// for auth-enabled kits (addresses high-priority gap in generated projects).
-	if flags["auth"] {
+	if flags["auth"] || flags["full"] {
 		_ = scaffoldpkg.InjectRBACBootstrapExamples(targetDir)
 	}
 	completeStep("Applying fixes")

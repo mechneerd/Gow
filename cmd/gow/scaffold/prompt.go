@@ -4,12 +4,13 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 )
 
 // PromptResult holds the user's answers from the interactive wizard.
 type PromptResult struct {
-	StarterKit string // "minimal", "api", "web", "auth"
+	StarterKit string // "minimal", "minimal-api", "api", "web", "auth", "full", etc.
 	Database   string // "sqlite", "mysql", "postgres"
 	ModulePath string
 }
@@ -21,27 +22,49 @@ func RunInteractiveWizard(defaultAppName string) (PromptResult, error) {
 
 	fmt.Println("\nNo starter kit specified. Let's create your project interactively.")
 
+	kits := GetStarterKits()
+	maxReady := 0
 	fmt.Println("\n🎯 Which starter kit would you like?")
-	fmt.Println("  1) Minimal")
-	fmt.Println("  2) API (with Sanctum)")
-	fmt.Println("  3) Web (Blade + views)")
-	fmt.Println("  4) Web + Auth (recommended)")
+	for i, kit := range kits {
+		num := i + 1
+		if kit.Ready {
+			maxReady = num
+			marker := ""
+			if kit.Key == "auth" {
+				marker = " (recommended)"
+			}
+			fmt.Printf("  %d) %-22s — %s%s\n", num, kit.Name, kit.Description, marker)
+		} else {
+			fmt.Printf("  %d) %-22s — %s (planned)\n", num, kit.Name, kit.Description)
+		}
+	}
 
-	fmt.Print("Enter choice [1-4] (default: 4): ")
+	defaultChoice := "4" // Web + Auth
+	fmt.Printf("Enter choice [1-%d] (default: %s): ", len(kits), defaultChoice)
 	choice, _ := reader.ReadString('\n')
 	choice = strings.TrimSpace(choice)
 
-	switch choice {
-	case "1":
-		result.StarterKit = "minimal"
-	case "2":
-		result.StarterKit = "api"
-	case "3":
-		result.StarterKit = "web"
-	case "4", "":
+	if choice == "" {
+		choice = defaultChoice
+	}
+
+choiceLoop:
+	for {
+		idx, err := strconv.Atoi(choice)
+		if err == nil && idx >= 1 && idx <= len(kits) {
+			selected := kits[idx-1]
+			if selected.Ready {
+				result.StarterKit = selected.Key
+				break choiceLoop
+			}
+			fmt.Printf("   ⚠️  %s is not yet available. Please choose a ready starter kit [1-%d]: ", selected.Name, maxReady)
+			choice, _ = reader.ReadString('\n')
+			choice = strings.TrimSpace(choice)
+			continue choiceLoop
+		}
+		// Invalid input — default to auth
 		result.StarterKit = "auth"
-	default:
-		result.StarterKit = "auth"
+		break choiceLoop
 	}
 
 	for {
