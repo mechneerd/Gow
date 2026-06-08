@@ -103,7 +103,7 @@ func replaceInContent(content string, ctx ReplaceContext) string {
 		"notifications",
 		"broadcasting",
 		"logging",
-		"config",
+		// "config" removed — skeletons define their own local config package
 		"console",
 		"cookie",
 		"storage",
