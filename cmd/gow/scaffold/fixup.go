@@ -212,10 +212,14 @@ func fixFileContent(content string, filePath string, moduleName string) string {
 	}
 
 	// Fix 2: bootstrap/app.go — remove unused "routes" import
-	if strings.HasSuffix(filePath, filepath.Join("bootstrap", "app.go")) ||
-		strings.HasSuffix(filePath, "bootstrap\\app.go") || strings.HasSuffix(filePath, "bootstrap/app.go") {
-		result = removeUnusedRoutesImport(result)
-	}
+	// DISABLED: The skeleton's bootstrap/app.go legitimately imports routes
+	// and calls RegisterRoutes()/RegisterAPIRoutes() in Serve().
+	// The routes package init() registers handlers on the GoW router,
+	// and Serve() mounts them on http.DefaultServeMux.
+	// if strings.HasSuffix(filePath, filepath.Join("bootstrap", "app.go")) ||
+	// 	strings.HasSuffix(filePath, "bootstrap\\app.go") || strings.HasSuffix(filePath, "bootstrap/app.go") {
+	// 	result = removeUnusedRoutesImport(result)
+	// }
 
 	// Fix 3: app/Livewire/Counter.go — add livewire import, fix BaseComponent reference
 	if strings.Contains(filePath, "Livewire") && strings.HasSuffix(filePath, "Counter.go") {
@@ -257,10 +261,13 @@ func fixFileContent(content string, filePath string, moduleName string) string {
 
 	// Fix 7: bootstrap/app.go — replace skeleton-specific config.AppConfig/config.Load
 	// with direct os.Getenv calls (skeleton uses types not in the framework config package)
-	if strings.HasSuffix(filePath, filepath.Join("bootstrap", "app.go")) ||
-		strings.HasSuffix(filePath, "bootstrap\\app.go") || strings.HasSuffix(filePath, "bootstrap/app.go") {
-		result = fixBootstrapAppGo(result)
-	}
+	// DISABLED: The full skeleton's bootstrap/app.go legitimately uses config.AppConfig
+	// and config.Load() which exist in the skeleton's own config/app.go package.
+	// The fixup was rewriting it to remove routes import and route registration.
+	// if strings.HasSuffix(filePath, filepath.Join("bootstrap", "app.go")) ||
+	// 	strings.HasSuffix(filePath, "bootstrap\\app.go") || strings.HasSuffix(filePath, "bootstrap/app.go") {
+	// 	result = fixBootstrapAppGo(result)
+	// }
 
 	// Fix 8: go.mod.template — remove invalid "latest" version, let go mod tidy handle it
 	if strings.HasSuffix(filePath, "go.mod.template") || strings.HasSuffix(filePath, "go.mod") {
