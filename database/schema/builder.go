@@ -21,7 +21,7 @@ func NewBuilder(conn *sql.DB, d dialect.Dialect) *Builder {
 	}
 }
 
-// Create executes a CREATE TABLE statement.
+// Create executes a CREATE TABLE statement, then creates any indexes separately.
 func (s *Builder) Create(table string, callback func(*Blueprint)) error {
 	blueprint := NewBlueprint(table)
 	callback(blueprint)
@@ -66,7 +66,7 @@ func (s *Builder) Create(table string, callback func(*Blueprint)) error {
 		sqlStr.WriteString(")")
 	}
 
-	// Table-level unique constraints
+	// Table-level unique constraints (inline)
 	for _, idx := range blueprint.Indexes() {
 		if strings.HasPrefix(idx, "unique:") {
 			cols := strings.TrimPrefix(idx, "unique:")
@@ -82,24 +82,7 @@ func (s *Builder) Create(table string, callback func(*Blueprint)) error {
 		}
 	}
 
-	// Table-level indexes (non-unique, non-unique: prefixed)
-	for _, idx := range blueprint.Indexes() {
-		if !strings.HasPrefix(idx, "unique:") {
-			cols := strings.Split(idx, ",")
-			colNames := make([]string, len(cols))
-			for i, c := range cols {
-				colNames[i] = s.dialect.QuoteIdentifier(strings.TrimSpace(c))
-			}
-			idxName := fmt.Sprintf("idx_%s_%s", table, strings.Join(cols, "_"))
-			sqlStr.WriteString(",\n    INDEX ")
-			sqlStr.WriteString(s.dialect.QuoteIdentifier(idxName))
-			sqlStr.WriteString(" (")
-			sqlStr.WriteString(strings.Join(colNames, ", "))
-			sqlStr.WriteString(")")
-		}
-	}
-
-	// Foreign keys
+	// Foreign keys (inline)
 	for _, fk := range blueprint.ForeignKeys() {
 		sqlStr.WriteString(",\n    FOREIGN KEY (")
 		sqlStr.WriteString(s.dialect.QuoteIdentifier(fk.Column))
@@ -120,8 +103,31 @@ func (s *Builder) Create(table string, callback func(*Blueprint)) error {
 
 	sqlStr.WriteString("\n)")
 
-	_, err := s.conn.Exec(sqlStr.String())
-	return err
+	if _, err := s.conn.Exec(sqlStr.String()); err != nil {
+		return err
+	}
+
+	// Create non-unique indexes separately (not supported inline in SQLite)
+	for _, idx := range blueprint.Indexes() {
+		if !strings.HasPrefix(idx, "unique:") {
+			cols := strings.Split(idx, ",")
+			colNames := make([]string, len(cols))
+			for i, c := range cols {
+				colNames[i] = s.dialect.QuoteIdentifier(strings.TrimSpace(c))
+			}
+			idxName := fmt.Sprintf("idx_%s_%s", table, strings.Join(cols, "_"))
+			createIdx := fmt.Sprintf("CREATE INDEX %s ON %s (%s)",
+				s.dialect.QuoteIdentifier(idxName),
+				s.dialect.QuoteIdentifier(table),
+				strings.Join(colNames, ", "),
+			)
+			if _, err := s.conn.Exec(createIdx); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }
 
 // Drop executes a DROP TABLE statement.

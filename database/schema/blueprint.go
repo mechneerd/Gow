@@ -144,26 +144,41 @@ func (b *Blueprint) Nullable() *Blueprint {
 	return b
 }
 
-// Unique makes the last defined column unique.
-func (b *Blueprint) Unique() *Blueprint {
-	if len(b.columns) > 0 {
-		b.columns[len(b.columns)-1].Unique = true
+// Unique makes the last defined column unique, or adds a composite unique constraint.
+// No args: modifies the last column. With args: adds a table-level unique constraint.
+func (b *Blueprint) Unique(columns ...string) *Blueprint {
+	if len(columns) == 0 {
+		if len(b.columns) > 0 {
+			b.columns[len(b.columns)-1].Unique = true
+		}
+	} else {
+		b.indexes = append(b.indexes, "unique:"+joinColumns(columns))
 	}
 	return b
 }
 
-// Primary makes the last defined column a primary key.
-func (b *Blueprint) Primary() *Blueprint {
-	if len(b.columns) > 0 {
-		b.columns[len(b.columns)-1].Primary = true
+// Primary makes the last defined column a primary key, or sets a composite primary key.
+// No args: modifies the last column. With args: sets a table-level composite primary key.
+func (b *Blueprint) Primary(columns ...string) *Blueprint {
+	if len(columns) == 0 {
+		if len(b.columns) > 0 {
+			b.columns[len(b.columns)-1].Primary = true
+		}
+	} else {
+		b.primaryKey = append(b.primaryKey, columns...)
 	}
 	return b
 }
 
-// Index marks the last defined column for indexing (tracked at table level).
-func (b *Blueprint) Index() *Blueprint {
-	if len(b.columns) > 0 {
-		b.indexes = append(b.indexes, b.columns[len(b.columns)-1].Name)
+// Index marks the last defined column for indexing, or adds a table-level index.
+// No args: modifies the last column. With args: adds a table-level index on the given columns.
+func (b *Blueprint) Index(columns ...string) *Blueprint {
+	if len(columns) == 0 {
+		if len(b.columns) > 0 {
+			b.indexes = append(b.indexes, b.columns[len(b.columns)-1].Name)
+		}
+	} else {
+		b.indexes = append(b.indexes, joinColumns(columns))
 	}
 	return b
 }
@@ -173,25 +188,6 @@ func (b *Blueprint) Default(val any) *Blueprint {
 	if len(b.columns) > 0 {
 		b.columns[len(b.columns)-1].Default = val
 	}
-	return b
-}
-
-// TablePrimary sets a composite primary key on the given columns.
-func (b *Blueprint) TablePrimary(columns ...string) *Blueprint {
-	b.primaryKey = append(b.primaryKey, columns...)
-	return b
-}
-
-// TableUnique adds a composite unique constraint on the given columns.
-func (b *Blueprint) TableUnique(columns ...string) *Blueprint {
-	// Store as an index with a unique marker
-	b.indexes = append(b.indexes, "unique:"+joinColumns(columns))
-	return b
-}
-
-// TableIndex adds an index on the given columns.
-func (b *Blueprint) TableIndex(columns ...string) *Blueprint {
-	b.indexes = append(b.indexes, joinColumns(columns))
 	return b
 }
 
