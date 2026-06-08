@@ -26,8 +26,6 @@ func (s *Builder) Create(table string, callback func(*Blueprint)) error {
 	blueprint := NewBlueprint(table)
 	callback(blueprint)
 
-	// Translate Blueprint to SQL using Dialect (Simplified for Phase 2)
-	// In a full implementation, the Dialect interface would have a CompileCreate method.
 	var sqlStr strings.Builder
 	sqlStr.WriteString("CREATE TABLE ")
 	sqlStr.WriteString(s.dialect.QuoteIdentifier(table))
@@ -55,6 +53,71 @@ func (s *Builder) Create(table string, callback func(*Blueprint)) error {
 			sqlStr.WriteString(" UNIQUE")
 		}
 	}
+
+	// Composite primary key
+	if len(blueprint.PrimaryKeyColumns()) > 0 {
+		sqlStr.WriteString(",\n    PRIMARY KEY (")
+		for i, col := range blueprint.PrimaryKeyColumns() {
+			if i > 0 {
+				sqlStr.WriteString(", ")
+			}
+			sqlStr.WriteString(s.dialect.QuoteIdentifier(col))
+		}
+		sqlStr.WriteString(")")
+	}
+
+	// Table-level unique constraints
+	for _, idx := range blueprint.Indexes() {
+		if strings.HasPrefix(idx, "unique:") {
+			cols := strings.TrimPrefix(idx, "unique:")
+			sqlStr.WriteString(",\n    UNIQUE (")
+			parts := strings.Split(cols, ",")
+			for i, c := range parts {
+				if i > 0 {
+					sqlStr.WriteString(", ")
+				}
+				sqlStr.WriteString(s.dialect.QuoteIdentifier(strings.TrimSpace(c)))
+			}
+			sqlStr.WriteString(")")
+		}
+	}
+
+	// Table-level indexes (non-unique, non-unique: prefixed)
+	for _, idx := range blueprint.Indexes() {
+		if !strings.HasPrefix(idx, "unique:") {
+			cols := strings.Split(idx, ",")
+			colNames := make([]string, len(cols))
+			for i, c := range cols {
+				colNames[i] = s.dialect.QuoteIdentifier(strings.TrimSpace(c))
+			}
+			idxName := fmt.Sprintf("idx_%s_%s", table, strings.Join(cols, "_"))
+			sqlStr.WriteString(",\n    INDEX ")
+			sqlStr.WriteString(s.dialect.QuoteIdentifier(idxName))
+			sqlStr.WriteString(" (")
+			sqlStr.WriteString(strings.Join(colNames, ", "))
+			sqlStr.WriteString(")")
+		}
+	}
+
+	// Foreign keys
+	for _, fk := range blueprint.ForeignKeys() {
+		sqlStr.WriteString(",\n    FOREIGN KEY (")
+		sqlStr.WriteString(s.dialect.QuoteIdentifier(fk.Column))
+		sqlStr.WriteString(") REFERENCES ")
+		sqlStr.WriteString(s.dialect.QuoteIdentifier(fk.ReferencedTable))
+		sqlStr.WriteString("(")
+		sqlStr.WriteString(s.dialect.QuoteIdentifier(fk.ReferencedColumn))
+		sqlStr.WriteString(")")
+		if fk.OnDelete != "" {
+			sqlStr.WriteString(" ON DELETE ")
+			sqlStr.WriteString(strings.ToUpper(fk.OnDelete))
+		}
+		if fk.OnUpdate != "" {
+			sqlStr.WriteString(" ON UPDATE ")
+			sqlStr.WriteString(strings.ToUpper(fk.OnUpdate))
+		}
+	}
+
 	sqlStr.WriteString("\n)")
 
 	_, err := s.conn.Exec(sqlStr.String())

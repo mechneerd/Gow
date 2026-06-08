@@ -16,6 +16,28 @@ type Migration interface {
 	Down(builder *schema.Builder) error
 }
 
+// FuncMigration wraps a single Up function as a Migration with a no-op Down.
+type FuncMigration struct {
+	UpFunc   func(builder *schema.Builder) error
+	DownFunc func(builder *schema.Builder) error
+}
+
+func (f *FuncMigration) Up(builder *schema.Builder) error {
+	return f.UpFunc(builder)
+}
+
+func (f *FuncMigration) Down(builder *schema.Builder) error {
+	if f.DownFunc != nil {
+		return f.DownFunc(builder)
+	}
+	return nil
+}
+
+// RegisterFunc registers a bare function as a Migration (Down is a no-op).
+func RegisterFunc(name string, up func(builder *schema.Builder) error) {
+	defaultRegistry.Register(name, &FuncMigration{UpFunc: up})
+}
+
 // Registry holds the registered migrations.
 type Registry struct {
 	migrations map[string]Migration
@@ -29,8 +51,16 @@ func NewRegistry() *Registry {
 }
 
 // Register adds a migration to the registry.
-func (r *Registry) Register(name string, m Migration) {
-	r.migrations[name] = m
+// Accepts either a Migration interface or a bare function with signature func(*schema.Builder) error.
+func (r *Registry) Register(name string, m any) {
+	switch v := m.(type) {
+	case Migration:
+		r.migrations[name] = v
+	case func(builder *schema.Builder) error:
+		r.migrations[name] = &FuncMigration{UpFunc: v}
+	default:
+		panic(fmt.Sprintf("migration.Register: unsupported type %T for migration %s", m, name))
+	}
 }
 
 // --- Default / Global Registry Support (for generated migrations + clean API) ---
@@ -39,8 +69,16 @@ var defaultRegistry = NewRegistry()
 
 // Register registers a migration with the default (global) registry.
 // Generated migration files call this in their init() function.
-func Register(name string, m Migration) {
-	defaultRegistry.Register(name, m)
+// It accepts either a Migration interface or a bare function with signature func(*schema.Builder) error.
+func Register(name string, m any) {
+	switch v := m.(type) {
+	case Migration:
+		defaultRegistry.Register(name, v)
+	case func(builder *schema.Builder) error:
+		defaultRegistry.Register(name, &FuncMigration{UpFunc: v})
+	default:
+		panic(fmt.Sprintf("migration.Register: unsupported type %T for migration %s", m, name))
+	}
 }
 
 // DefaultMigrator returns a new Migrator wired to the default registry.
